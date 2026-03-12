@@ -80,6 +80,25 @@ Expected release outputs:
 - `artifacts\release\<version>\Toyopuc.DeviceMonitor.exe`
 - `artifacts\publish\Toyopuc.SoakMonitor\Toyopuc.SoakMonitor.exe`
 
+## Pre-Tag Review Checklist
+
+Before creating a release tag, confirm these review items:
+
+1. Tag alignment
+   - The target tag commit matches the intended `main` commit.
+   - If `main` moved after a prior tag, create a new version tag instead of reusing old notes.
+2. Changelog alignment
+   - Recent fixes are recorded in [CHANGELOG.md](CHANGELOG.md) (including test-stability fixes).
+3. DeviceMonitor reconnect regression
+   - Manual validation confirms auto-reconnect behavior after transient socket failures.
+   - If behavior changed, add or update automated regression coverage.
+4. DeviceMonitor rendering performance baseline
+   - Confirm monitor update behavior at normal DPI and high DPI.
+   - Keep a short benchmark note so future regressions are detectable.
+5. Release consistency (tag, notes, assets)
+   - GitHub Release notes mention bundled `Toyopuc.DeviceMonitor.exe`.
+   - Attached release assets match the release notes and target tag commit.
+
 ## GitHub Actions
 
 Repository workflows:
