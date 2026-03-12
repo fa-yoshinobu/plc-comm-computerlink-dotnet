@@ -20,6 +20,11 @@ Repository:
 - License: `MIT`
 - Verified direct target: `TOYOPUC-Plus`
 - Verified relay target: `Nano 10GX`
+- Verified on real hardware:
+  - `TOYOPUC-Plus CPU (TCC-6740) + Plus EX2 (TCU-6858)`
+  - `Nano 10GX (TUC-1157)`
+  - `PC3JX-D (TCC-6902)`
+  - `PC10G CPU (TCC-6353)`
 
 ## Requirements
 
