@@ -2,21 +2,21 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>TOYOPUC Computer Link .NET | TOYOPUC Computer Link .NET Documentation </title>
+      <title>Project Architecture and Design Goals | TOYOPUC Computer Link .NET Documentation </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="TOYOPUC Computer Link .NET | TOYOPUC Computer Link .NET Documentation ">
+      <meta name="title" content="Project Architecture and Design Goals | TOYOPUC Computer Link .NET Documentation ">
       
       
-      <link rel="icon" href="favicon.ico">
-      <link rel="stylesheet" href="public/docfx.min.css">
-      <link rel="stylesheet" href="public/main.css">
-      <meta name="docfx:navrel" content="toc.html">
-      <meta name="docfx:tocrel" content="toc.html">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
       
-      <meta name="docfx:rel" content="">
+      <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/index.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/maintainer/ARCHITECTURE.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -30,7 +30,7 @@
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
 
-      <script type="module" src="./public/docfx.min.js"></script>
+      <script type="module" src="./../public/docfx.min.js"></script>
 
       <script>
         const theme = localStorage.getItem('theme') || 'auto'
@@ -43,8 +43,8 @@
     <header class="bg-body border-bottom">
       <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
         <div class="container-xxl flex-nowrap">
-          <a class="navbar-brand" href="index.html">
-            <img id="logo" class="svg" src="logo.svg" alt="">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
             
           </a>
           <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,19 +71,29 @@
         </div>
 
         <article data-uid="">
-<h1 id="toyopuc-computer-link-net">TOYOPUC Computer Link .NET</h1>
+<h1 id="project-architecture-and-design-goals">Project Architecture and Design Goals</h1>
 
-<p>High-performance client for JTEKT TOYOPUC PLCs.</p>
-<h2 id="documentation">Documentation</h2>
+<p>This document outlines the core design philosophy and technical evolution of the TOYOPUC Computer Link .NET library.</p>
+<h2 id="1-project-background">1. Project Background</h2>
+<p>Originally developed to provide a modern, reliable, and high-performance alternative to legacy communication libraries. The goal was to leverage .NET's Task-based Asynchronous Pattern (TAP) for efficient industrial monitoring.</p>
+<h2 id="2-core-design-principles">2. Core Design Principles</h2>
 <ul>
-<li><a href="user/USER_GUIDE.html">User Guide</a></li>
-<li><a href="api/index.html">API Reference</a></li>
+<li><strong>Async First</strong>: All I/O operations are inherently asynchronous to prevent thread-pool starvation in large-scale monitoring systems.</li>
+<li><strong>Provider Independence</strong>: Separation of protocol framing logic from the transport layer (TCP/UDP).</li>
+<li><strong>Strict Typing</strong>: Using .NET's type system to prevent common PLC addressing errors at compile-time.</li>
+</ul>
+<h2 id="3-implementation-details">3. Implementation Details</h2>
+<p>The library uses a tiered approach:</p>
+<ul>
+<li><strong>Low-Level Client</strong>: Direct frame manipulation.</li>
+<li><strong>High-Level Client</strong>: Human-readable device strings (e.g., &quot;P1-D100&quot;) and automatic range validation.</li>
+<li><strong>Catalog System</strong>: Centrally managed device range profiles based on official JTEKT specifications.</li>
 </ul>
 
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/index.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/maintainer/ARCHITECTURE.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>

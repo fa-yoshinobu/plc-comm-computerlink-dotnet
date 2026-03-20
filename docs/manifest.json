@@ -12,73 +12,10 @@
     },
     {
       "type": "Conceptual",
-      "source_relative_path": "AGENTS.md",
-      "output": {
-        ".html": {
-          "relative_path": "AGENTS.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Conceptual",
-      "source_relative_path": "CHANGELOG.md",
-      "output": {
-        ".html": {
-          "relative_path": "CHANGELOG.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Resource",
-      "source_relative_path": "README.md",
-      "output": {
-        "resource": {
-          "relative_path": "README.md"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Conceptual",
-      "source_relative_path": "README.md",
-      "output": {
-        ".html": {
-          "relative_path": "README.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Conceptual",
-      "source_relative_path": "TODO.md",
-      "output": {
-        ".html": {
-          "relative_path": "TODO.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Toc",
-      "source_relative_path": "api/toc.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/toc.html"
-        },
-        ".json": {
-          "relative_path": "api/toc.json"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Conceptual",
       "source_relative_path": "docsrc/maintainer/API_UNIFICATION_POLICY.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/API_UNIFICATION_POLICY.html"
+          "relative_path": "maintainer/API_UNIFICATION_POLICY.html"
         }
       },
       "version": ""
@@ -88,7 +25,7 @@
       "source_relative_path": "docsrc/maintainer/ARCHITECTURE.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/ARCHITECTURE.html"
+          "relative_path": "maintainer/ARCHITECTURE.html"
         }
       },
       "version": ""
@@ -98,7 +35,7 @@
       "source_relative_path": "docsrc/maintainer/AUTOMATED_TEST_PLAN.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/AUTOMATED_TEST_PLAN.html"
+          "relative_path": "maintainer/AUTOMATED_TEST_PLAN.html"
         }
       },
       "version": ""
@@ -108,7 +45,7 @@
       "source_relative_path": "docsrc/maintainer/LIBRARY_PROFILE_SPEC.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/LIBRARY_PROFILE_SPEC.html"
+          "relative_path": "maintainer/LIBRARY_PROFILE_SPEC.html"
         }
       },
       "version": ""
@@ -118,7 +55,7 @@
       "source_relative_path": "docsrc/maintainer/PYTHON_PORTING_NOTES.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/PYTHON_PORTING_NOTES.html"
+          "relative_path": "maintainer/PYTHON_PORTING_NOTES.html"
         }
       },
       "version": ""
@@ -128,7 +65,7 @@
       "source_relative_path": "docsrc/maintainer/RELEASE_PROCESS.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/RELEASE_PROCESS.html"
+          "relative_path": "maintainer/RELEASE_PROCESS.html"
         }
       },
       "version": ""
@@ -138,7 +75,7 @@
       "source_relative_path": "docsrc/maintainer/TESTRESULTS.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/TESTRESULTS.html"
+          "relative_path": "maintainer/TESTRESULTS.html"
         }
       },
       "version": ""
@@ -148,17 +85,7 @@
       "source_relative_path": "docsrc/maintainer/VALIDATION.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/maintainer/VALIDATION.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Resource",
-      "source_relative_path": "docsrc/maintainer/device_profile_matrix_r2.csv",
-      "output": {
-        "resource": {
-          "relative_path": "docsrc/maintainer/device_profile_matrix_r2.csv"
+          "relative_path": "maintainer/VALIDATION.html"
         }
       },
       "version": ""
@@ -168,7 +95,7 @@
       "source_relative_path": "docsrc/user/TROUBLESHOOTING.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/user/TROUBLESHOOTING.html"
+          "relative_path": "user/TROUBLESHOOTING.html"
         }
       },
       "version": ""
@@ -178,7 +105,7 @@
       "source_relative_path": "docsrc/user/USER_GUIDE.md",
       "output": {
         ".html": {
-          "relative_path": "docsrc/user/USER_GUIDE.html"
+          "relative_path": "user/USER_GUIDE.html"
         }
       },
       "version": ""
@@ -198,20 +125,10 @@
       "source_relative_path": "docsrc/user/toc.yml",
       "output": {
         ".html": {
-          "relative_path": "docsrc/user/toc.html"
+          "relative_path": "user/toc.html"
         },
         ".json": {
-          "relative_path": "docsrc/user/toc.json"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "Conceptual",
-      "source_relative_path": "examples/README.md",
-      "output": {
-        ".html": {
-          "relative_path": "examples/README.html"
+          "relative_path": "user/toc.json"
         }
       },
       "version": ""
@@ -222,256 +139,6 @@
       "output": {
         ".html": {
           "relative_path": "index.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ClockData.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ClockData.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.CpuStatusData.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.CpuStatusData.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ExNoAddress32.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ExNoAddress32.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ExtNoAddress.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ExtNoAddress.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ParsedAddress.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ParsedAddress.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.RelayLayer.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.RelayLayer.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ResolvedDevice.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ResolvedDevice.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ResponseFrame.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ResponseFrame.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucAddress.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucAddress.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucAddressRange.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucAddressRange.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucAddressingOptions.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucAddressingOptions.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucAreaDescriptor.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucAreaDescriptor.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucClient.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucClient.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucDeviceCatalog.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucDeviceCatalog.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucDeviceClient.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucDeviceClient.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucDeviceProfile.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucDeviceProfile.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucDeviceProfiles.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucDeviceProfiles.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucDeviceResolver.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucDeviceResolver.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucError.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucError.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucProtocol.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucProtocol.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucProtocolError.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucProtocolError.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucRelay.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucRelay.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.ToyopucTimeoutError.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.ToyopucTimeoutError.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.TransportTraceFrame.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.TransportTraceFrame.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/Toyopuc.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/Toyopuc.html"
         }
       },
       "version": ""
