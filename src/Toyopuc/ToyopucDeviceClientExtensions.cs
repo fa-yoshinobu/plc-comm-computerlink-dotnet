@@ -28,30 +28,30 @@ public static class ToyopucDeviceClientExtensions
         switch (dtype.ToUpperInvariant())
         {
             case "F":
-            {
-                var floats = await client.ReadFloat32sAsync(device, 1, cancellationToken: ct).ConfigureAwait(false);
-                return floats[0];
-            }
+                {
+                    var floats = await client.ReadFloat32sAsync(device, 1, cancellationToken: ct).ConfigureAwait(false);
+                    return floats[0];
+                }
             case "D":
-            {
-                var dwords = await client.ReadDWordsAsync(device, 1, cancellationToken: ct).ConfigureAwait(false);
-                return dwords[0];
-            }
+                {
+                    var dwords = await client.ReadDWordsAsync(device, 1, cancellationToken: ct).ConfigureAwait(false);
+                    return dwords[0];
+                }
             case "L":
-            {
-                var dwords = await client.ReadDWordsAsync(device, 1, cancellationToken: ct).ConfigureAwait(false);
-                return unchecked((int)dwords[0]);
-            }
+                {
+                    var dwords = await client.ReadDWordsAsync(device, 1, cancellationToken: ct).ConfigureAwait(false);
+                    return unchecked((int)dwords[0]);
+                }
             case "S":
-            {
-                var raw = await client.ReadAsync(device, 1, ct).ConfigureAwait(false);
-                return unchecked((short)Convert.ToUInt16(raw, CultureInfo.InvariantCulture));
-            }
+                {
+                    var raw = await client.ReadAsync(device, 1, ct).ConfigureAwait(false);
+                    return unchecked((short)Convert.ToUInt16(raw, CultureInfo.InvariantCulture));
+                }
             default: // "U"
-            {
-                var raw = await client.ReadAsync(device, 1, ct).ConfigureAwait(false);
-                return Convert.ToUInt16(raw, CultureInfo.InvariantCulture);
-            }
+                {
+                    var raw = await client.ReadAsync(device, 1, ct).ConfigureAwait(false);
+                    return Convert.ToUInt16(raw, CultureInfo.InvariantCulture);
+                }
         }
     }
 
@@ -113,8 +113,8 @@ public static class ToyopucDeviceClientExtensions
             throw new ArgumentOutOfRangeException(nameof(bitIndex), "bitIndex must be 0-15.");
         var raw = await client.ReadAsync(device, 1, ct).ConfigureAwait(false);
         int cur = Convert.ToUInt16(raw, CultureInfo.InvariantCulture);
-        if (value) cur |=   1 << bitIndex;
-        else       cur &= ~(1 << bitIndex);
+        if (value) cur |= 1 << bitIndex;
+        else cur &= ~(1 << bitIndex);
         await client.WriteAsync(device, (ushort)(cur & 0xFFFF), ct).ConfigureAwait(false);
     }
 

@@ -1,7 +1,7 @@
 
 [![Documentation](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://fa-yoshinobu.github.io/plc-comm-computerlink-dotnet/)
 
-[![.NET 9.0](https://img.shields.io/badge/.NET-9.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![.NET 9.0](https://img.shields.io/badge/.NET-9.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Static Analysis: dotnet format](https://img.shields.io/badge/Lint-dotnet%20format-blue.svg)](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format)
 
@@ -20,12 +20,12 @@ A modern, high-performance .NET client library for JTEKT TOYOPUC computer-link c
 ### Installation
 ```bash
 # Add NuGet package (Coming Soon)
-# dotnet add package Toyopuc
+# dotnet add package PlcComm.Toyopuc
 ```
 
 ### Basic Usage
 ```csharp
-using Toyopuc;
+using PlcComm.Toyopuc;
 
 // Connect to a TOYOPUC PLC
 using var client = new ToyopucDeviceClient("192.168.1.5", 1025);

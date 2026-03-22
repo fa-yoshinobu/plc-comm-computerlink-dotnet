@@ -12,7 +12,7 @@ Common issues and solutions when using the TOYOPUC Computer Link .NET library.
 ## 2. Communication Errors
 
 ### Error Code 0x40 (Invalid Address)
-- The requested device is outside the range supported by your specific TOYOPUC model. Refer to [Model Ranges](../user/MODEL_RANGES.md) for details.
+- The requested device is outside the range supported by your specific TOYOPUC model. Refer to the `ToyopucDeviceProfiles` class or the User Guide for supported ranges per model.
 
 ### Timeout Exceptions
 - Check network latency. Consider increasing the `Timeout` property in `ToyopucDeviceClient`.

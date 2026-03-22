@@ -11,7 +11,7 @@ Add a project reference to `src/Toyopuc/Toyopuc.csproj` or include the compiled 
 The library provides `ToyopucDeviceClient` for high-level, string-based device access.
 
 ```csharp
-using Toyopuc;
+using PlcComm.Toyopuc;
 
 // Initialize the client
 using var client = new ToyopucDeviceClient("192.168.1.5", 1025);

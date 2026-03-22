@@ -2,17 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>PlcComm.Toyopuc</AssemblyName>
-    <RootNamespace>PlcComm.Toyopuc</RootNamespace>
-    <Title>PlcComm.Toyopuc</Title>
-    <Product>PlcComm.Toyopuc</Product>
-    <IsPackable>true</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>PlcComm.Toyopuc</PackageId>
     <Version>0.1.2</Version>
+    <Title>PLC Communication TOYOPUC Computer Link .NET</Title>
     <Description>TOYOPUC computer-link communication library for .NET.</Description>
     <PackageTags>toyopuc plc industrial-automation tcp udp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
