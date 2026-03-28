@@ -1,0 +1,103 @@
+[![CI](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/PlcComm.Toyopuc.svg)](https://www.nuget.org/packages/PlcComm.Toyopuc/)
+[![Documentation](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://fa-yoshinobu.github.io/plc-comm-computerlink-dotnet/)
+[![.NET 9.0](https://img.shields.io/badge/.NET-9.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/LICENSE)
+[![Static Analysis: dotnet format](https://img.shields.io/badge/Lint-dotnet%20format-blue.svg)](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format)
+
+# Computer Link Protocol for .NET
+
+![Illustration](https://raw.githubusercontent.com/fa-yoshinobu/plc-comm-computerlink-dotnet/main/docsrc/assets/toyopuc.png)
+
+A user-focused .NET library for JTEKT TOYOPUC Computer Link communication.
+The recommended entry point is the high-level `ToyopucDeviceClient` API.
+
+## Key Features
+
+- High-level device access such as `P1-D0000`, `P1-M0000`, `ES0000`, and `FR000000`
+- Typed helpers for `U`, `S`, `D`, `L`, and `F`
+- Snapshot helpers such as `ReadManyAsync`, `ReadNamedAsync`, `ReadWordsAsync`, `ReadDWordsAsync`, and `PollAsync`
+- FR file-register helpers and relay helpers for common application work
+- Ready-to-run examples for minimal reads, cookbook-style usage, monitoring, and soak runs
+
+## Quick Start
+
+### Installation
+
+Install from NuGet:
+
+```powershell
+dotnet add package PlcComm.Toyopuc
+```
+
+You can also reference `src/Toyopuc/PlcComm.Toyopuc.csproj` directly from a local solution during development.
+
+### High-level example
+
+```csharp
+using PlcComm.Toyopuc;
+
+await using var client = new ToyopucDeviceClient("192.168.250.100", 1025);
+await client.OpenAsync();
+
+var word = await client.ReadAsync("P1-D0000");
+Console.WriteLine($"P1-D0000 = {word}");
+
+await client.WriteAsync("P1-D0001", 1234);
+await client.WriteAsync("P1-M0000", 1);
+
+var typed = await client.ReadTypedAsync("P1-D0200", "F");
+Console.WriteLine($"P1-D0200:F = {typed}");
+
+var snapshot = await client.ReadNamedAsync(["P1-D0000", "P1-D0200:F", "P1-D0000.0"]);
+Console.WriteLine(snapshot["P1-D0000"]);
+```
+
+Basic area families `P/K/V/T/C/L/X/Y/M/S/N/R/D` should use a `P1-`, `P2-`, or `P3-` prefix when a profile is in use.
+
+## Common User Tasks
+
+- Read or write one device: `ReadAsync`, `WriteAsync`
+- Read several devices together: `ReadManyAsync`, `ReadNamedAsync`
+- Read 32-bit integers or float32 values: `ReadDWordsAsync`, `ReadTypedAsync`
+- Change one flag bit inside a word: `WriteBitInWordAsync`
+- Read contiguous word blocks: `ReadWordsAsync`, `ReadDWordsAsync`
+- Persist FR data: `ReadFrAsync`, `WriteFrAsync`, `CommitFrAsync`
+- Poll a small watch list repeatedly: `PollAsync`
+
+## User Docs
+
+- [User Guide](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/USER_GUIDE.md)
+- [Examples Guide](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/examples/README.md)
+
+Start with these example programs:
+
+- `examples/PlcComm.Toyopuc.MinimalRead`
+- `examples/PlcComm.Toyopuc.HighLevelSample`
+- `examples/PlcComm.Toyopuc.SoakMonitor`
+
+Engineering and validation documents remain under `docsrc/maintainer/`.
+
+## Development and CI
+
+Run local CI:
+
+```powershell
+run_ci.bat
+```
+
+Run the release-style check including docs:
+
+```powershell
+release_check.bat
+```
+
+Pack the NuGet package locally:
+
+```powershell
+dotnet pack src\Toyopuc\PlcComm.Toyopuc.csproj -c Release
+```
+
+## License
+
+Distributed under the [MIT License](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/LICENSE).

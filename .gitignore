@@ -1,0 +1,15 @@
+﻿**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo
+TestResults/
+logs/
+artifacts/
+local_folder/
+publish/
+*.log
+*.nupkg
+*.snupkg
+

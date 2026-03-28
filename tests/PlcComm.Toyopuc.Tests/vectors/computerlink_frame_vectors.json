@@ -1,0 +1,86 @@
+{
+  "_comment": "TOYOPUC Computer Link protocol vectors. Python and .NET must produce identical bytes.",
+
+  "frame_vectors": [
+    {
+      "id": "clock_read",
+      "function": "build_clock_read",
+      "hex": "00000300327000"
+    },
+    {
+      "id": "cpu_status_read",
+      "function": "build_cpu_status_read",
+      "hex": "00000300321100"
+    },
+    {
+      "id": "word_read_addr100_cnt3",
+      "function": "build_word_read",
+      "addr": 100,
+      "count": 3,
+      "hex": "000005001C64000300"
+    },
+    {
+      "id": "byte_read_addr50_cnt4",
+      "function": "build_byte_read",
+      "addr": 50,
+      "count": 4,
+      "hex": "000005001E32000400"
+    },
+    {
+      "id": "bit_read_addr200",
+      "function": "build_bit_read",
+      "addr": 200,
+      "hex": "0000030020C800"
+    },
+    {
+      "id": "bit_write_addr200_val1",
+      "function": "build_bit_write",
+      "addr": 200,
+      "value": 1,
+      "hex": "0000040021C80001"
+    },
+    {
+      "id": "bit_write_addr200_val0",
+      "function": "build_bit_write",
+      "addr": 200,
+      "value": 0,
+      "hex": "0000040021C80000"
+    }
+  ],
+
+  "response_vectors": [
+    {
+      "id": "word_read_2words",
+      "hex": "800005001C34127856",
+      "ft": 128,
+      "rc": 0,
+      "cmd": 28,
+      "data_hex": "34127856"
+    },
+    {
+      "id": "bit_read_on",
+      "hex": "800002002001",
+      "ft": 128,
+      "rc": 0,
+      "cmd": 32,
+      "data_hex": "01"
+    },
+    {
+      "id": "write_ok",
+      "hex": "800001001D",
+      "ft": 128,
+      "rc": 0,
+      "cmd": 29,
+      "data_hex": ""
+    }
+  ],
+
+  "bcd_vectors": [
+    {"value":  0, "bcd_decimal":  0},
+    {"value":  9, "bcd_decimal":  9},
+    {"value": 10, "bcd_decimal": 16},
+    {"value": 26, "bcd_decimal": 38},
+    {"value": 59, "bcd_decimal": 89},
+    {"value": 99, "bcd_decimal": 153}
+  ]
+}

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>User Guide: TOYOPUC Computer Link .NET | TOYOPUC Computer Link .NET Documentation </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="User Guide: TOYOPUC Computer Link .NET | TOYOPUC Computer Link .NET Documentation ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/USER_GUIDE.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="user-guide-toyopuc-computer-link-net">User Guide: TOYOPUC Computer Link .NET</h1>
+
+<p>This guide explains the high-level .NET API only.
+Use it when you want to read and write TOYOPUC devices by device string such as <code>P1-D0000</code>, <code>P1-M0000</code>, <code>ES0000</code>, or <code>FR000000</code>.</p>
+<h2 id="choose-an-api">Choose an API</h2>
+<p>Use <code>ToyopucDeviceClient</code> as the main client type.
+On top of that client, use these high-level helpers when they match your task:</p>
+<ul>
+<li><code>ReadTypedAsync</code> / <code>WriteTypedAsync</code></li>
+<li><code>ReadNamedAsync</code></li>
+<li><code>ReadWordsAsync</code> / <code>ReadDWordsAsync</code></li>
+<li><code>WriteBitInWordAsync</code></li>
+<li><code>PollAsync</code></li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<pre><code class="lang-csharp">using PlcComm.Toyopuc;
+
+await using var client = new ToyopucDeviceClient(&quot;192.168.250.100&quot;, 1025);
+await client.OpenAsync();
+
+var word = await client.ReadAsync(&quot;P1-D0000&quot;);
+Console.WriteLine($&quot;P1-D0000 = {word}&quot;);
+
+await client.WriteAsync(&quot;P1-D0001&quot;, 1234);
+await client.WriteAsync(&quot;P1-M0000&quot;, 1);
+</code></pre>
+<h2 id="device-addressing">Device Addressing</h2>
+<h3 id="address-format">Address Format</h3>
+<pre><code class="lang-text">[Program]-[AreaType][Address]
+</code></pre>
+<ul>
+<li><code>Program</code>
+<code>P1</code>, <code>P2</code>, or <code>P3</code></li>
+<li><code>AreaType</code>
+device family such as <code>D</code>, <code>M</code>, <code>ES</code>, <code>FR</code></li>
+<li><code>Address</code>
+decimal or hexadecimal device number</li>
+</ul>
+<p>When a profile is in use, basic families <code>P/K/V/T/C/L/X/Y/M/S/N/R/D</code> should be written as <code>P1-*</code>, <code>P2-*</code>, or <code>P3-*</code>.</p>
+<h3 id="common-device-families">Common Device Families</h3>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Type</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>D</code></td>
+<td>Data register (word)</td>
+<td><code>P1-D0100</code></td>
+</tr>
+<tr>
+<td><code>S</code></td>
+<td>Special register (word)</td>
+<td><code>P1-S0000</code></td>
+</tr>
+<tr>
+<td><code>N</code></td>
+<td>File register (word)</td>
+<td><code>P1-N0100</code></td>
+</tr>
+<tr>
+<td><code>M</code></td>
+<td>Internal relay (bit)</td>
+<td><code>P1-M0100</code></td>
+</tr>
+<tr>
+<td><code>P</code></td>
+<td>Shared relay (bit)</td>
+<td><code>P1-P0000</code></td>
+</tr>
+<tr>
+<td><code>X</code></td>
+<td>Input relay (bit)</td>
+<td><code>P1-X0000</code></td>
+</tr>
+<tr>
+<td><code>Y</code></td>
+<td>Output relay (bit)</td>
+<td><code>P1-Y0000</code></td>
+</tr>
+<tr>
+<td><code>T</code></td>
+<td>Timer (bit)</td>
+<td><code>P1-T0000</code></td>
+</tr>
+<tr>
+<td><code>C</code></td>
+<td>Counter (bit)</td>
+<td><code>P1-C0000</code></td>
+</tr>
+<tr>
+<td><code>ES</code></td>
+<td>Extended special register (word)</td>
+<td><code>ES0000</code></td>
+</tr>
+<tr>
+<td><code>EN</code></td>
+<td>Extended file register (word)</td>
+<td><code>EN0000</code></td>
+</tr>
+<tr>
+<td><code>U</code></td>
+<td>Extended word area</td>
+<td><code>U00000</code></td>
+</tr>
+<tr>
+<td><code>EB</code></td>
+<td>Extended block word area</td>
+<td><code>EB00000</code></td>
+</tr>
+<tr>
+<td><code>FR</code></td>
+<td>File-register flash area</td>
+<td><code>FR000000</code></td>
+</tr>
+</tbody>
+</table>
+<p>Extended areas such as <code>ES</code>, <code>EN</code>, <code>H</code>, <code>U</code>, <code>EB</code>, and <code>FR</code> do not require a program prefix.</p>
+<h3 id="byte-and-packed-word-suffixes">Byte and Packed-Word Suffixes</h3>
+<p>Append <code>L</code>, <code>H</code>, or <code>W</code> to bit-area addresses for byte or packed-word access:</p>
+<pre><code class="lang-csharp">var packed = await client.ReadAsync(&quot;P1-M0010W&quot;);
+var lowByte = await client.ReadAsync(&quot;P1-M0010L&quot;);
+var highByte = await client.ReadAsync(&quot;P1-M0010H&quot;);
+</code></pre>
+<h2 id="common-tasks">Common Tasks</h2>
+<h3 id="read-and-write-a-single-device">Read and Write a Single Device</h3>
+<pre><code class="lang-csharp">var value = await client.ReadAsync(&quot;P1-D0000&quot;);
+await client.WriteAsync(&quot;P1-D0001&quot;, 1234);
+await client.WriteAsync(&quot;P1-M0000&quot;, 1);
+</code></pre>
+<h3 id="read-and-write-several-devices-together">Read and Write Several Devices Together</h3>
+<pre><code class="lang-csharp">var snapshot = await client.ReadManyAsync([&quot;P1-D0000&quot;, &quot;P1-D0001&quot;, &quot;P1-M0000&quot;]);
+Console.WriteLine(snapshot[0]);
+
+await client.WriteManyAsync(
+[
+    new KeyValuePair&lt;object, object&gt;(&quot;P1-D0000&quot;, 10),
+    new KeyValuePair&lt;object, object&gt;(&quot;P1-D0001&quot;, 20),
+    new KeyValuePair&lt;object, object&gt;(&quot;P1-M0000&quot;, 0),
+]);
+</code></pre>
+<h3 id="read-typed-values">Read Typed Values</h3>
+<p>Use these type codes with <code>ReadTypedAsync</code> and <code>WriteTypedAsync</code>:</p>
+<table>
+<thead>
+<tr>
+<th>dtype</th>
+<th>Type</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;U&quot;</code></td>
+<td>unsigned 16-bit int</td>
+<td>1 word</td>
+</tr>
+<tr>
+<td><code>&quot;S&quot;</code></td>
+<td>signed 16-bit int</td>
+<td>1 word</td>
+</tr>
+<tr>
+<td><code>&quot;D&quot;</code></td>
+<td>unsigned 32-bit int</td>
+<td>2 words</td>
+</tr>
+<tr>
+<td><code>&quot;L&quot;</code></td>
+<td>signed 32-bit int</td>
+<td>2 words</td>
+</tr>
+<tr>
+<td><code>&quot;F&quot;</code></td>
+<td>float32</td>
+<td>2 words</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="lang-csharp">var floatValue = await client.ReadTypedAsync(&quot;P1-D0100&quot;, &quot;F&quot;);
+var signedValue = await client.ReadTypedAsync(&quot;P1-D0200&quot;, &quot;L&quot;);
+
+await client.WriteTypedAsync(&quot;P1-D0100&quot;, &quot;F&quot;, 3.14f);
+await client.WriteTypedAsync(&quot;P1-D0200&quot;, &quot;S&quot;, -100);
+</code></pre>
+<h3 id="read-contiguous-blocks">Read Contiguous Blocks</h3>
+<pre><code class="lang-csharp">ushort[] words = await client.ReadWordsAsync(&quot;P1-D0000&quot;, 10);
+uint[] dwords = await client.ReadDWordsAsync(&quot;P1-D0200&quot;, 4);
+</code></pre>
+<h3 id="change-one-bit-inside-a-word">Change One Bit Inside a Word</h3>
+<pre><code class="lang-csharp">await client.WriteBitInWordAsync(&quot;P1-D0100&quot;, bitIndex: 3, value: true);
+</code></pre>
+<h3 id="read-a-typed-snapshot-by-name">Read a Typed Snapshot by Name</h3>
+<p>Address notation:</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;P1-D0100&quot;</code></td>
+<td>unsigned 16-bit word</td>
+</tr>
+<tr>
+<td><code>&quot;P1-D0100:F&quot;</code></td>
+<td>float32</td>
+</tr>
+<tr>
+<td><code>&quot;P1-D0100:S&quot;</code></td>
+<td>signed 16-bit word</td>
+</tr>
+<tr>
+<td><code>&quot;P1-D0100:D&quot;</code></td>
+<td>unsigned 32-bit value</td>
+</tr>
+<tr>
+<td><code>&quot;P1-D0100:L&quot;</code></td>
+<td>signed 32-bit value</td>
+</tr>
+<tr>
+<td><code>&quot;P1-D0100.3&quot;</code></td>
+<td>bit 3 inside the word</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="lang-csharp">var result = await client.ReadNamedAsync(
+[
+    &quot;P1-D0100&quot;,
+    &quot;P1-D0101:F&quot;,
+    &quot;P1-D0102:S&quot;,
+    &quot;P1-D0100.3&quot;,
+]);
+
+Console.WriteLine(result[&quot;P1-D0101:F&quot;]);
+</code></pre>
+<h3 id="poll-values-repeatedly">Poll Values Repeatedly</h3>
+<pre><code class="lang-csharp">var count = 0;
+await foreach (var snapshot in client.PollAsync([&quot;P1-D0100&quot;, &quot;P1-D0101:F&quot;], TimeSpan.FromSeconds(1)))
+{
+    Console.WriteLine(snapshot[&quot;P1-D0100&quot;]);
+    count++;
+    if (count &gt;= 3)
+    {
+        break;
+    }
+}
+</code></pre>
+<h3 id="fr-file-register-access">FR File-Register Access</h3>
+<p>Use FR helpers when you need non-volatile file-register data.</p>
+<pre><code class="lang-csharp">var currentValue = await client.ReadFrAsync(&quot;FR000000&quot;);
+await client.WriteFrAsync(&quot;FR000000&quot;, 0x1234, commit: false);
+await client.CommitFrAsync(&quot;FR000000&quot;, wait: true);
+</code></pre>
+<p>Use <code>commit: true</code> only when you intentionally want to persist the modified FR block to flash.</p>
+<h3 id="relay-access">Relay Access</h3>
+<p>Relay helpers are also available from <code>ToyopucDeviceClient</code>.</p>
+<pre><code class="lang-csharp">var status = await client.RelayReadCpuStatusAsync(&quot;P1-L2:N2&quot;);
+var wordValue = await client.RelayReadWordsAsync(&quot;P1-L2:N2&quot;, &quot;P1-D0000&quot;, count: 1);
+await client.RelayWriteAsync(&quot;P1-L2:N2&quot;, &quot;P1-M0000&quot;, 1);
+</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ToyopucError</code></td>
+<td>PLC returned an error response</td>
+</tr>
+<tr>
+<td><code>ToyopucProtocolError</code></td>
+<td>Malformed or unexpected protocol data</td>
+</tr>
+<tr>
+<td><code>TimeoutException</code></td>
+<td>Communication timeout</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="lang-csharp">try
+{
+    var value = await client.ReadAsync(&quot;P1-D0000&quot;);
+}
+catch (TimeoutException)
+{
+    Console.WriteLine(&quot;Timeout: check IP address and Computer Link port.&quot;);
+}
+catch (ToyopucProtocolError ex)
+{
+    Console.WriteLine($&quot;Protocol error: {ex.Message}&quot;);
+}
+catch (ToyopucError ex)
+{
+    Console.WriteLine($&quot;PLC error: {ex.Message}&quot;);
+}
+</code></pre>
+<h2 id="sample-programs">Sample Programs</h2>
+<p>Start with these examples:</p>
+<ul>
+<li><code>examples/PlcComm.Toyopuc.MinimalRead</code></li>
+<li><code>examples/PlcComm.Toyopuc.HighLevelSample</code></li>
+<li><code>examples/PlcComm.Toyopuc.SoakMonitor</code></li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/USER_GUIDE.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          PLC Communication Workspace - fa-yoshinobu
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

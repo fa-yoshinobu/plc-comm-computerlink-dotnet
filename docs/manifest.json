@@ -1,0 +1,378 @@
+{
+  "source_base_path": "D:/PLC_COMM_PROJ/plc-comm-computerlink-dotnet",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "Resource",
+      "output": {
+        "resource": {
+          "relative_path": "index.json"
+        }
+      }
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "README.md",
+      "output": {
+        ".html": {
+          "relative_path": "README.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docsrc/user/TROUBLESHOOTING.md",
+      "output": {
+        ".html": {
+          "relative_path": "user/TROUBLESHOOTING.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docsrc/user/USER_GUIDE.md",
+      "output": {
+        ".html": {
+          "relative_path": "user/USER_GUIDE.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "docsrc/user/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "user/toc.html"
+        },
+        ".json": {
+          "relative_path": "user/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ClockData.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ClockData.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.CpuStatusData.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.CpuStatusData.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ExNoAddress32.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ExNoAddress32.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ExtNoAddress.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ExtNoAddress.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ParsedAddress.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ParsedAddress.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.RelayLayer.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.RelayLayer.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ResolvedDevice.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ResolvedDevice.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ResponseFrame.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ResponseFrame.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucAddress.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAddress.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucAddressRange.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAddressRange.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucAddressingOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAddressingOptions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucAreaDescriptor.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAreaDescriptor.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucClient.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucClient.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceCatalog.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceCatalog.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceClient.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceClient.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceClientExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceClientExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceProfile.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceProfile.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceProfiles.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceProfiles.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceResolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceResolver.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucError.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucProtocol.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucProtocol.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucProtocolError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucProtocolError.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucRelay.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucRelay.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucTimeoutError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTimeoutError.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucTraceDirection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTraceDirection.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucTraceFrame.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTraceFrame.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucTransportMode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTransportMode.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.TransportTraceFrame.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.TransportTraceFrame.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "obj/api/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/toc.html"
+        },
+        ".json": {
+          "relative_path": "api/obj/api/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html"
+        },
+        ".json": {
+          "relative_path": "toc.json"
+        }
+      },
+      "version": ""
+    }
+  ],
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}
