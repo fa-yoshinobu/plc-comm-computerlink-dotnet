@@ -26,8 +26,16 @@ The recommended entry point is the high-level `ToyopucDeviceClient` API.
 
 Install from NuGet:
 
+- Package page: https://www.nuget.org/packages/PlcComm.Toyopuc/
+
 ```powershell
 dotnet add package PlcComm.Toyopuc
+```
+
+Or add a package reference directly:
+
+```xml
+<PackageReference Include="PlcComm.Toyopuc" Version="0.1.3" />
 ```
 
 You can also reference `src/Toyopuc/PlcComm.Toyopuc.csproj` directly from a local solution during development.
