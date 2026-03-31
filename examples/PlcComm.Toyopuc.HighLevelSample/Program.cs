@@ -28,6 +28,7 @@ await client.OpenAsync();
 Console.WriteLine($"connect  : {transport.ToString().ToLowerInvariant()}://{host}:{port}");
 Console.WriteLine($"profile  : {profileName}");
 Console.WriteLine("scenario : high-level cookbook");
+Console.WriteLine($"normalize: {ToyopucAddress.Normalize("p1-d0100", profile: profileName)}");
 
 Console.WriteLine();
 Console.WriteLine("1. ReadAsync / WriteAsync");
@@ -60,11 +61,15 @@ await client.WriteTypedAsync("P1-D0300", "F", 3.14f);
 Console.WriteLine("Wrote -500 -> P1-D0200:L and 3.14 -> P1-D0300:F");
 
 Console.WriteLine();
-Console.WriteLine("4. ReadWordsAsync / ReadDWordsAsync");
-ushort[] words = await client.ReadWordsAsync("P1-D0000", 4);
-uint[] dwords = await client.ReadDWordsAsync("P1-D0200", 2);
-Console.WriteLine($"words  = [{string.Join(", ", words)}]");
-Console.WriteLine($"dwords = [{string.Join(", ", dwords)}]");
+Console.WriteLine("4. ReadWordsSingleRequestAsync / ReadDWordsSingleRequestAsync / chunked helpers");
+ushort[] words = await client.ReadWordsSingleRequestAsync("P1-D0000", 4);
+uint[] dwords = await client.ReadDWordsSingleRequestAsync("P1-D0200", 2);
+ushort[] chunkedWords = await client.ReadWordsChunkedAsync("P1-D0000", 32, maxWordsPerRequest: 8);
+uint[] chunkedDwords = await client.ReadDWordsChunkedAsync("P1-D0200", 8, maxDwordsPerRequest: 4);
+Console.WriteLine($"words        = [{string.Join(", ", words)}]");
+Console.WriteLine($"dwords       = [{string.Join(", ", dwords)}]");
+Console.WriteLine($"chunkedWords = [{string.Join(", ", chunkedWords)}]");
+Console.WriteLine($"chunkedDword = [{string.Join(", ", chunkedDwords)}]");
 
 Console.WriteLine();
 Console.WriteLine("5. WriteBitInWordAsync / ReadNamedAsync");
@@ -158,6 +163,7 @@ static void PrintUsage()
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp \"PC10G:PC10 mode\"");
     Console.WriteLine();
     Console.WriteLine("This sample demonstrates ReadAsync, WriteAsync, ReadManyAsync, WriteManyAsync,");
-    Console.WriteLine("ReadTypedAsync, WriteTypedAsync, ReadWordsAsync, ReadDWordsAsync,");
-    Console.WriteLine("WriteBitInWordAsync, ReadNamedAsync, PollAsync, and FR helpers.");
+    Console.WriteLine("ReadTypedAsync, WriteTypedAsync, ReadWordsSingleRequestAsync, ReadDWordsSingleRequestAsync,");
+    Console.WriteLine("ReadWordsChunkedAsync, ReadDWordsChunkedAsync, WriteBitInWordAsync,");
+    Console.WriteLine("ReadNamedAsync, PollAsync, and FR helpers.");
 }
