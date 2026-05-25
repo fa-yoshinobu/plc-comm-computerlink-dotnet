@@ -17,6 +17,8 @@
 A user-focused .NET library for JTEKT TOYOPUC Computer Link communication.
 The recommended entry point is the high-level queued client created by `ToyopucDeviceClientFactory`.
 
+Maintainer release steps are documented in [Release Process](RELEASING.md).
+
 This README intentionally covers the public high-level API only:
 
 - `ToyopucConnectionOptions`
