@@ -1,0 +1,91 @@
+namespace PlcComm.Toyopuc;
+
+internal static class Pc10Payloads
+{
+    public static byte[] PackWordValues(IEnumerable<int> values)
+    {
+        var items = values as int[] ?? values.ToArray();
+        var data = new byte[items.Length * 2];
+        for (var i = 0; i < items.Length; i++)
+        {
+            WriteU16LittleEndian(data, i * 2, items[i] & 0xFFFF);
+        }
+
+        return data;
+    }
+
+    public static byte[] BuildMultiWordReadPayload(IEnumerable<int> addresses32)
+    {
+        var items = addresses32.ToArray();
+        var payload = new byte[4 + (items.Length * 4)];
+        payload[2] = (byte)(items.Length & 0xFF);
+        for (var i = 0; i < items.Length; i++)
+        {
+            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i]);
+        }
+
+        return payload;
+    }
+
+    public static byte[] PackMultiWordPayload(IEnumerable<(int Address32, int Value)> addressValues)
+    {
+        var items = addressValues.ToArray();
+        var payload = new byte[4 + (items.Length * 4) + (items.Length * 2)];
+        payload[2] = (byte)(items.Length & 0xFF);
+        for (var i = 0; i < items.Length; i++)
+        {
+            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
+        }
+
+        var valuesOffset = 4 + (items.Length * 4);
+        for (var i = 0; i < items.Length; i++)
+        {
+            WriteU16LittleEndian(payload, valuesOffset + (i * 2), items[i].Value);
+        }
+
+        return payload;
+    }
+
+    public static byte[] PackMultiBitPayload(IEnumerable<(int Address32, int Value)> addressValues)
+    {
+        var items = addressValues.ToArray();
+        var bitBytesOffset = 4 + (items.Length * 4);
+        var payload = new byte[bitBytesOffset + ((items.Length + 7) / 8)];
+        payload[0] = (byte)(items.Length & 0xFF);
+        for (var i = 0; i < items.Length; i++)
+        {
+            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
+            if ((items[i].Value & 0x01) != 0)
+            {
+                payload[bitBytesOffset + (i / 8)] |= (byte)(1 << (i % 8));
+            }
+        }
+
+        return payload;
+    }
+
+    public static byte[] BuildMultiBitReadPayload(IEnumerable<int> addresses32)
+    {
+        var items = addresses32.ToArray();
+        var payload = new byte[4 + (items.Length * 4)];
+        payload[0] = (byte)(items.Length & 0xFF);
+        for (var i = 0; i < items.Length; i++)
+        {
+            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i]);
+        }
+
+        return payload;
+    }
+
+    private static void WriteU16LittleEndian(byte[] buffer, int offset, int value)
+    {
+        buffer[offset] = (byte)(value & 0xFF);
+        buffer[offset + 1] = (byte)((value >> 8) & 0xFF);
+    }
+
+    private static void WriteAddress32LittleEndian(byte[] buffer, int offset, int address32)
+    {
+        WriteU16LittleEndian(buffer, offset, address32 & 0xFFFF);
+        WriteU16LittleEndian(buffer, offset + 2, (address32 >> 16) & 0xFFFF);
+    }
+}

@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.Text;
 
 namespace PlcComm.Toyopuc;
 
@@ -487,66 +486,10 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
     }
 
-    private static void WriteU16LittleEndian(byte[] buffer, int offset, int value)
-    {
-        buffer[offset] = (byte)(value & 0xFF);
-        buffer[offset + 1] = (byte)((value >> 8) & 0xFF);
-    }
-
-    private static void WriteAddress32LittleEndian(byte[] buffer, int offset, int address32)
-    {
-        WriteU16LittleEndian(buffer, offset, address32 & 0xFFFF);
-        WriteU16LittleEndian(buffer, offset + 2, (address32 >> 16) & 0xFFFF);
-    }
-
-    private static byte[] PackWordValues(IEnumerable<int> values)
-    {
-        var items = values as int[] ?? values.ToArray();
-        var data = new byte[items.Length * 2];
-        for (var i = 0; i < items.Length; i++)
-        {
-            WriteU16LittleEndian(data, i * 2, items[i] & 0xFFFF);
-        }
-
-        return data;
-    }
-
-    private static byte[] BuildPc10MultiWordReadPayload(IEnumerable<int> addresses32)
-    {
-        var items = addresses32.ToArray();
-        var payload = new byte[4 + (items.Length * 4)];
-        payload[2] = (byte)(items.Length & 0xFF);
-        for (var i = 0; i < items.Length; i++)
-        {
-            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i]);
-        }
-
-        return payload;
-    }
-
-    private static byte[] PackPc10MultiWordPayload(IEnumerable<(int Address32, int Value)> addressValues)
-    {
-        var items = addressValues.ToArray();
-        var payload = new byte[4 + (items.Length * 4) + (items.Length * 2)];
-        payload[2] = (byte)(items.Length & 0xFF);
-        for (var i = 0; i < items.Length; i++)
-        {
-            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
-        }
-
-        var valuesOffset = 4 + (items.Length * 4);
-        for (var i = 0; i < items.Length; i++)
-        {
-            WriteU16LittleEndian(payload, valuesOffset + (i * 2), items[i].Value);
-        }
-
-        return payload;
-    }
-
     private static int[] ReadPc10MultiWords(ToyopucClient client, IEnumerable<int> addresses32)
     {
         var items = addresses32.ToArray();
-        return ParsePc10MultiWordData(client.Pc10MultiRead(BuildPc10MultiWordReadPayload(items)), items.Length);
+        return ParsePc10MultiWordData(client.Pc10MultiRead(Pc10Payloads.BuildMultiWordReadPayload(items)), items.Length);
     }
 
     private static int ReadPc10BlockWord(ToyopucClient client, int address32)
@@ -565,41 +508,10 @@ public partial class ToyopucDeviceClient : ToyopucClient
         client.Pc10BlockWrite(address32, new[] { (byte)(value & 0xFF), (byte)((value >> 8) & 0xFF) });
     }
 
-    private static byte[] PackPc10MultiBitPayload(IEnumerable<(int Address32, int Value)> addressValues)
-    {
-        var items = addressValues.ToArray();
-        var bitBytesOffset = 4 + (items.Length * 4);
-        var payload = new byte[bitBytesOffset + ((items.Length + 7) / 8)];
-        payload[0] = (byte)(items.Length & 0xFF);
-        for (var i = 0; i < items.Length; i++)
-        {
-            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
-            if ((items[i].Value & 0x01) != 0)
-            {
-                payload[bitBytesOffset + (i / 8)] |= (byte)(1 << (i % 8));
-            }
-        }
-
-        return payload;
-    }
-
-    private static byte[] BuildPc10MultiBitReadPayload(IEnumerable<int> addresses32)
-    {
-        var items = addresses32.ToArray();
-        var payload = new byte[4 + (items.Length * 4)];
-        payload[0] = (byte)(items.Length & 0xFF);
-        for (var i = 0; i < items.Length; i++)
-        {
-            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i]);
-        }
-
-        return payload;
-    }
-
     private static int[] ReadPc10MultiBits(ToyopucClient client, IEnumerable<int> addresses32)
     {
         var items = addresses32.ToArray();
-        return ParsePc10MultiBitData(client.Pc10MultiRead(BuildPc10MultiBitReadPayload(items)), items.Length);
+        return ParsePc10MultiBitData(client.Pc10MultiRead(Pc10Payloads.BuildMultiBitReadPayload(items)), items.Length);
     }
 
     private object[] ReadRuns(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries)
@@ -679,51 +591,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return items;
     }
 
-    private static int GetBatchRunLength(IReadOnlyList<ResolvedDevice> devices, int startIndex, bool splitPc10BlockBoundaries)
-    {
-        var firstDevice = devices[startIndex];
-        var key = GetBatchGroupKey(firstDevice);
-        if (key is null)
-        {
-            return 1;
-        }
-
-        var pc10Block = splitPc10BlockBoundaries ? GetPc10BatchBlock(firstDevice) : null;
-        var index = startIndex + 1;
-        while (index < devices.Count
-            && GetBatchGroupKey(devices[index]) == key
-            && (!splitPc10BlockBoundaries || GetPc10BatchBlock(devices[index]) == pc10Block))
-        {
-            index++;
-        }
-
-        return index - startIndex;
-    }
-
-    private static int GetBatchRunLength(IReadOnlyList<(ResolvedDevice Device, object Value)> items, int startIndex, bool splitPc10BlockBoundaries)
-    {
-        var firstDevice = items[startIndex].Device;
-        var key = GetBatchGroupKey(firstDevice);
-        if (key is null)
-        {
-            return 1;
-        }
-
-        var pc10Block = splitPc10BlockBoundaries ? GetPc10BatchBlock(firstDevice) : null;
-        var index = startIndex + 1;
-        while (index < items.Count
-            && GetBatchGroupKey(items[index].Device) == key
-            && (!splitPc10BlockBoundaries || GetPc10BatchBlock(items[index].Device) == pc10Block))
-        {
-            index++;
-        }
-
-        return index - startIndex;
-    }
-
     private int[] GetRunPlan(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries)
     {
-        var key = BuildRunPlanKey(devices, splitPc10BlockBoundaries);
+        var key = DeviceRunPlanner.BuildRunPlanKey(devices, splitPc10BlockBoundaries);
         if (_runPlanCache.Count >= RunPlanCacheMaxEntries)
         {
             _runPlanCache.Clear();
@@ -731,13 +601,13 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
         return _runPlanCache.GetOrAdd(
             key,
-            static (_, state) => CompileRunPlan(state.Devices, state.SplitPc10BlockBoundaries),
+            static (_, state) => DeviceRunPlanner.CompileRunPlan(state.Devices, state.SplitPc10BlockBoundaries),
             (Devices: devices, SplitPc10BlockBoundaries: splitPc10BlockBoundaries));
     }
 
     private int[] GetRunPlan(IReadOnlyList<(ResolvedDevice Device, object Value)> items, bool splitPc10BlockBoundaries)
     {
-        var key = BuildRunPlanKey(items, splitPc10BlockBoundaries);
+        var key = DeviceRunPlanner.BuildRunPlanKey(items, splitPc10BlockBoundaries);
         if (_runPlanCache.Count >= RunPlanCacheMaxEntries)
         {
             _runPlanCache.Clear();
@@ -745,92 +615,13 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
         return _runPlanCache.GetOrAdd(
             key,
-            static (_, state) => CompileRunPlan(state.Items, state.SplitPc10BlockBoundaries),
+            static (_, state) => DeviceRunPlanner.CompileRunPlan(state.Items, state.SplitPc10BlockBoundaries),
             (Items: items, SplitPc10BlockBoundaries: splitPc10BlockBoundaries));
     }
 
     private static string NormalizeDeviceCacheKey(string device)
     {
         return device.Trim().ToUpperInvariant();
-    }
-
-    private static string BuildRunPlanKey(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries)
-    {
-        var builder = new StringBuilder(2 + (devices.Count * 16));
-        builder.Append(splitPc10BlockBoundaries ? '1' : '0');
-        for (var i = 0; i < devices.Count; i++)
-        {
-            builder.Append('\u001F');
-            builder.Append(devices[i].Text);
-        }
-
-        return builder.ToString();
-    }
-
-    private static string BuildRunPlanKey(IReadOnlyList<(ResolvedDevice Device, object Value)> items, bool splitPc10BlockBoundaries)
-    {
-        var builder = new StringBuilder(2 + (items.Count * 16));
-        builder.Append(splitPc10BlockBoundaries ? '1' : '0');
-        for (var i = 0; i < items.Count; i++)
-        {
-            builder.Append('\u001F');
-            builder.Append(items[i].Device.Text);
-        }
-
-        return builder.ToString();
-    }
-
-    private static int[] CompileRunPlan(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries)
-    {
-        var runLengths = new List<int>();
-        var index = 0;
-        while (index < devices.Count)
-        {
-            var runLength = GetBatchRunLength(devices, index, splitPc10BlockBoundaries);
-            runLengths.Add(runLength);
-            index += runLength;
-        }
-
-        return runLengths.ToArray();
-    }
-
-    private static int[] CompileRunPlan(IReadOnlyList<(ResolvedDevice Device, object Value)> items, bool splitPc10BlockBoundaries)
-    {
-        var runLengths = new List<int>();
-        var index = 0;
-        while (index < items.Count)
-        {
-            var runLength = GetBatchRunLength(items, index, splitPc10BlockBoundaries);
-            runLengths.Add(runLength);
-            index += runLength;
-        }
-
-        return runLengths.ToArray();
-    }
-
-    private static string? GetBatchGroupKey(ResolvedDevice device)
-    {
-        return device.Scheme switch
-        {
-            "basic-word" => "basic-word",
-            "basic-byte" => "basic-byte",
-            "ext-bit" or "program-bit" => "ext-bit",
-            "ext-word" or "program-word" => "ext-word",
-            "ext-byte" or "program-byte" => "ext-byte",
-            "pc10-bit" => "pc10-bit",
-            "pc10-word" => "pc10-word",
-            "pc10-byte" => "pc10-byte",
-            _ => null,
-        };
-    }
-
-    private static int? GetPc10BatchBlock(ResolvedDevice device)
-    {
-        return device.Scheme switch
-        {
-            "pc10-bit" or "pc10-word" or "pc10-byte" => Require(device.Address32, "pc10 addr32") >> 16,
-            _ => null,
-        };
     }
 
     private object[] ReadBatch(IReadOnlyList<ResolvedDevice> devices)
@@ -840,7 +631,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             return Array.Empty<object>();
         }
 
-        var group = GetBatchGroupKey(devices[0]);
+        var group = DeviceRunPlanner.GetBatchGroupKey(devices[0]);
         if (group is null || !AllDevicesInGroup(devices, group))
         {
             return ReadIndividually(devices);
@@ -867,7 +658,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             return Array.Empty<object>();
         }
 
-        var group = GetBatchGroupKey(devices[0]);
+        var group = DeviceRunPlanner.GetBatchGroupKey(devices[0]);
         if (group is null || !AllDevicesInGroup(devices, group))
         {
             return RelayReadIndividually(hops, devices);
@@ -894,7 +685,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             return;
         }
 
-        var group = GetBatchGroupKey(items[0].Device);
+        var group = DeviceRunPlanner.GetBatchGroupKey(items[0].Device);
         if (group is null
             || !AllItemsInGroup(items, group)
             || HasDuplicateDevices(items))
@@ -928,7 +719,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 WritePc10WordBatch(items);
                 return;
             case "pc10-bit":
-                Pc10MultiWrite(PackPc10MultiBitPayload(CollectAddress32BitValues(items)));
+                Pc10MultiWrite(Pc10Payloads.PackMultiBitPayload(CollectAddress32BitValues(items)));
                 return;
             case "pc10-byte":
                 WritePc10ByteBatch(items);
@@ -950,7 +741,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             return;
         }
 
-        var group = GetBatchGroupKey(items[0].Device);
+        var group = DeviceRunPlanner.GetBatchGroupKey(items[0].Device);
         if (group is null
             || !AllItemsInGroup(items, group)
             || HasDuplicateDevices(items))
@@ -992,7 +783,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 {
                     var response = SendViaRelay(
                         hops,
-                        ToyopucProtocol.BuildPc10MultiWrite(PackPc10MultiBitPayload(CollectAddress32BitValues(items))));
+                        ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiBitPayload(CollectAddress32BitValues(items))));
                     EnsureCommand(response, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
                     return;
                 }
@@ -1133,7 +924,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private object[] ReadPc10WordBatch(IReadOnlyList<ResolvedDevice> devices)
     {
-        if (TryGetConsecutivePc10BlockStart(devices, 2, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 2, out var startAddress))
         {
             return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(Pc10BlockRead(startAddress, devices.Count * 2)));
         }
@@ -1148,7 +939,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private object[] RelayReadPc10WordBatch(object hops, IReadOnlyList<ResolvedDevice> devices)
     {
-        if (TryGetConsecutivePc10BlockStart(devices, 2, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 2, out var startAddress))
         {
             var response = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockRead(startAddress, devices.Count * 2));
             EnsureCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
@@ -1160,7 +951,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             return RelayReadPc10WordBatchBySegments(hops, devices);
         }
 
-        var responseMulti = SendViaRelay(hops, ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiWordReadPayload(CollectAddress32Values(devices))));
+        var responseMulti = SendViaRelay(hops, ToyopucProtocol.BuildPc10MultiRead(Pc10Payloads.BuildMultiWordReadPayload(CollectAddress32Values(devices))));
         EnsureCommand(responseMulti, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
         return BoxWords(ParsePc10MultiWordData(responseMulti.Data, devices.Count));
     }
@@ -1171,7 +962,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var segmentStart = 0;
         while (segmentStart < devices.Count)
         {
-            var segmentLength = GetConsecutivePc10WordSegmentLength(devices, segmentStart);
+            var segmentLength = DeviceRunPlanner.GetConsecutivePc10WordSegmentLength(devices, segmentStart);
             var startAddress = Require(devices[segmentStart].Address32, "pc10 addr32");
             var words = ToyopucProtocol.UnpackU16LittleEndian(client.Pc10BlockRead(startAddress, segmentLength * 2));
             if (words.Length < segmentLength)
@@ -1196,7 +987,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var segmentStart = 0;
         while (segmentStart < devices.Count)
         {
-            var segmentLength = GetConsecutivePc10WordSegmentLength(devices, segmentStart);
+            var segmentLength = DeviceRunPlanner.GetConsecutivePc10WordSegmentLength(devices, segmentStart);
             var startAddress = Require(devices[segmentStart].Address32, "pc10 addr32");
             var response = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockRead(startAddress, segmentLength * 2));
             EnsureCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
@@ -1221,14 +1012,14 @@ public partial class ToyopucDeviceClient : ToyopucClient
     {
         var response = SendViaRelay(
             hops,
-            ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiBitReadPayload(CollectAddress32Values(devices))));
+            ToyopucProtocol.BuildPc10MultiRead(Pc10Payloads.BuildMultiBitReadPayload(CollectAddress32Values(devices))));
         EnsureCommand(response, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
         return BoxBooleanBits(ParsePc10MultiBitData(response.Data, devices.Count));
     }
 
     private object[] ReadPc10ByteBatch(IReadOnlyList<ResolvedDevice> devices)
     {
-        if (TryGetConsecutivePc10BlockStart(devices, 1, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 1, out var startAddress))
         {
             return BoxBytes(Pc10BlockRead(startAddress, devices.Count));
         }
@@ -1238,7 +1029,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private object[] RelayReadPc10ByteBatch(object hops, IReadOnlyList<ResolvedDevice> devices)
     {
-        if (TryGetConsecutivePc10BlockStart(devices, 1, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 1, out var startAddress))
         {
             var response = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockRead(startAddress, devices.Count));
             EnsureCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
@@ -1368,34 +1159,34 @@ public partial class ToyopucDeviceClient : ToyopucClient
     private void WritePc10WordBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
         var values = CollectIntValues(items);
-        if (TryGetConsecutivePc10BlockStart(items, 2, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 2, out var startAddress))
         {
-            Pc10BlockWrite(startAddress, PackWordValues(values));
+            Pc10BlockWrite(startAddress, Pc10Payloads.PackWordValues(values));
             return;
         }
 
-        Pc10MultiWrite(PackPc10MultiWordPayload(CollectAddress32WordValues(items)));
+        Pc10MultiWrite(Pc10Payloads.PackMultiWordPayload(CollectAddress32WordValues(items)));
     }
 
     private void RelayWritePc10WordBatch(object hops, IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
         var values = CollectIntValues(items);
-        if (TryGetConsecutivePc10BlockStart(items, 2, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 2, out var startAddress))
         {
-            var response = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockWrite(startAddress, PackWordValues(values)));
+            var response = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockWrite(startAddress, Pc10Payloads.PackWordValues(values)));
             EnsureCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
             return;
         }
 
         var responseMulti = SendViaRelay(
             hops,
-            ToyopucProtocol.BuildPc10MultiWrite(PackPc10MultiWordPayload(CollectAddress32WordValues(items))));
+            ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiWordPayload(CollectAddress32WordValues(items))));
         EnsureCommand(responseMulti, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
     }
 
     private void WritePc10ByteBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
-        if (TryGetConsecutivePc10BlockStart(items, 1, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 1, out var startAddress))
         {
             Pc10BlockWrite(startAddress, CollectByteValues(items));
             return;
@@ -1409,7 +1200,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void RelayWritePc10ByteBatch(object hops, IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
-        if (TryGetConsecutivePc10BlockStart(items, 1, out var startAddress))
+        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 1, out var startAddress))
         {
             var response = SendViaRelay(
                 hops,
@@ -1478,46 +1269,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return true;
     }
 
-    private static bool TryGetConsecutivePc10BlockStart(IReadOnlyList<ResolvedDevice> devices, int step, out int start)
-    {
-        start = default;
-        if (!TryGetConsecutiveStart(devices, static device => device.Address32, step, out start))
-        {
-            return false;
-        }
-
-        var block = Require(devices[0].Address32, "pc10 addr32") >> 16;
-        for (var i = 1; i < devices.Count; i++)
-        {
-            if ((Require(devices[i].Address32, "pc10 addr32") >> 16) != block)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static bool TryGetConsecutivePc10BlockStart(IReadOnlyList<(ResolvedDevice Device, object Value)> items, int step, out int start)
-    {
-        start = default;
-        if (!TryGetConsecutiveStart(items, static item => item.Device.Address32, step, out start))
-        {
-            return false;
-        }
-
-        var block = Require(items[0].Device.Address32, "pc10 addr32") >> 16;
-        for (var i = 1; i < items.Count; i++)
-        {
-            if ((Require(items[i].Device.Address32, "pc10 addr32") >> 16) != block)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     private static bool ContainsPackedWordDevice(IReadOnlyList<ResolvedDevice> devices)
     {
         for (var i = 0; i < devices.Count; i++)
@@ -1529,27 +1280,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
         }
 
         return false;
-    }
-
-    private static int GetConsecutivePc10WordSegmentLength(IReadOnlyList<ResolvedDevice> devices, int startIndex)
-    {
-        var startAddress = Require(devices[startIndex].Address32, "pc10 addr32");
-        var block = startAddress >> 16;
-        var length = 1;
-        var expectedAddress = startAddress + 2;
-        for (var i = startIndex + 1; i < devices.Count; i++)
-        {
-            var currentAddress = Require(devices[i].Address32, "pc10 addr32");
-            if ((currentAddress >> 16) != block || currentAddress != expectedAddress)
-            {
-                break;
-            }
-
-            length++;
-            expectedAddress += 2;
-        }
-
-        return length;
     }
 
     private static bool TryGetUniformNumber(IReadOnlyList<ResolvedDevice> devices, out int number)
@@ -1624,7 +1354,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     {
         for (var i = 1; i < devices.Count; i++)
         {
-            if (GetBatchGroupKey(devices[i]) != group)
+            if (DeviceRunPlanner.GetBatchGroupKey(devices[i]) != group)
             {
                 return false;
             }
@@ -1637,7 +1367,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     {
         for (var i = 1; i < items.Count; i++)
         {
-            if (GetBatchGroupKey(items[i].Device) != group)
+            if (DeviceRunPlanner.GetBatchGroupKey(items[i].Device) != group)
             {
                 return false;
             }
@@ -2155,7 +1885,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 {
                     var response = SendViaRelay(
                         hops,
-                        ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiBitReadPayload(new[] { Require(resolved.Address32, "pc10 addr32") })));
+                        ToyopucProtocol.BuildPc10MultiRead(Pc10Payloads.BuildMultiBitReadPayload(new[] { Require(resolved.Address32, "pc10 addr32") })));
                     EnsureCommand(response, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
                     if (response.Data.Length < 5)
                     {
@@ -2234,7 +1964,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 WriteExtBytes(Require(resolved.No, "extended number"), Require(resolved.Address, "extended addr"), new[] { ToInt32Invariant(value) });
                 return;
             case "pc10-bit":
-                Pc10MultiWrite(PackPc10MultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value) & 0x01) }));
+                Pc10MultiWrite(Pc10Payloads.PackMultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value) & 0x01) }));
                 return;
             case "pc10-word":
                 WritePc10BlockWord(this, Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value));
@@ -2327,7 +2057,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 {
                     var response = SendViaRelay(
                         hops,
-                        ToyopucProtocol.BuildPc10MultiWrite(PackPc10MultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value) & 0x01) })));
+                        ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value) & 0x01) })));
                     EnsureCommand(response, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
                     return;
                 }
