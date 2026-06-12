@@ -99,6 +99,12 @@ Sub-command structure: `CMD=32`, `SUB_HI`, `SUB_LO`
 | `0x98` | `ReadExtMulti` | multi-point extended read |
 | `0x99` | `WriteExtMulti` | multi-point extended write |
 
+`CMD=98/99` point addresses are monitor byte addresses for all three sections
+(bit, byte, and word points; manual 3-60/3-61 "byte address N"). A `CMD=94/95`
+word address must be doubled before it is used as a multi-point word address.
+The high-level batching converts this automatically; only callers of the raw
+`ReadExtMulti`/`WriteExtMulti` APIs need to pass byte addresses themselves.
+
 ### PC10 Commands (CMD=C2–C5)
 
 | CMD | Name | Notes |

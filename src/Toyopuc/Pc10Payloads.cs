@@ -2,6 +2,29 @@ namespace PlcComm.Toyopuc;
 
 internal static class Pc10Payloads
 {
+    private const int Pc10MultiReadMaxPoints = 0x7F;
+    private const int Pc10MultiWriteMaxPayloadBytes = 0x0200;
+
+    private static void RequireMultiReadCount(int count)
+    {
+        if (count < 1 || count > Pc10MultiReadMaxPoints)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(count),
+                $"CMD=C4 PC10 multi-read point count must be 1..0x{Pc10MultiReadMaxPoints:X} ({Pc10MultiReadMaxPoints})");
+        }
+    }
+
+    private static void RequireMultiWritePayload(byte[] payload)
+    {
+        if (payload.Length < 1 || payload.Length > Pc10MultiWriteMaxPayloadBytes)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(payload),
+                $"CMD=C5 PC10 multi-write payload must be 1..0x{Pc10MultiWriteMaxPayloadBytes:X} ({Pc10MultiWriteMaxPayloadBytes}) bytes");
+        }
+    }
+
     public static byte[] PackWordValues(IEnumerable<int> values)
     {
         var items = values as int[] ?? values.ToArray();
@@ -17,6 +40,7 @@ internal static class Pc10Payloads
     public static byte[] BuildMultiWordReadPayload(IEnumerable<int> addresses32)
     {
         var items = addresses32.ToArray();
+        RequireMultiReadCount(items.Length);
         var payload = new byte[4 + (items.Length * 4)];
         payload[2] = (byte)(items.Length & 0xFF);
         for (var i = 0; i < items.Length; i++)
@@ -43,6 +67,7 @@ internal static class Pc10Payloads
             WriteU16LittleEndian(payload, valuesOffset + (i * 2), items[i].Value);
         }
 
+        RequireMultiWritePayload(payload);
         return payload;
     }
 
@@ -61,12 +86,14 @@ internal static class Pc10Payloads
             }
         }
 
+        RequireMultiWritePayload(payload);
         return payload;
     }
 
     public static byte[] BuildMultiBitReadPayload(IEnumerable<int> addresses32)
     {
         var items = addresses32.ToArray();
+        RequireMultiReadCount(items.Length);
         var payload = new byte[4 + (items.Length * 4)];
         payload[0] = (byte)(items.Length & 0xFF);
         for (var i = 0; i < items.Length; i++)

@@ -842,7 +842,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var data = ReadExtMulti(
             Array.Empty<(int No, int Bit, int Address)>(),
             Array.Empty<(int No, int Address)>(),
-            CollectNoAddresses(devices));
+            CollectNoWordMonitorAddresses(devices));
         return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(data));
     }
 
@@ -861,7 +861,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             ToyopucProtocol.BuildExtMultiRead(
                 Array.Empty<(int No, int Bit, int Address)>(),
                 Array.Empty<(int No, int Address)>(),
-                CollectNoAddresses(devices)));
+                CollectNoWordMonitorAddresses(devices)));
         EnsureCommand(responseMulti, 0x98, "Unexpected CMD in relay ext multi-read response");
         return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(responseMulti.Data));
     }
@@ -1078,7 +1078,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         WriteExtMulti(
             Array.Empty<(int No, int Bit, int Address, int Value)>(),
             Array.Empty<(int No, int Address, int Value)>(),
-            CollectNoAddressValues(items));
+            CollectNoWordMonitorAddressValues(items));
     }
 
     private void RelayWriteExtWordBatch(object hops, IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1097,7 +1097,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             ToyopucProtocol.BuildExtMultiWrite(
                 Array.Empty<(int No, int Bit, int Address, int Value)>(),
                 Array.Empty<(int No, int Address, int Value)>(),
-                CollectNoAddressValues(items)));
+                CollectNoWordMonitorAddressValues(items)));
         EnsureCommand(responseMulti, 0x99, "Unexpected CMD in relay ext multi-write response");
     }
 
@@ -1431,6 +1431,19 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return points;
     }
 
+    // CMD=98/99 word points carry monitor byte addresses (manual: "byte address N"),
+    // while ResolvedDevice.Address holds the CMD=94/95 word address.
+    private static (int No, int Address)[] CollectNoWordMonitorAddresses(IReadOnlyList<ResolvedDevice> devices)
+    {
+        var points = new (int No, int Address)[devices.Count];
+        for (var i = 0; i < devices.Count; i++)
+        {
+            points[i] = (Require(devices[i].No, "extended number"), Require(devices[i].Address, "extended addr") * 2);
+        }
+
+        return points;
+    }
+
     private static (int No, int Bit, int Address)[] CollectNoBitAddresses(IReadOnlyList<ResolvedDevice> devices)
     {
         var points = new (int No, int Bit, int Address)[devices.Count];
@@ -1464,6 +1477,21 @@ public partial class ToyopucDeviceClient : ToyopucClient
             values[i] = (
                 Require(items[i].Device.No, "extended number"),
                 Require(items[i].Device.Address, "extended addr"),
+                ToInt32Invariant(items[i].Value));
+        }
+
+        return values;
+    }
+
+    // See CollectNoWordMonitorAddresses: CMD=99 word points carry monitor byte addresses.
+    private static (int No, int Address, int Value)[] CollectNoWordMonitorAddressValues(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
+    {
+        var values = new (int No, int Address, int Value)[items.Count];
+        for (var i = 0; i < items.Count; i++)
+        {
+            values[i] = (
+                Require(items[i].Device.No, "extended number"),
+                Require(items[i].Device.Address, "extended addr") * 2,
                 ToInt32Invariant(items[i].Value));
         }
 

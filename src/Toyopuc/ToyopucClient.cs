@@ -40,7 +40,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     private const int FrBlockWords = 0x8000;
     private const int FrMaxIndex = 0x1FFFFF;
-    private const int FrIoChunkWords = 0x0200;
+    private const int FrIoChunkWords = 0x01F8;
     public const int UdpReceiveBufferSize = 65535;
 
     private Socket? _socket;

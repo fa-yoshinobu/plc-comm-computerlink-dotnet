@@ -569,9 +569,9 @@ public static class ToyopucAddress
         }
         else if (normalizedArea == "EB")
         {
-            if (index is < 0x00000 or > 0x3FFFF)
+            if (index is < 0x00000 or > 0x1FFFF)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), "EB index out of range (0x00000-0x3FFFF)");
+                throw new ArgumentOutOfRangeException(nameof(index), "EB extended-No index out of range (0x00000-0x1FFFF)");
             }
 
             var block = index / 0x8000;

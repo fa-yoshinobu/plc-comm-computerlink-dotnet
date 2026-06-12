@@ -7,6 +7,69 @@ public static class ToyopucProtocol
     public const byte FtCommand = 0x00;
     public const byte FtResponse = 0x80;
 
+    private const int ContinuousWordMax = 0x0200;
+    private const int ContinuousByteMax = 0x0400;
+    private const int BasicMultiMaxPoints = 0x0080;
+    private const int ExtMultiMaxPoints = 0x00B0;
+    private const int ExtMultiMaxDataBytes = 0x0080;
+    private const int Pc10BlockMaxBytes = 0x03F0;
+    private const int Pc10MultiMaxPayloadBytes = 0x0200;
+
+    private static int RequireCount(string label, int count, int maxCount)
+    {
+        if (count < 1 || count > maxCount)
+        {
+            throw new ArgumentOutOfRangeException(label, $"{label} count must be 1..0x{maxCount:X} ({maxCount})");
+        }
+
+        return count;
+    }
+
+    private static void RequireLength(string label, int length, int maxLength)
+    {
+        if (length < 1 || length > maxLength)
+        {
+            throw new ArgumentOutOfRangeException(label, $"{label} length must be 1..0x{maxLength:X} ({maxLength}) bytes");
+        }
+    }
+
+    private static void RequirePc10BlockRange(int address32, int byteCount)
+    {
+        var offset = address32 & 0xFFFF;
+        if (offset + byteCount > 0x10000)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(byteCount),
+                "PC10 block access must not cross the 16-bit block boundary");
+        }
+    }
+
+    private static void RequireExtMultiReadLimits(int bitCount, int byteCount, int wordCount)
+    {
+        var total = bitCount + byteCount + wordCount;
+        RequireCount("CMD=98 point", total, ExtMultiMaxPoints);
+        var dataBytes = ((bitCount + 7) / 8) + byteCount + (wordCount * 2);
+        if (dataBytes > ExtMultiMaxDataBytes)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(wordCount),
+                $"CMD=98 response data would exceed 0x{ExtMultiMaxDataBytes:X} ({ExtMultiMaxDataBytes}) bytes");
+        }
+    }
+
+    private static void RequireExtMultiWriteLimits(int bitCount, int byteCount, int wordCount)
+    {
+        var total = bitCount + byteCount + wordCount;
+        RequireCount("CMD=99 point", total, ExtMultiMaxPoints);
+        var dataBytes = bitCount + byteCount + (wordCount * 2);
+        if (dataBytes > ExtMultiMaxDataBytes)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(wordCount),
+                $"CMD=99 write data would exceed 0x{ExtMultiMaxDataBytes:X} ({ExtMultiMaxDataBytes}) bytes");
+        }
+    }
+
     private static byte[] CreateCommandFrame(int cmd, int dataLength)
     {
         var frame = new byte[5 + dataLength];
@@ -162,9 +225,10 @@ public static class ToyopucProtocol
 
     public static byte[] BuildCpuStatusReadA0()
     {
-        var frame = CreateCommandFrame(0xA0, 2);
-        frame[5] = 0x01;
-        frame[6] = 0x10;
+        var frame = CreateCommandFrame(0xA0, 3);
+        frame[5] = 0x00;
+        frame[6] = 0x11;
+        frame[7] = 0x00;
         return frame;
     }
 
@@ -250,12 +314,12 @@ public static class ToyopucProtocol
 
     public static CpuStatusData ParseCpuStatusDataA0(byte[] data)
     {
-        if (data.Length != 10 || data[0] != 0x01 || data[1] != 0x10)
+        if (data.Length != 11 || data[0] != 0x00 || data[1] != 0x11 || data[2] != 0x00)
         {
-            throw new ToyopucProtocolError("A0 CPU status response must be 10 bytes starting with 01 10");
+            throw new ToyopucProtocolError("A0 CPU status response must be 11 bytes starting with 00 11 00");
         }
 
-        return new CpuStatusData(data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9]);
+        return new CpuStatusData(data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10]);
     }
 
     public static byte[] ParseCpuStatusDataA0Raw(byte[] data)
@@ -265,6 +329,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildWordRead(int address, int count)
     {
+        count = RequireCount("CMD=1C word-read", count, ContinuousWordMax);
         var frame = CreateCommandFrame(0x1C, 4);
         WriteU16(frame, 5, address);
         WriteU16(frame, 7, count);
@@ -274,6 +339,7 @@ public static class ToyopucProtocol
     public static byte[] BuildWordWrite(int address, IEnumerable<int> values)
     {
         var words = values.ToArray();
+        RequireCount("CMD=1D word-write", words.Length, ContinuousWordMax);
         var frame = CreateCommandFrame(0x1D, 2 + (words.Length * 2));
         WriteU16(frame, 5, address);
         for (var i = 0; i < words.Length; i++)
@@ -286,6 +352,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildByteRead(int address, int count)
     {
+        count = RequireCount("CMD=1E byte-read", count, ContinuousByteMax);
         var frame = CreateCommandFrame(0x1E, 4);
         WriteU16(frame, 5, address);
         WriteU16(frame, 7, count);
@@ -295,6 +362,7 @@ public static class ToyopucProtocol
     public static byte[] BuildByteWrite(int address, IEnumerable<int> values)
     {
         var bytes = MaterializeByteValues(values);
+        RequireCount("CMD=1F byte-write", bytes.Length, ContinuousByteMax);
         var frame = CreateCommandFrame(0x1F, 2 + bytes.Length);
         WriteU16(frame, 5, address);
         if (bytes.Length > 0)
@@ -323,6 +391,7 @@ public static class ToyopucProtocol
     public static byte[] BuildMultiWordRead(IEnumerable<int> addresses)
     {
         var items = addresses.ToArray();
+        RequireCount("CMD=22 multi-word-read", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x22, items.Length * 2);
         for (var i = 0; i < items.Length; i++)
         {
@@ -335,6 +404,7 @@ public static class ToyopucProtocol
     public static byte[] BuildMultiWordWrite(IEnumerable<(int Address, int Value)> pairs)
     {
         var items = pairs.ToArray();
+        RequireCount("CMD=23 multi-word-write", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x23, items.Length * 4);
         for (var i = 0; i < items.Length; i++)
         {
@@ -348,6 +418,7 @@ public static class ToyopucProtocol
     public static byte[] BuildMultiByteRead(IEnumerable<int> addresses)
     {
         var items = addresses.ToArray();
+        RequireCount("CMD=24 multi-byte-read", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x24, items.Length * 2);
         for (var i = 0; i < items.Length; i++)
         {
@@ -360,6 +431,7 @@ public static class ToyopucProtocol
     public static byte[] BuildMultiByteWrite(IEnumerable<(int Address, int Value)> pairs)
     {
         var items = pairs.ToArray();
+        RequireCount("CMD=25 multi-byte-write", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x25, items.Length * 3);
         for (var i = 0; i < items.Length; i++)
         {
@@ -372,6 +444,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildExtWordRead(int number, int address, int count)
     {
+        count = RequireCount("CMD=94 ext-word-read", count, ContinuousWordMax);
         var frame = CreateCommandFrame(0x94, 5);
         frame[5] = (byte)(number & 0xFF);
         WriteU16(frame, 6, address);
@@ -382,6 +455,7 @@ public static class ToyopucProtocol
     public static byte[] BuildExtWordWrite(int number, int address, IEnumerable<int> values)
     {
         var words = values.ToArray();
+        RequireCount("CMD=95 ext-word-write", words.Length, ContinuousWordMax);
         var frame = CreateCommandFrame(0x95, 3 + (words.Length * 2));
         frame[5] = (byte)(number & 0xFF);
         WriteU16(frame, 6, address);
@@ -395,6 +469,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildExtByteRead(int number, int address, int count)
     {
+        count = RequireCount("CMD=96 ext-byte-read", count, ContinuousByteMax);
         var frame = CreateCommandFrame(0x96, 5);
         frame[5] = (byte)(number & 0xFF);
         WriteU16(frame, 6, address);
@@ -405,6 +480,7 @@ public static class ToyopucProtocol
     public static byte[] BuildExtByteWrite(int number, int address, IEnumerable<int> values)
     {
         var bytes = MaterializeByteValues(values);
+        RequireCount("CMD=97 ext-byte-write", bytes.Length, ContinuousByteMax);
         var frame = CreateCommandFrame(0x97, 3 + bytes.Length);
         frame[5] = (byte)(number & 0xFF);
         WriteU16(frame, 6, address);
@@ -424,6 +500,7 @@ public static class ToyopucProtocol
         var bits = bitPoints.ToArray();
         var bytes = bytePoints.ToArray();
         var words = wordPoints.ToArray();
+        RequireExtMultiReadLimits(bits.Length, bytes.Length, words.Length);
         var frame = CreateCommandFrame(0x98, 3 + (bits.Length * 3) + (bytes.Length * 3) + (words.Length * 3));
         frame[5] = (byte)(bits.Length & 0xFF);
         frame[6] = (byte)(bytes.Length & 0xFF);
@@ -462,6 +539,7 @@ public static class ToyopucProtocol
         var bits = bitPoints.ToArray();
         var bytes = bytePoints.ToArray();
         var words = wordPoints.ToArray();
+        RequireExtMultiWriteLimits(bits.Length, bytes.Length, words.Length);
         var frame = CreateCommandFrame(0x99, 3 + (bits.Length * 4) + (bytes.Length * 4) + (words.Length * 5));
         frame[5] = (byte)(bits.Length & 0xFF);
         frame[6] = (byte)(bytes.Length & 0xFF);
@@ -498,6 +576,8 @@ public static class ToyopucProtocol
 
     public static byte[] BuildPc10BlockRead(int address32, int count)
     {
+        count = RequireCount("CMD=C2 PC10 block-read", count, Pc10BlockMaxBytes);
+        RequirePc10BlockRange(address32, count);
         var frame = CreateCommandFrame(0xC2, 6);
         WriteU16(frame, 5, address32 & 0xFFFF);
         WriteU16(frame, 7, (address32 >> 16) & 0xFFFF);
@@ -507,6 +587,8 @@ public static class ToyopucProtocol
 
     public static byte[] BuildPc10BlockWrite(int address32, byte[] dataBytes)
     {
+        RequireLength("CMD=C3 PC10 block-write", dataBytes.Length, Pc10BlockMaxBytes);
+        RequirePc10BlockRange(address32, dataBytes.Length);
         var frame = CreateCommandFrame(0xC3, 4 + dataBytes.Length);
         WriteU16(frame, 5, address32 & 0xFFFF);
         WriteU16(frame, 7, (address32 >> 16) & 0xFFFF);
@@ -520,11 +602,13 @@ public static class ToyopucProtocol
 
     public static byte[] BuildPc10MultiRead(byte[] payload)
     {
+        RequireLength("CMD=C4 PC10 multi-read payload", payload.Length, Pc10MultiMaxPayloadBytes);
         return BuildCommand(0xC4, payload);
     }
 
     public static byte[] BuildPc10MultiWrite(byte[] payload)
     {
+        RequireLength("CMD=C5 PC10 multi-write payload", payload.Length, Pc10MultiMaxPayloadBytes);
         return BuildCommand(0xC5, payload);
     }
 

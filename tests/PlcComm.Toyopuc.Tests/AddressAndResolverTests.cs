@@ -87,6 +87,17 @@ public class AddressAndResolverTests
     }
 
     [Fact]
+    public void ResolveDevice_EbExtendedNoStopsAtManualRangeWhenPc10Disabled()
+    {
+        Assert.Equal("pc10-word", ToyopucDeviceResolver.ResolveDevice("EB20000").Scheme);
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            ToyopucDeviceResolver.ResolveDevice("EB20000", ToyopucAddressingOptions.ToyopucPlusExtended));
+
+        Assert.Contains("EB extended-No index out of range", ex.Message);
+    }
+
+    [Fact]
     public void AddressingOptions_FromProfile_ToyopucPlusModes_DisablePc10Switches()
     {
         var standard = ToyopucAddressingOptions.FromProfile("TOYOPUC-Plus:Plus Standard mode");

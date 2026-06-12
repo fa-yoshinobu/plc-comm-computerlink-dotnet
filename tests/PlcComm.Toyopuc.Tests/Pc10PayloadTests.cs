@@ -27,6 +27,17 @@ public class Pc10PayloadTests
     }
 
     [Fact]
+    public void PayloadBuilders_RejectCountWrapAndOversizedWrites()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Pc10Payloads.BuildMultiWordReadPayload(Enumerable.Repeat(0x00100000, 0x80)));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Pc10Payloads.PackMultiWordPayload(Enumerable.Repeat((Address32: 0x00100000, Value: 0), 85)));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Pc10Payloads.PackMultiBitPayload(Enumerable.Range(0, 124).Select(i => (Address32: 0x00100000 + i, Value: 1))));
+    }
+
+    [Fact]
     public void PackMultiWordPayload_PreservesCurrentAddressThenValueLayout()
     {
         var payload = Pc10Payloads.PackMultiWordPayload(new[]

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed `CMD=98`/`CMD=99` multi-point word addressing: word points now carry monitor byte addresses (manual 3-60/3-61 "byte address N") instead of `CMD=94/95` word addresses. Sparse `ReadMany()` of word devices (including packed bit-device words such as `P1-V000W`) previously read the wrong area and returned incorrect (typically all-zero) data, and sparse `WriteMany()` of word devices previously wrote to the wrong area. This matches the fix in `plc-comm-computerlink-python`, where the defect was verified on real hardware.
+- `ReadExtMulti()` / `WriteExtMulti()` word-point addresses are documented as monitor byte addresses; callers passing `CMD=94/95` word addresses must double them.
+- Fixed `CMD=A0` CPU-status read to send `A0 00 11 00` and parse `00 11 00` plus the 8 status bytes, matching the manual and R08CPU hardware verification.
+- Reduced FR PC10 block I/O chunks to `0x01F8` words (`0x03F0` bytes) so `CMD=C2/C3` requests stay within the documented byte-count limit.
+- Added fail-fast protocol guards for oversized single-frame requests instead of silently producing out-of-range or count-wrapped frames. This covers continuous read/write, basic multi-point, extended multi-point, PC10 block, and PC10 multi-point commands.
+- Restricted `CMD=94-99` EB extended-No addressing to `EB00000-EB1FFFF`; wider EB access remains on the PC10 route when enabled.
+
 ## [0.1.8] - 2026-05-02
 
 ### Changed
