@@ -1,6 +1,6 @@
 # Test Results
 
-Last updated: `2026-05-02`
+Last updated: `2026-06-12`
 
 This document records the latest checked results per target. Verification dates are section-specific.
 
@@ -146,7 +146,7 @@ Observed result:
 
 ## 2. Relay Nano 10GX
 
-Verified: `2026-03-12`
+Verified: `2026-03-12`, refreshed on `2026-06-12`
 
 Connection:
 
@@ -168,9 +168,63 @@ dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.10
 - `run_validation.ps1 -Target relay-10gx`: `OK`
 - Standard suite: `summary : suite=Nano 10GX:Compatible mode ok=9 skip=0 ng=0`
 - Full generated suite: `summary : suite=full:Nano 10GX:Compatible mode ok=221 skip=0 ng=0`
+- `2026-06-12` `P1-L1:N2` relay recheck: CPU status, `P1-D0000` read/write/readback, read count probe `1/8/16/32/64/128/256`, UDP relay read, and TCP+UDP simultaneous read-only stress were `OK`.
+- `2026-06-12` 30-minute relay write/readback soak: `1029` alternating writes to `P1-D0000` (`0x1111` / `0x2222`), `0` failures, final restore to `0x270F` verified.
 - Build + tests stayed green while fixing validation gaps:
   - `dotnet build PlcComm.Toyopuc.sln`: `OK`
   - `dotnet test PlcComm.Toyopuc.sln --no-build`: `OK` (latest local run: `160 passed`)
+
+### `P1-L1:N2` Relay Recheck (2026-06-12)
+
+Connection:
+
+- host: `192.168.250.100`
+- port: `1025`
+- protocol: `tcp`
+- profile: `Nano 10GX:Compatible mode`
+- hops: `P1-L1:N2`
+
+Observed results:
+
+- CPU status read: `OK`
+- `P1-D0000` read: `OK`
+- `P1-D0000` write/readback: `OK`; value changes were also visible on the user monitor.
+- `P1-D0000` count probe: `1/8/16/32/64/128/256` all `OK`
+- single TCP client sequential read-only stress: `100` iterations `OK`
+- UDP relay read after enabling UDP `1027` and using PC local port `12000`: `OK`
+- single UDP client sequential read-only stress: `500` iterations `OK`
+- TCP + UDP simultaneous read-only stress: `500` iterations each `OK`
+- two simultaneous TCP clients against the same relay hop: one client hit a socket error at the first request; immediate single-client post-check was `OK`
+
+Interpretation:
+
+- Single-client relay use is stable for this path.
+- The historical `0x73` / socket error was not reproduced under idle single-client relay use.
+- The two-TCP-client result is treated as same-hop simultaneous-use contention, not a relay frame generation bug.
+
+Short write probe:
+
+```powershell
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x1111 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x1111.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x2222 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x2222.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x3333 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x3333.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x270F --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x270F.log
+```
+
+Result:
+
+- `0x270F -> 0x1111 -> 0x2222 -> 0x3333 -> 0x270F`
+- every write/readback verify matched.
+
+30-minute write/readback soak:
+
+- device: `P1-D0000`
+- values: alternating `0x1111` / `0x2222`
+- duration: `30m`
+- iterations: `1029`
+- failures: `0`
+- final restore: `0x270F`, verify `OK`
+- local summary: `logs\relay_p1_l1_n2_write_soak_20260612_202939_status.json`
 
 ### Read-only Coverage
 
@@ -654,6 +708,49 @@ dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.10
 - FR write/commit/restore checks:
   - `FR000000` commit/write/readback/restore `OK`
   - explicit change run: `0x55AB -> 0x55AA -> 0x55AB` (`OK`)
+
+### Direct FR C2/C3 Chunk-Limit Recheck
+
+Verified: `2026-06-12`
+
+Connection:
+
+- host: `192.168.250.100`
+- port: `1025`
+- protocol: `tcp`
+- target/configuration: `Nano 10GX` with `FR` visible
+- relay hops: none (direct)
+
+Purpose:
+
+- confirm the `0x01F8` word (`0x03F0` byte) FR chunk limit fix on real hardware
+- confirm that `0x01F9` word high-level/low-level helper operations split instead of sending an oversized `CMD=C2/C3`
+- confirm oversized direct `CMD=C2/C3` requests fail before transmission
+
+Observed result:
+
+- `ReadFrWords(FR000000, 1)`: `OK`
+- `ReadFrWords(FR000000, 4)`: `OK`
+- `ReadFrWords(FR007FFF, 2)`: `OK` across the FR block boundary
+- direct `CMD=C2` with `0x03F0` bytes: `OK`
+- direct `CMD=C2` with `0x03F1` bytes: `ArgumentOutOfRangeException` before transmission
+- `WriteFr(FR000200, 4 words, commit: false)`: write/readback/restore `OK`
+- `WriteFrWords(FR000400, 0x01F8 words, commit: false)`: exact-max write/readback/restore `OK`
+- `WriteFrWords(FR000400, 0x01F9 words, commit: false)`: split write/readback/restore `OK`
+- direct `CMD=C3` with `0x03F1` bytes: `ArgumentOutOfRangeException` before transmission
+- `WriteFr(FR000200, 4 words, commit: true, wait: true)`: commit/readback `OK`
+- restore original values to `FR000200-FR000203` with `commit: true, wait: true`: `OK`
+- post-reset / post-power-cycle readback of committed marker `FR000200-FR000203 = 0xCA10,0xCA11,0xCA12,0xCA13`: `OK`
+- restore original values to `FR000200-FR000203` after persistence check with `commit: true, wait: true`: `OK`
+
+Note:
+
+- `CMD=CA` commit/wait/readback and restore commit are verified for the direct Nano 10GX FR-visible path.
+- Power-cycle / CPU-reset persistence was verified by committing a marker before restart, reading it after restart from both Python and .NET, and then restoring the original values.
+- Detailed JSON logs are kept outside the repository:
+  - `D:\_github_plc\toyopuc-fr-nano10gx-dotnet-20260612.json`
+  - `D:\_github_plc\toyopuc-fr-nano10gx-dotnet-commit-20260612.json`
+  - `D:\_github_plc\toyopuc-fr-nano10gx-persistence-post-reset-dotnet-20260612.json`
 
 ### Bit-to-packed Readback Probe (`V/X/Y/EV`)
 

@@ -28,20 +28,26 @@ upload assets built from `main` when the release points at an older tag.
 
 1. Update the package version in `src\Toyopuc\PlcComm.Toyopuc.csproj`.
 2. Update `CHANGELOG.md`.
-3. Run the release checks:
+3. Make sure DocFX is available for the documentation step:
+
+   ```powershell
+   dotnet tool install -g docfx
+   ```
+
+4. Run the release checks:
 
    ```powershell
    .\release_check.bat
    ```
 
-4. Create and push the `vX.Y.Z` tag:
+5. Create and push the `vX.Y.Z` tag:
 
    ```powershell
    git tag vX.Y.Z
    git push origin vX.Y.Z
    ```
 
-5. Build release artifacts from the tag:
+6. Build release artifacts from the tag:
 
    ```powershell
    git switch --detach vX.Y.Z
@@ -53,10 +59,10 @@ upload assets built from `main` when the release points at an older tag.
    git switch main
    ```
 
-6. Publish the NuGet package manually.
-7. Create or update the GitHub Release for `vX.Y.Z`, then upload the `.nupkg`,
+7. Publish the NuGet package manually.
+8. Create or update the GitHub Release for `vX.Y.Z`, then upload the `.nupkg`,
    `.snupkg`, and DLL zip assets.
-8. Mark the GitHub Release as Latest when it is the newest stable release.
+9. Mark the GitHub Release as Latest when it is the newest stable release.
 
 ## Release Notes
 

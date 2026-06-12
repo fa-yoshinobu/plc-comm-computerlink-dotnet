@@ -26,6 +26,12 @@ jobs:
         run: dotnet format PlcComm.Toyopuc.sln --verify-no-changes --no-restore
       - name: Pack
         run: dotnet pack src\Toyopuc\PlcComm.Toyopuc.csproj -c Release --no-build --output out
+      - name: Create DLL zip
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src\Toyopuc\PlcComm.Toyopuc.csproj
+          $version = $project.Project.PropertyGroup.Version | Select-Object -First 1
+          Compress-Archive -Path src\Toyopuc\bin\Release\net9.0\* -DestinationPath "out\PlcComm.Toyopuc.$version.dll.zip" -Force
       - name: Upload package artifact
         uses: actions/upload-artifact@v7
         with:

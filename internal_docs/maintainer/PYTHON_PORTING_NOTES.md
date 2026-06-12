@@ -3,12 +3,22 @@
 This document tracks behavior checks between this .NET implementation and the
 upstream Python implementation.
 
-## Candidate Cross-Implementation Defect
+## Resolved Cross-Implementation Defect
 
 ### PC10 packed-word `ReadMany` may return all zeros on non-consecutive lists
 
 Discovered on `2026-03-12` during direct `Nano 10GX:Compatible mode` checks in
 the .NET implementation (before library-side fix).
+
+Resolution status:
+
+- Resolved in Python and .NET.
+- The direct and relay read/write paths were fixed so program packed-word
+  addresses use the protocol's byte-address form where required.
+- Live verification on `2026-06-12` confirmed that sparse packed-word reads no
+  longer collapse to all-zero.
+- Cross-verify frame parity was also checked, so the checklist below is kept as
+  historical context rather than an active TODO.
 
 #### Symptom
 
@@ -38,34 +48,35 @@ the .NET implementation (before library-side fix).
 
 ---
 
-## Checklist for the Original Python Program
+## Historical Checklist for the Original Python Program
 
-Use this checklist to determine whether the same issue exists in Python.
+This checklist was used to determine whether the same issue existed in Python.
+It is complete and no longer represents open work.
 
 ### 1. Preconditions
 
-- [ ] PLC/profile where packed-word PC10 access is available (for example
+- [x] PLC/profile where packed-word PC10 access is available (for example
       `Nano 10GX:Compatible mode` direct).
-- [ ] Frame logging enabled (to confirm command type and payload).
-- [ ] A packed-word area that has known non-zero points at the test time.
+- [x] Frame logging enabled (to confirm command type and payload).
+- [x] A packed-word area that has known non-zero points at the test time.
 
 ### 2. Reference Read (contiguous, expected-good)
 
-- [ ] Read a contiguous packed-word block (example: `P1-V000W` count `16`).
-- [ ] Confirm at least one value is non-zero.
-- [ ] Confirm transport uses normal PC10 block-read path for contiguous access.
+- [x] Read a contiguous packed-word block (example: `P1-V000W` count `16`).
+- [x] Confirm at least one value is non-zero.
+- [x] Confirm transport uses normal PC10 block-read path for contiguous access.
 
 Pass condition:
 - contiguous read returns plausible values (not forced all-zero).
 
 ### 3. Sparse `ReadMany` Repro
 
-- [ ] Build one sparse packed-word device list containing a range gap.
-- [ ] Example list pattern:
+- [x] Build one sparse packed-word device list containing a range gap.
+- [x] Example list pattern:
       - `P1-V000W` .. `P1-V00FW` (16 points)
       - `P1-V100W` .. `P1-V12FW` (48 points)
       - total `64` points in one `ReadMany`.
-- [ ] Execute one-shot `ReadMany` with that list.
+- [x] Execute one-shot `ReadMany` with that list.
 
 Pass condition:
 - result is not uniformly zero when step 2 proved non-zero data exists.
@@ -76,10 +87,10 @@ Fail condition (suspected same defect):
 
 ### 4. Frame-Level Confirmation
 
-- [ ] Inspect captured request frames for sparse `ReadMany`.
-- [ ] Check whether Python sends one `PC10 multi-read (C4)` over sparse packed
+- [x] Inspect captured request frames for sparse `ReadMany`.
+- [x] Check whether Python sends one `PC10 multi-read (C4)` over sparse packed
       words.
-- [ ] Compare with segmented `PC10 block-read (C2)` behavior.
+- [x] Compare with segmented `PC10 block-read (C2)` behavior.
 
 Interpretation:
 - If sparse packed-word `ReadMany` uses `C4` and reproduces all-zero, defect is
@@ -89,17 +100,17 @@ Interpretation:
 
 ### 5. Relay Variant (optional)
 
-- [ ] Repeat steps 2-4 through relay path (if relay is used in production).
-- [ ] Confirm behavior is consistent between direct and relay.
+- [x] Repeat steps 2-4 through relay path (if relay is used in production).
+- [x] Confirm behavior is consistent between direct and relay.
 
 ### 6. Regression Guard (recommended)
 
-- [ ] Add an automated test that compares:
+- [x] Add an automated test that compares:
       - contiguous packed-word read result
       - sparse packed-word `ReadMany` result
-- [ ] Assert that sparse read does not collapse to all-zero when contiguous
+- [x] Assert that sparse read does not collapse to all-zero when contiguous
       read confirms non-zero in same cycle.
-- [ ] Assert frame strategy for sparse packed words:
+- [x] Assert frame strategy for sparse packed words:
       segmented block reads are preferred over one sparse multi-read.
 
 ---

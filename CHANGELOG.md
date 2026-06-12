@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-06-12
+
 ### Fixed
 - Fixed `CMD=98`/`CMD=99` multi-point word addressing: word points now carry monitor byte addresses (manual 3-60/3-61 "byte address N") instead of `CMD=94/95` word addresses. Sparse `ReadMany()` of word devices (including packed bit-device words such as `P1-V000W`) previously read the wrong area and returned incorrect (typically all-zero) data, and sparse `WriteMany()` of word devices previously wrote to the wrong area. This matches the fix in `plc-comm-computerlink-python`, where the defect was verified on real hardware.
 - `ReadExtMulti()` / `WriteExtMulti()` word-point addresses are documented as monitor byte addresses; callers passing `CMD=94/95` word addresses must double them.
