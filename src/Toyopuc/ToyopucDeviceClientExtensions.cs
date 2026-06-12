@@ -774,8 +774,12 @@ public static class ToyopucDeviceClientExtensions
         if (address.Contains('.'))
         {
             var index = address.LastIndexOf('.');
-            if (int.TryParse(address[(index + 1)..], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var bitIndex) && bitIndex is >= 0 and <= 15)
+            var bitText = address[(index + 1)..].Trim();
+            if (bitText.Length == 1 &&
+                int.TryParse(bitText, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var bitIndex) &&
+                bitIndex is >= 0 and <= 15)
                 return (address[..index], "BIT_IN_WORD", bitIndex);
+            throw new ToyopucProtocolError($"Invalid bit-in-word index in '{address}'. Use one hex digit 0-F or ':' for data type.");
         }
         return (address, "U", null);
     }
