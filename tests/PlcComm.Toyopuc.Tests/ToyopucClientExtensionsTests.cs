@@ -98,6 +98,37 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
+    public async Task ReadNamedAsync_DottedDIsBitIndex13NotDwordSuffix()
+    {
+        var expected = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 1);
+        await using var server = new ScriptedToyopucServer(_ => BuildResponse(0x94, new byte[] { 0x00, 0x20 }));
+
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            transport: ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+
+        var values = await client.ReadNamedAsync(["P1-D0000.D"]);
+
+        Assert.True(Assert.IsType<bool>(values["P1-D0000.D"]));
+        Assert.Equal([Convert.ToHexString(expected)], server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task ReadNamedAsync_InvalidBitIndex_ThrowsBeforeTransportRead()
+    {
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            timeout: TimeSpan.FromMilliseconds(1),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(["P1-D0000.10"]));
+    }
+
+    [Fact]
     public async Task WriteWordsSingleRequestAsync_UsesOneExtWordWriteForProgramDevices()
     {
         var expected = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, new[] { 0x1234, 0x5678 });

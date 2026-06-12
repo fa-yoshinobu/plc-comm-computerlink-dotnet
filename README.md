@@ -83,6 +83,15 @@ Start with these public high-level families first:
 - FR storage: `FR000000`
 - typed and bit views: `P1-D0100:S`, `P1-D0200:D`, `P1-D0300:F`, `P1-D0000.3`
 
+High-level address syntax is shared across the PLC helper libraries:
+
+- use `:` for data types and special views: `P1-D0100:U`, `P1-D0100:S`,
+  `P1-D0100:D`, `P1-D0100:L`, `P1-D0100:F`
+- use `.` only for bit-in-word access: `P1-D0100.0` through `P1-D0100.F`
+- `P1-D0100.D` is bit `0xD` / bit 13, not a 32-bit data type request
+- low-level Computer Link frames still encode the selected word/dword/float
+  route internally; the `:D` / `:F` spelling is the public helper-layer form
+
 See the full public table in [Supported PLC Registers](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/SUPPORTED_REGISTERS.md).
 
 ## Public Documentation
