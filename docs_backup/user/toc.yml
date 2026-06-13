@@ -1,13 +1,7 @@
 - name: Getting Started
   href: GETTING_STARTED.md
-- name: Usage Guide
-  href: USAGE_GUIDE.md
 - name: Supported PLC Registers
   href: SUPPORTED_REGISTERS.md
-- name: PLC Profiles
-  href: PROFILES.md
-- name: Gotchas
-  href: GOTCHAS.md
 - name: Latest Communication Verification
   href: LATEST_COMMUNICATION_VERIFICATION.md
 - name: User Guide

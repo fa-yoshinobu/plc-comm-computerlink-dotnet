@@ -21,8 +21,10 @@ if (string.IsNullOrWhiteSpace(profileName))
     return;
 }
 
+// Resolve the profile first so invalid model strings fail before any PLC traffic starts.
 var profile = ToyopucAddressingOptions.FromProfile(profileName);
 
+// Create the direct client for this minimal sample.
 using var plc = new ToyopucDeviceClient(
     host,
     port,
@@ -30,8 +32,12 @@ using var plc = new ToyopucDeviceClient(
     addressingOptions: profile,
     plcProfile: profileName);
 
+// The selected profile controls address validation for the read below.
+// The transport connection opens lazily on the first request.
 var status = plc.ReadCpuStatus();
+// Read the PLC clock after the status read proves the session is responding.
 var clock = plc.ReadClock().AsDateTime();
+// Read one high-level device string; start with P1-D0000 before trying typed views.
 var value = plc.Read(device);
 
 Console.WriteLine($"connect    : {transport.ToString().ToLowerInvariant()}://{host}:{port}");
@@ -78,7 +84,7 @@ static void PrintUsage()
     Console.WriteLine();
     Console.WriteLine("Examples:");
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 \"toyopuc:plus:extended\"");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1027 udp P1-D0000 \"toyopuc:plus:extended\"");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1035 udp P1-D0000 \"toyopuc:plus:extended\"");
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-M0000 \"toyopuc:pc10g:pc10\"");
     Console.WriteLine();
     Console.WriteLine("This sample reads CPU status, PLC clock, and one high-level device address.");

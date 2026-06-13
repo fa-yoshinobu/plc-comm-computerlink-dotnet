@@ -1,124 +1,61 @@
-[![Documentation](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://fa-yoshinobu.github.io/plc-comm-computerlink-dotnet/)
+# Examples
 
-Use this page as the user-facing guide to the high-level .NET examples.
+## What is in this directory
 
-## Start Here
+This directory contains small runnable programs for first reads, high-level API exploration, long-running polling, hardware smoke tests, write-limit checks, and packed-bit behavior probes. Start with `PlcComm.Toyopuc.MinimalRead` or `PlcComm.Toyopuc.HighLevelSample` before using the validation utilities.
 
-If you want the shortest path, start with one of these:
-
-- `examples/PlcComm.Toyopuc.MinimalRead`
-  Smallest read-only example. Reads CPU status, clock, and one device.
-- `examples/PlcComm.Toyopuc.HighLevelSample`
-  High-level cookbook that demonstrates single reads, writes, typed helpers, snapshots, explicit `single-request` and `chunked` contiguous block reads, FR access, and polling.
-- `examples/PlcComm.Toyopuc.SoakMonitor`
-  Long-duration polling with reconnect and CSV logging.
-
-Profile-specific examples require an explicit `profile` / `--profile`; they do
-not infer a TOYOPUC model when the value is omitted. With a profile selected,
-basic families `P/K/V/T/C/L/X/Y/M/S/N/R/D` should use `P1-*`, `P2-*`, or `P3-*`.
-
-The newer explicit APIs such as `ToyopucDeviceClientFactory.OpenAndConnectAsync`,
-`ToyopucConnectionOptions`, `ToyopucAddress.Normalize`,
-`ReadWordsSingleRequestAsync`, `ReadDWordsSingleRequestAsync`,
-`ReadWordsChunkedAsync`, and `ReadDWordsChunkedAsync` use the same device
-syntax shown in these examples.
-
-## Quick Commands
-
-Minimal read:
+## How to run
 
 ```powershell
 dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 "toyopuc:plus:extended"
-dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1027 udp P1-D0000 "toyopuc:plus:extended"
 ```
-
-High-level cookbook:
 
 ```powershell
 dotnet run --project examples\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp "toyopuc:plus:extended"
-dotnet run --project examples\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp "toyopuc:pc10g:pc10"
 ```
-
-Dedicated soak monitor:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --devices P1-D0000,P1-M0000,U08000 --interval 2s --duration 30m --retries 3 --log logs\soak.log --poll-csv logs\soak.csv --summary-json logs\soak_summary.json
+dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --devices P1-D0000,P1-M0000 --interval 2s --duration 1m
 ```
 
-## Choose an Example by Task
+```powershell
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --device P1-D0000
+```
 
-- Read one device and confirm that communication works
-  - `examples/PlcComm.Toyopuc.MinimalRead`
-- Learn the main high-level APIs
-  - `examples/PlcComm.Toyopuc.HighLevelSample`
-- Observe reconnect behavior and log a watch list
-  - `examples/PlcComm.Toyopuc.SoakMonitor`
+```powershell
+dotnet run --project examples\PlcComm.Toyopuc.WriteLimitProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc10g:pc10"
+```
+
+```powershell
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc10g:pc10"
+```
 
 ## Simulator
 
-Use the sibling Python repository in this workspace as the simulator source:
+Use the sibling Python repository as the simulator source:
 
 ```powershell
 cd D:\PLC_COMM_PROJ\plc-comm-computerlink-python
 python scripts\sim_server.py --host 127.0.0.1 --port 15000
 ```
 
-Then run the .NET smoke test from this repository:
+Then run the smoke test against the simulator:
 
 ```powershell
-cd D:\PLC_COMM_PROJ\plc-comm-computerlink-dotnet
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 127.0.0.1 --port 15000 --protocol tcp
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 127.0.0.1 --port 15000 --protocol tcp --profile "toyopuc:generic" --device P1-D0000 --skip-status-read --skip-clock-read
 ```
 
-Write/readback simulator check:
+## Example index
 
-```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 127.0.0.1 --port 15000 --protocol tcp --device P1-D0000 --write-value 0x1234
-```
-
-## Engineering Utilities
-
-These projects are useful for validation and investigation, but they are not the main user tutorial:
-
-- `examples/PlcComm.Toyopuc.SmokeTest`
-- `examples/PlcComm.Toyopuc.WriteLimitProbe`
-- `examples/PlcComm.Toyopuc.BitPatternProbe`
-
-Write-limit probe:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File examples\probe_direct_length_limits.ps1 -Profile "toyopuc:pc10g:pc10"
-```
-
-Bit-pattern probe:
-
-```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --profile "toyopuc:pc10g:pc10" --csv logs\bit_pattern_pc10g_direct.csv --summary-json logs\bit_pattern_pc10g_direct.json
-```
-
-Profile-driven validation:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target plus
-powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target relay-10gx
-```
-
-Relay FR write + commit with restore:
-
-```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --fr-device FR000000 --fr-write-value 0x55AB --fr-commit --restore-after-write --verbose --log logs\relay_fr_commit_restore.log
-```
-
-## Publish
-
-High-level sample:
-
-```powershell
-dotnet publish examples\PlcComm.Toyopuc.HighLevelSample -c Release -p:PublishProfile=win-x64-single-file -o artifacts\publish\PlcComm.Toyopuc.HighLevelSample
-```
-
-Soak monitor:
-
-```powershell
-dotnet publish examples\PlcComm.Toyopuc.SoakMonitor -c Release -p:PublishProfile=win-x64-single-file -o artifacts\publish\PlcComm.Toyopuc.SoakMonitor
-```
+| Project/File | What it demonstrates |
+| --- | --- |
+| `examples/PlcComm.Toyopuc.MinimalRead` | Minimal status, clock, and one-device read. |
+| `examples/PlcComm.Toyopuc.HighLevelSample` | High-level reads, writes, typed helpers, snapshots, block helpers, polling, and FR helpers. |
+| `examples/PlcComm.Toyopuc.SoakMonitor` | Long-running polling with reconnect behavior and optional logs. |
+| `examples/PlcComm.Toyopuc.SmokeTest` | Hardware validation, read/write restore checks, relay checks, FR checks, and profile suites. |
+| `examples/PlcComm.Toyopuc.WriteLimitProbe` | Safe write-limit confirmation for selected word ranges. |
+| `examples/PlcComm.Toyopuc.BitPatternProbe` | Packed word and byte readback behavior for bit families. |
+| `examples/run_validation.ps1` | Wrapper for profile-specific smoke validation targets. |
+| `examples/probe_direct_length_limits.ps1` | Wrapper for direct write-limit probing. |
+| `examples/probe_relay_length_limits.ps1` | Wrapper for relay read/write length probing. |
+| `examples/run_fr_range_change_proof.ps1` | FR range before/after dump and change proof workflow. |
