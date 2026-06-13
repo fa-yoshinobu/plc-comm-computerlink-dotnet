@@ -56,8 +56,8 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
         set => _client.Timeout = value;
     }
 
-    /// <summary>Gets the normalized PLC profile name, if any.</summary>
-    public string? PlcProfile => _client.PlcProfile;
+    /// <summary>Gets the normalized PLC profile name.</summary>
+    public string PlcProfile => _client.PlcProfile;
 
     /// <summary>Gets the addressing options used by the wrapped client.</summary>
     public ToyopucAddressingOptions AddressingOptions => _client.AddressingOptions;

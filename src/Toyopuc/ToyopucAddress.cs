@@ -226,25 +226,46 @@ public static class ToyopucAddress
         return Format(address, address.Index);
     }
 
+    /// <summary>Formats a resolved device back to canonical text using an explicit PLC profile.</summary>
+    /// <param name="address">Resolved device to format.</param>
+    /// <param name="profile">Canonical PLC profile name.</param>
+    /// <returns>Canonical uppercase device text.</returns>
+    public static string Format(ResolvedDevice address, string profile)
+    {
+        ArgumentNullException.ThrowIfNull(address);
+        return Format(address, address.Index, profile);
+    }
+
     /// <summary>Formats a resolved device using an explicit index override.</summary>
     /// <param name="address">Resolved device metadata to reuse.</param>
     /// <param name="index">Explicit logical index to format.</param>
     /// <returns>Canonical uppercase device text for the supplied index.</returns>
     public static string Format(ResolvedDevice address, int index)
     {
+        return Format(address, index, profile: null);
+    }
+
+    /// <summary>Formats a resolved device using an explicit index override and PLC profile.</summary>
+    /// <param name="address">Resolved device metadata to reuse.</param>
+    /// <param name="index">Explicit logical index to format.</param>
+    /// <param name="profile">Canonical PLC profile name.</param>
+    /// <returns>Canonical uppercase device text for the supplied index.</returns>
+    public static string Format(ResolvedDevice address, int index, string? profile)
+    {
         ArgumentNullException.ThrowIfNull(address);
+        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(profile);
 
         if (address.Unit == "byte")
         {
             var suffix = address.High ? "H" : "L";
-            var descriptor = ToyopucDeviceCatalog.GetAreaDescriptor(address.Area);
+            var descriptor = ToyopucDeviceCatalog.GetAreaDescriptor(address.Area, normalizedProfile);
             var byteWidth = descriptor.GetAddressWidth("byte");
             return address.Prefix is not null
                 ? $"{address.Prefix}-{address.Area}{index.ToString($"X{byteWidth}", CultureInfo.InvariantCulture)}{suffix}"
                 : $"{address.Area}{index.ToString($"X{byteWidth}", CultureInfo.InvariantCulture)}{suffix}";
         }
 
-        var descriptorForUnit = ToyopucDeviceCatalog.GetAreaDescriptor(address.Area);
+        var descriptorForUnit = ToyopucDeviceCatalog.GetAreaDescriptor(address.Area, normalizedProfile);
         var width = descriptorForUnit.GetAddressWidth(address.Unit, address.Packed);
         var packedSuffix = address.Packed && address.Unit == "word" ? "W" : string.Empty;
         return address.Prefix is not null
@@ -259,7 +280,8 @@ public static class ToyopucAddress
     /// <returns>The canonical representation returned by <see cref="Format(ResolvedDevice)"/>.</returns>
     public static string Normalize(string text, ToyopucAddressingOptions? options = null, string? profile = null)
     {
-        return Format(Parse(text, options, profile));
+        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(profile);
+        return Format(Parse(text, options, normalizedProfile), normalizedProfile);
     }
 
     public static ParsedAddress ParseAddress(string text, string unit, int radix = 16)

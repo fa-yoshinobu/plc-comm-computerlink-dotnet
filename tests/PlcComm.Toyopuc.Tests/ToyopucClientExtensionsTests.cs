@@ -8,6 +8,7 @@ namespace PlcComm.Toyopuc.Tests;
 public sealed class ToyopucClientExtensionsTests
 {
     private const double LocalTestTimeoutSeconds = 3.0;
+    private const string Pc10Profile = "toyopuc:pc10g:pc10";
 
     [Fact]
     public void ToyopucAddress_Normalize_PreservesPrefixAndSuffix()
@@ -63,7 +64,8 @@ public sealed class ToyopucClientExtensionsTests
             "127.0.0.1",
             server.Port,
             transport: ToyopucTransportMode.Tcp,
-            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            plcProfile: Pc10Profile);
 
         var values = await client.ReadDWordsChunkedAsync("B0100", 3, 1);
 
@@ -89,7 +91,8 @@ public sealed class ToyopucClientExtensionsTests
             server.Port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
 
         var values = await client.ReadWordsSingleRequestAsync("P1-D0000", 2);
 
@@ -108,7 +111,8 @@ public sealed class ToyopucClientExtensionsTests
             server.Port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
 
         var values = await client.ReadNamedAsync(["P1-D0000.D"]);
 
@@ -123,7 +127,8 @@ public sealed class ToyopucClientExtensionsTests
             "127.0.0.1",
             1,
             timeout: TimeSpan.FromMilliseconds(1),
-            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
 
         await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(["P1-D0000.10"]));
     }
@@ -139,7 +144,8 @@ public sealed class ToyopucClientExtensionsTests
             server.Port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
 
         await client.WriteWordsSingleRequestAsync("P1-D0000", new ushort[] { 0x1234, 0x5678 });
 

@@ -38,9 +38,10 @@ public static class ToyopucDeviceClientFactory
         if (options.RecvBufsize < 1)
             throw new ArgumentOutOfRangeException(nameof(options), "RecvBufsize must be 1 or greater.");
 
-        string? normalizedProfile = string.IsNullOrWhiteSpace(options.PlcProfile)
-            ? null
-            : ToyopucPlcProfiles.NormalizeName(options.PlcProfile);
+        if (string.IsNullOrWhiteSpace(options.PlcProfile))
+            throw new ArgumentException("PlcProfile is required.", nameof(options));
+
+        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(options.PlcProfile);
 
         var inner = new ToyopucDeviceClient(
             options.Host,

@@ -87,6 +87,9 @@ public class DeviceRunPlannerTests
 
     private static ResolvedDevice Resolve(string device)
     {
-        return ToyopucDeviceResolver.ResolveDevice(device, ToyopucAddressingOptions.Nano10GxCompatible);
+        return ToyopucDeviceResolver.ResolveDevice(
+            device,
+            ToyopucAddressingOptions.Nano10GxCompatible,
+            "toyopuc:nano-10gx:compatible");
     }
 }

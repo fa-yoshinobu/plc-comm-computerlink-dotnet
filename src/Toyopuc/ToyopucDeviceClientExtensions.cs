@@ -117,7 +117,7 @@ public static class ToyopucDeviceClientExtensions
         while (offset < count)
         {
             var chunkCount = Math.Min(maxWordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset));
+            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
             var chunk = await ReadWordsSingleRequestCoreAsync(client, relayHops: null, chunkDevice, chunkCount, ct).ConfigureAwait(false);
             Array.Copy(chunk, 0, result, offset, chunkCount);
             offset += chunkCount;
@@ -138,7 +138,7 @@ public static class ToyopucDeviceClientExtensions
         while (offset < count)
         {
             var chunkCount = Math.Min(maxDwordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)));
+            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)), client.PlcProfile);
             var chunk = await client.ReadDWordsSingleRequestAsync(chunkDevice, chunkCount, ct).ConfigureAwait(false);
             Array.Copy(chunk, 0, result, offset, chunkCount);
             offset += chunkCount;
@@ -161,7 +161,7 @@ public static class ToyopucDeviceClientExtensions
         while (offset < values.Count)
         {
             var chunkCount = Math.Min(maxWordsPerRequest, values.Count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset));
+            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
             await client.WriteWordsSingleRequestAsync(chunkDevice, values.Skip(offset).Take(chunkCount).ToArray(), ct).ConfigureAwait(false);
             offset += chunkCount;
         }
@@ -182,7 +182,7 @@ public static class ToyopucDeviceClientExtensions
         while (offset < values.Count)
         {
             var chunkCount = Math.Min(maxDwordsPerRequest, values.Count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)));
+            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)), client.PlcProfile);
             await client.WriteDWordsSingleRequestAsync(chunkDevice, values.Skip(offset).Take(chunkCount).ToArray(), ct).ConfigureAwait(false);
             offset += chunkCount;
         }
@@ -323,7 +323,7 @@ public static class ToyopucDeviceClientExtensions
         while (offset < count)
         {
             var chunkCount = Math.Min(maxWordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset));
+            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
             var chunk = await ReadWordsSingleRequestCoreAsync(client, relayHops, chunkDevice, chunkCount, ct).ConfigureAwait(false);
             Array.Copy(chunk, 0, result, offset, chunkCount);
             offset += chunkCount;
@@ -341,7 +341,7 @@ public static class ToyopucDeviceClientExtensions
         while (offset < count)
         {
             var chunkCount = Math.Min(maxDwordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)));
+            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)), client.PlcProfile);
             var chunk = await ReadDWordsSingleRequestCoreAsync(client, relayHops, chunkDevice, chunkCount, ct).ConfigureAwait(false);
             Array.Copy(chunk, 0, result, offset, chunkCount);
             offset += chunkCount;
@@ -362,7 +362,7 @@ public static class ToyopucDeviceClientExtensions
         while (offset < values.Count)
         {
             var chunkCount = Math.Min(maxWordsPerRequest, values.Count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset));
+            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
             await WriteWordsSingleRequestCoreAsync(client, relayHops, chunkDevice, values.Skip(offset).Take(chunkCount).ToArray(), ct).ConfigureAwait(false);
             offset += chunkCount;
         }
@@ -519,7 +519,7 @@ public static class ToyopucDeviceClientExtensions
         devices[0] = start;
         for (var i = 1; i < count; i++)
         {
-            devices[i] = client.ResolveDevice(ToyopucAddress.Format(start, checked(start.Index + i)));
+            devices[i] = client.ResolveDevice(ToyopucAddress.Format(start, checked(start.Index + i), client.PlcProfile));
         }
         return devices;
     }

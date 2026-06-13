@@ -143,18 +143,21 @@ public static class ToyopucDeviceCatalog
         string? prefix = null,
         string? profile = null)
     {
+        var profileInfo = ToyopucPlcProfiles.FromName(profile);
         var prefixed = !string.IsNullOrWhiteSpace(prefix);
-        var descriptor = GetAreaDescriptor(area, profile);
+        var descriptor = GetAreaDescriptor(area, profileInfo.Name);
         var unit = descriptor.SupportsPackedWord ? "bit" : "word";
         var ranges = GetSupportedRanges(descriptor, prefixed, unit, packed: false);
-        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed: false, ToyopucPlcProfiles.FromName(profile).AddressingOptions);
+        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed: false, profileInfo.AddressingOptions, profileInfo.Name);
     }
 
     public static IReadOnlyList<string> GetSuggestedStartAddresses(
         string area,
         ToyopucAddressingOptions? options)
     {
-        return GetSuggestedStartAddresses(area, prefix: null, options);
+        throw new ArgumentException(
+            "PLC profile is required. Use a profile-based overload with an explicit canonical profile name.",
+            nameof(options));
     }
 
     public static IReadOnlyList<string> GetSuggestedStartAddresses(
@@ -162,11 +165,9 @@ public static class ToyopucDeviceCatalog
         string? prefix,
         ToyopucAddressingOptions? options)
     {
-        var prefixed = !string.IsNullOrWhiteSpace(prefix);
-        var descriptor = GetAreaDescriptor(area, profile: null);
-        var unit = descriptor.SupportsPackedWord ? "bit" : "word";
-        var ranges = GetSupportedRanges(descriptor, prefixed, unit, packed: false);
-        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed: false, options ?? ToyopucAddressingOptions.Default);
+        throw new ArgumentException(
+            "PLC profile is required. Use a profile-based overload with an explicit canonical profile name.",
+            nameof(options));
     }
 
     public static IReadOnlyList<string> GetSuggestedStartAddresses(
@@ -176,10 +177,11 @@ public static class ToyopucDeviceCatalog
         bool packed,
         string? profile)
     {
+        var profileInfo = ToyopucPlcProfiles.FromName(profile);
         var prefixed = !string.IsNullOrWhiteSpace(prefix);
-        var descriptor = GetAreaDescriptor(area, profile);
+        var descriptor = GetAreaDescriptor(area, profileInfo.Name);
         var ranges = GetSupportedRanges(descriptor, prefixed, unit, packed);
-        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed, ToyopucPlcProfiles.FromName(profile).AddressingOptions);
+        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed, profileInfo.AddressingOptions, profileInfo.Name);
     }
 
     private static IReadOnlyList<string> GetSuggestedStartAddresses(
@@ -188,7 +190,8 @@ public static class ToyopucDeviceCatalog
         string? prefix,
         string unit,
         bool packed,
-        ToyopucAddressingOptions options)
+        ToyopucAddressingOptions options,
+        string profile)
     {
         var normalizedPrefix = NormalizePrefix(prefix);
         ValidateAccess(descriptor, normalizedPrefix);
@@ -224,7 +227,7 @@ public static class ToyopucDeviceCatalog
         {
             var width = descriptor.GetAddressWidth(unit, packed);
             var candidate = value.ToString($"X{width}", CultureInfo.InvariantCulture);
-            if (seen.Add(candidate) && CanResolve($"{addressPrefix}{descriptor.Area}{candidate}{suffix}", options))
+            if (seen.Add(candidate) && CanResolve($"{addressPrefix}{descriptor.Area}{candidate}{suffix}", options, profile))
             {
                 results.Add(candidate);
             }
@@ -280,11 +283,11 @@ public static class ToyopucDeviceCatalog
         _ = GetSupportedRanges(descriptor, prefixed: true, unit: descriptor.SupportsPackedWord ? "bit" : "word", packed: false);
     }
 
-    private static bool CanResolve(string device, ToyopucAddressingOptions options)
+    private static bool CanResolve(string device, ToyopucAddressingOptions options, string profile)
     {
         try
         {
-            _ = ToyopucDeviceResolver.ResolveDevice(device, options);
+            _ = ToyopucDeviceResolver.ResolveDevice(device, options, profile);
             return true;
         }
         catch

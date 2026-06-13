@@ -104,7 +104,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(response);
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -228,7 +228,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1C, new byte[] { 0x78, 0x56, 0x34, 0x12 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
         var result = client.ReadDWord("B0100");
 
         await serverTask;
@@ -253,7 +253,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1C, new byte[] { 0x78, 0x56, 0x34, 0x12 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
         var result = client.ReadDWord(0x1100);
 
         await serverTask;
@@ -278,7 +278,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1C, new byte[] { 0x00, 0x00, 0xC0, 0x3F }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
         var result = client.ReadFloat32("B0100");
 
         await serverTask;
@@ -303,7 +303,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1C, new byte[] { 0x78, 0x56, 0x34, 0x12 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
         var result = await client.ReadDWordAsync("B0100");
 
         await serverTask;
@@ -328,7 +328,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1D, Array.Empty<byte>()));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
         client.WriteFloat32("B0100", 1.5f);
 
         await serverTask;
@@ -352,7 +352,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1D, Array.Empty<byte>()));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
         client.WriteFloat32(0x1100, 1.5f);
 
         await serverTask;
@@ -376,7 +376,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1C, new byte[] { 0x11, 0x11, 0x22, 0x22, 0x33, 0x33 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -405,7 +405,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x94, new byte[] { 0x11, 0x11, 0x22, 0x22 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -442,7 +442,8 @@ public class ProtocolAndClientTests
             port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible)
+            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible,
+            plcProfile: ToyopucPlcProfiles.Nano10GxCompatible.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -471,7 +472,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1C, new byte[] { 0x34, 0x12 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
         var result = client.Read("B0100");
 
         await serverTask;
@@ -498,7 +499,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x22, new byte[] { 0x34, 0x12, 0x78, 0x56 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -527,7 +528,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x98, new byte[] { 0x50, 0x00, 0x40, 0x00 }));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -563,7 +564,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x99, Array.Empty<byte>()));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -651,7 +652,8 @@ public class ProtocolAndClientTests
             port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible)
+            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible,
+            plcProfile: ToyopucPlcProfiles.Nano10GxCompatible.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -677,7 +679,8 @@ public class ProtocolAndClientTests
             1,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
 
         Assert.Throws<ArgumentException>(() => client.ReadMany(new object[] { "M100W", "M101W", "M110W" }));
     }
@@ -690,7 +693,8 @@ public class ProtocolAndClientTests
             1,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
 
         Assert.Throws<ArgumentException>(() => client.Read("P17F0", 16));
     }
@@ -719,7 +723,8 @@ public class ProtocolAndClientTests
             port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible)
+            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible,
+            plcProfile: ToyopucPlcProfiles.Nano10GxCompatible.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -749,7 +754,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x1D, Array.Empty<byte>()));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -769,7 +774,8 @@ public class ProtocolAndClientTests
             1,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Pc10GMode);
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: ToyopucPlcProfiles.Pc10GMode.Name);
 
         Assert.Throws<ArgumentException>(() => client.Write("P17F0", new[]
         {
@@ -794,7 +800,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0x23, Array.Empty<byte>()));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -835,7 +841,8 @@ public class ProtocolAndClientTests
             port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible)
+            addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible,
+            plcProfile: ToyopucPlcProfiles.Nano10GxCompatible.Name)
         {
             CaptureTraceFrames = true,
         };
@@ -877,7 +884,7 @@ public class ProtocolAndClientTests
             await stream.WriteAsync(BuildResponse(0xC3, Array.Empty<byte>()));
         });
 
-        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds))
+        using var client = new ToyopucDeviceClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds), plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };
