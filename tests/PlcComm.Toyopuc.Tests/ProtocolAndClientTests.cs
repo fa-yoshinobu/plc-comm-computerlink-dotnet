@@ -606,7 +606,7 @@ public class ProtocolAndClientTests
             port,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
-            deviceProfile: ToyopucDeviceProfiles.Pc10GMode.Name)
+            plcProfile: ToyopucPlcProfiles.Pc10GMode.Name)
         {
             CaptureTraceFrames = true,
         };

@@ -15,7 +15,7 @@ var device = (args.ElementAtOrDefault(3) ?? "P1-D0000").ToUpperInvariant();
 var profileName = args.ElementAtOrDefault(4);
 if (string.IsNullOrWhiteSpace(profileName))
 {
-    Console.Error.WriteLine("profile is required. Specify it explicitly; no device profile is inferred from defaults.");
+    Console.Error.WriteLine("profile is required. Specify it explicitly; no PLC profile is inferred from defaults.");
     PrintUsage();
     Environment.ExitCode = 1;
     return;
@@ -28,7 +28,7 @@ using var plc = new ToyopucDeviceClient(
     port,
     transport: transport,
     addressingOptions: profile,
-    deviceProfile: profileName);
+    plcProfile: profileName);
 
 var status = plc.ReadCpuStatus();
 var clock = plc.ReadClock().AsDateTime();
@@ -74,12 +74,12 @@ static void PrintUsage()
     Console.WriteLine("Usage:");
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- [host] [port] [tcp|udp] [device] <profile>");
     Console.WriteLine();
-    Console.WriteLine("Profile is required; the sample does not infer a device profile.");
+    Console.WriteLine("Profile is required; the sample does not infer a PLC profile.");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 \"TOYOPUC-Plus:Plus Extended mode\"");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1027 udp P1-D0000 \"TOYOPUC-Plus:Plus Extended mode\"");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-M0000 \"PC10G:PC10 mode\"");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 \"toyopuc:plus:extended\"");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1027 udp P1-D0000 \"toyopuc:plus:extended\"");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-M0000 \"toyopuc:pc10g:pc10\"");
     Console.WriteLine();
     Console.WriteLine("This sample reads CPU status, PLC clock, and one high-level device address.");
 }

@@ -33,11 +33,11 @@ public sealed class ExampleCliContractTests
     [InlineData(
         @"examples\PlcComm.Toyopuc.WriteLimitProbe\PlcComm.Toyopuc.WriteLimitProbe.csproj",
         "Toyopuc safe write-limit confirmation",
-        "required; no device profile is inferred")]
+        "required; no PLC profile is inferred")]
     [InlineData(
         @"examples\PlcComm.Toyopuc.BitPatternProbe\PlcComm.Toyopuc.BitPatternProbe.csproj",
         "Toyopuc bit-to-packed readback probe",
-        "required; no device profile is inferred")]
+        "required; no PLC profile is inferred")]
     public async Task ExampleCli_HelpOutput_ContainsStableUsage(
         string projectPath,
         string expectedHeader,
@@ -103,7 +103,7 @@ public sealed class ExampleCliContractTests
         var result = await RunProjectAsync(
             @"examples\PlcComm.Toyopuc.SoakMonitor\PlcComm.Toyopuc.SoakMonitor.csproj",
             "--profile",
-            "PC10G:PC10 mode");
+            "toyopuc:pc10g:pc10");
 
         Assert.Equal(1, result.ExitCode);
         Assert.Contains("--devices is required", result.AllOutput, StringComparison.Ordinal);

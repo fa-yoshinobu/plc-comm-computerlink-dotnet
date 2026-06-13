@@ -1,0 +1,897 @@
+### YamlMime:ManagedReference
+items:
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions
+  commentId: T:PlcComm.Toyopuc.ToyopucConnectionOptions
+  id: ToyopucConnectionOptions
+  parent: PlcComm.Toyopuc
+  children:
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.#ctor(System.String)
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.Host
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.Port
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.Retries
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout
+  - PlcComm.Toyopuc.ToyopucConnectionOptions.Transport
+  langs:
+  - csharp
+  - vb
+  name: ToyopucConnectionOptions
+  nameWithType: ToyopucConnectionOptions
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions
+  type: Class
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: ToyopucConnectionOptions
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 10
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Explicit connection options for a stable TOYOPUC device session.
+  remarks: >-
+    This type keeps transport, profile, retry, and relay settings explicit for the
+
+    unified high-level connection flow and generated API documentation.
+  example: []
+  syntax:
+    content: 'public sealed record ToyopucConnectionOptions : IEquatable<ToyopucConnectionOptions>'
+    content.vb: Public NotInheritable Class ToyopucConnectionOptions Implements IEquatable(Of ToyopucConnectionOptions)
+  inheritance:
+  - System.Object
+  implements:
+  - System.IEquatable{PlcComm.Toyopuc.ToyopucConnectionOptions}
+  inheritedMembers:
+  - System.Object.Equals(System.Object)
+  - System.Object.Equals(System.Object,System.Object)
+  - System.Object.GetHashCode
+  - System.Object.GetType
+  - System.Object.ReferenceEquals(System.Object,System.Object)
+  - System.Object.ToString
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.#ctor(System.String)
+  commentId: M:PlcComm.Toyopuc.ToyopucConnectionOptions.#ctor(System.String)
+  id: '#ctor(System.String)'
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: ToyopucConnectionOptions(string)
+  nameWithType: ToyopucConnectionOptions.ToyopucConnectionOptions(string)
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.ToyopucConnectionOptions(string)
+  type: Constructor
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: .ctor
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 10
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Explicit connection options for a stable TOYOPUC device session.
+  remarks: >-
+    This type keeps transport, profile, retry, and relay settings explicit for the
+
+    unified high-level connection flow and generated API documentation.
+  example: []
+  syntax:
+    content: public ToyopucConnectionOptions(string Host)
+    parameters:
+    - id: Host
+      type: System.String
+      description: PLC IP address or hostname.
+    content.vb: Public Sub New(Host As String)
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.#ctor*
+  nameWithType.vb: ToyopucConnectionOptions.New(String)
+  fullName.vb: PlcComm.Toyopuc.ToyopucConnectionOptions.New(String)
+  name.vb: New(String)
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Host
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.Host
+  id: Host
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: Host
+  nameWithType: ToyopucConnectionOptions.Host
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Host
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Host
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 10
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: PLC IP address or hostname.
+  example: []
+  syntax:
+    content: public string Host { get; init; }
+    parameters: []
+    return:
+      type: System.String
+    content.vb: Public Property Host As String
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.Host*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Port
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.Port
+  id: Port
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: Port
+  nameWithType: ToyopucConnectionOptions.Port
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Port
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Port
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 14
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the PLC port number.
+  remarks: The default TOYOPUC communication port is <code>1025</code>.
+  example: []
+  syntax:
+    content: public int Port { get; init; }
+    parameters: []
+    return:
+      type: System.Int32
+    content.vb: Public Property Port As Integer
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.Port*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout
+  id: Timeout
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: Timeout
+  nameWithType: ToyopucConnectionOptions.Timeout
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Timeout
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 18
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the communication timeout.
+  remarks: A zero value falls back to <xref href="PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout" data-throw-if-not-resolved="false"></xref>.
+  example: []
+  syntax:
+    content: public TimeSpan Timeout { get; init; }
+    parameters: []
+    return:
+      type: System.TimeSpan
+    content.vb: Public Property Timeout As TimeSpan
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Transport
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.Transport
+  id: Transport
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: Transport
+  nameWithType: ToyopucConnectionOptions.Transport
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Transport
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Transport
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 21
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the transport protocol.
+  example: []
+  syntax:
+    content: public ToyopucTransportMode Transport { get; init; }
+    parameters: []
+    return:
+      type: PlcComm.Toyopuc.ToyopucTransportMode
+    content.vb: Public Property Transport As ToyopucTransportMode
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.Transport*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile
+  id: PlcProfile
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: PlcProfile
+  nameWithType: ToyopucConnectionOptions.PlcProfile
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: PlcProfile
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 28
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the optional PLC profile name.
+  remarks: >-
+    Supply a known profile name when you want documented profile-based address resolution instead of
+
+    a fully generic session.
+  example: []
+  syntax:
+    content: public string? PlcProfile { get; init; }
+    parameters: []
+    return:
+      type: System.String
+    content.vb: Public Property PlcProfile As String
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops
+  id: RelayHops
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: RelayHops
+  nameWithType: ToyopucConnectionOptions.RelayHops
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: RelayHops
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 32
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the optional relay hop chain text.
+  remarks: Leave this empty for direct connections; provide relay hops for routed sessions.
+  example: []
+  syntax:
+    content: public string? RelayHops { get; init; }
+    parameters: []
+    return:
+      type: System.String
+    content.vb: Public Property RelayHops As String
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort
+  id: LocalPort
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: LocalPort
+  nameWithType: ToyopucConnectionOptions.LocalPort
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: LocalPort
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 35
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the local UDP port. Ignored for TCP.
+  example: []
+  syntax:
+    content: public int LocalPort { get; init; }
+    parameters: []
+    return:
+      type: System.Int32
+    content.vb: Public Property LocalPort As Integer
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Retries
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.Retries
+  id: Retries
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: Retries
+  nameWithType: ToyopucConnectionOptions.Retries
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Retries
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Retries
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 38
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the retry count for transport operations.
+  example: []
+  syntax:
+    content: public int Retries { get; init; }
+    parameters: []
+    return:
+      type: System.Int32
+    content.vb: Public Property Retries As Integer
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.Retries*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay
+  id: RetryDelay
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: RetryDelay
+  nameWithType: ToyopucConnectionOptions.RetryDelay
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: RetryDelay
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 41
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the retry delay.
+  example: []
+  syntax:
+    content: public TimeSpan RetryDelay { get; init; }
+    parameters: []
+    return:
+      type: System.TimeSpan
+    content.vb: Public Property RetryDelay As TimeSpan
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize
+  id: RecvBufsize
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: RecvBufsize
+  nameWithType: ToyopucConnectionOptions.RecvBufsize
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: RecvBufsize
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 44
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets or sets the receive buffer size.
+  example: []
+  syntax:
+    content: public int RecvBufsize { get; init; }
+    parameters: []
+    return:
+      type: System.Int32
+    content.vb: Public Property RecvBufsize As Integer
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+  id: EffectiveTimeout
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: EffectiveTimeout
+  nameWithType: ToyopucConnectionOptions.EffectiveTimeout
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: EffectiveTimeout
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 47
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets the effective timeout used for a new client instance.
+  example: []
+  syntax:
+    content: public TimeSpan EffectiveTimeout { get; }
+    parameters: []
+    return:
+      type: System.TimeSpan
+    content.vb: Public ReadOnly Property EffectiveTimeout As TimeSpan
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout*
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay
+  id: EffectiveRetryDelay
+  parent: PlcComm.Toyopuc.ToyopucConnectionOptions
+  langs:
+  - csharp
+  - vb
+  name: EffectiveRetryDelay
+  nameWithType: ToyopucConnectionOptions.EffectiveRetryDelay
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucConnectionOptions.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: EffectiveRetryDelay
+    path: src/Toyopuc/ToyopucConnectionOptions.cs
+    startLine: 50
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  summary: Gets the effective retry delay used for a new client instance.
+  example: []
+  syntax:
+    content: public TimeSpan EffectiveRetryDelay { get; }
+    parameters: []
+    return:
+      type: System.TimeSpan
+    content.vb: Public ReadOnly Property EffectiveRetryDelay As TimeSpan
+  overload: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay*
+references:
+- uid: PlcComm.Toyopuc
+  commentId: N:PlcComm.Toyopuc
+  href: PlcComm.html
+  name: PlcComm.Toyopuc
+  nameWithType: PlcComm.Toyopuc
+  fullName: PlcComm.Toyopuc
+  spec.csharp:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+  spec.vb:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+- uid: System.Object
+  commentId: T:System.Object
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object
+  name: object
+  nameWithType: object
+  fullName: object
+  nameWithType.vb: Object
+  fullName.vb: Object
+  name.vb: Object
+- uid: System.IEquatable{PlcComm.Toyopuc.ToyopucConnectionOptions}
+  commentId: T:System.IEquatable{PlcComm.Toyopuc.ToyopucConnectionOptions}
+  parent: System
+  definition: System.IEquatable`1
+  href: https://learn.microsoft.com/dotnet/api/system.iequatable-1
+  name: IEquatable<ToyopucConnectionOptions>
+  nameWithType: IEquatable<ToyopucConnectionOptions>
+  fullName: System.IEquatable<PlcComm.Toyopuc.ToyopucConnectionOptions>
+  nameWithType.vb: IEquatable(Of ToyopucConnectionOptions)
+  fullName.vb: System.IEquatable(Of PlcComm.Toyopuc.ToyopucConnectionOptions)
+  name.vb: IEquatable(Of ToyopucConnectionOptions)
+  spec.csharp:
+  - uid: System.IEquatable`1
+    name: IEquatable
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.iequatable-1
+  - name: <
+  - uid: PlcComm.Toyopuc.ToyopucConnectionOptions
+    name: ToyopucConnectionOptions
+    href: PlcComm.Toyopuc.ToyopucConnectionOptions.html
+  - name: '>'
+  spec.vb:
+  - uid: System.IEquatable`1
+    name: IEquatable
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.iequatable-1
+  - name: (
+  - name: Of
+  - name: " "
+  - uid: PlcComm.Toyopuc.ToyopucConnectionOptions
+    name: ToyopucConnectionOptions
+    href: PlcComm.Toyopuc.ToyopucConnectionOptions.html
+  - name: )
+- uid: System.Object.Equals(System.Object)
+  commentId: M:System.Object.Equals(System.Object)
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)
+  name: Equals(object)
+  nameWithType: object.Equals(object)
+  fullName: object.Equals(object)
+  nameWithType.vb: Object.Equals(Object)
+  fullName.vb: Object.Equals(Object)
+  name.vb: Equals(Object)
+  spec.csharp:
+  - uid: System.Object.Equals(System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)
+  - name: (
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+  spec.vb:
+  - uid: System.Object.Equals(System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)
+  - name: (
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+- uid: System.Object.Equals(System.Object,System.Object)
+  commentId: M:System.Object.Equals(System.Object,System.Object)
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)
+  name: Equals(object, object)
+  nameWithType: object.Equals(object, object)
+  fullName: object.Equals(object, object)
+  nameWithType.vb: Object.Equals(Object, Object)
+  fullName.vb: Object.Equals(Object, Object)
+  name.vb: Equals(Object, Object)
+  spec.csharp:
+  - uid: System.Object.Equals(System.Object,System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)
+  - name: (
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+  spec.vb:
+  - uid: System.Object.Equals(System.Object,System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)
+  - name: (
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+- uid: System.Object.GetHashCode
+  commentId: M:System.Object.GetHashCode
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.gethashcode
+  name: GetHashCode()
+  nameWithType: object.GetHashCode()
+  fullName: object.GetHashCode()
+  nameWithType.vb: Object.GetHashCode()
+  fullName.vb: Object.GetHashCode()
+  spec.csharp:
+  - uid: System.Object.GetHashCode
+    name: GetHashCode
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gethashcode
+  - name: (
+  - name: )
+  spec.vb:
+  - uid: System.Object.GetHashCode
+    name: GetHashCode
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gethashcode
+  - name: (
+  - name: )
+- uid: System.Object.GetType
+  commentId: M:System.Object.GetType
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.gettype
+  name: GetType()
+  nameWithType: object.GetType()
+  fullName: object.GetType()
+  nameWithType.vb: Object.GetType()
+  fullName.vb: Object.GetType()
+  spec.csharp:
+  - uid: System.Object.GetType
+    name: GetType
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gettype
+  - name: (
+  - name: )
+  spec.vb:
+  - uid: System.Object.GetType
+    name: GetType
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gettype
+  - name: (
+  - name: )
+- uid: System.Object.ReferenceEquals(System.Object,System.Object)
+  commentId: M:System.Object.ReferenceEquals(System.Object,System.Object)
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.referenceequals
+  name: ReferenceEquals(object, object)
+  nameWithType: object.ReferenceEquals(object, object)
+  fullName: object.ReferenceEquals(object, object)
+  nameWithType.vb: Object.ReferenceEquals(Object, Object)
+  fullName.vb: Object.ReferenceEquals(Object, Object)
+  name.vb: ReferenceEquals(Object, Object)
+  spec.csharp:
+  - uid: System.Object.ReferenceEquals(System.Object,System.Object)
+    name: ReferenceEquals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.referenceequals
+  - name: (
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+  spec.vb:
+  - uid: System.Object.ReferenceEquals(System.Object,System.Object)
+    name: ReferenceEquals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.referenceequals
+  - name: (
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+- uid: System.Object.ToString
+  commentId: M:System.Object.ToString
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.tostring
+  name: ToString()
+  nameWithType: object.ToString()
+  fullName: object.ToString()
+  nameWithType.vb: Object.ToString()
+  fullName.vb: Object.ToString()
+  spec.csharp:
+  - uid: System.Object.ToString
+    name: ToString
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.tostring
+  - name: (
+  - name: )
+  spec.vb:
+  - uid: System.Object.ToString
+    name: ToString
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.tostring
+  - name: (
+  - name: )
+- uid: System
+  commentId: N:System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system
+  name: System
+  nameWithType: System
+  fullName: System
+- uid: System.IEquatable`1
+  commentId: T:System.IEquatable`1
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.iequatable-1
+  name: IEquatable<T>
+  nameWithType: IEquatable<T>
+  fullName: System.IEquatable<T>
+  nameWithType.vb: IEquatable(Of T)
+  fullName.vb: System.IEquatable(Of T)
+  name.vb: IEquatable(Of T)
+  spec.csharp:
+  - uid: System.IEquatable`1
+    name: IEquatable
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.iequatable-1
+  - name: <
+  - name: T
+  - name: '>'
+  spec.vb:
+  - uid: System.IEquatable`1
+    name: IEquatable
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.iequatable-1
+  - name: (
+  - name: Of
+  - name: " "
+  - name: T
+  - name: )
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.#ctor*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.#ctor
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions__ctor_System_String_
+  name: ToyopucConnectionOptions
+  nameWithType: ToyopucConnectionOptions.ToyopucConnectionOptions
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.ToyopucConnectionOptions
+  nameWithType.vb: ToyopucConnectionOptions.New
+  fullName.vb: PlcComm.Toyopuc.ToyopucConnectionOptions.New
+  name.vb: New
+- uid: System.String
+  commentId: T:System.String
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.string
+  name: string
+  nameWithType: string
+  fullName: string
+  nameWithType.vb: String
+  fullName.vb: String
+  name.vb: String
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Host*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.Host
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_Host
+  name: Host
+  nameWithType: ToyopucConnectionOptions.Host
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Host
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Port*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.Port
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_Port
+  name: Port
+  nameWithType: ToyopucConnectionOptions.Port
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Port
+- uid: System.Int32
+  commentId: T:System.Int32
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.int32
+  name: int
+  nameWithType: int
+  fullName: int
+  nameWithType.vb: Integer
+  fullName.vb: Integer
+  name.vb: Integer
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+  commentId: P:PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_EffectiveTimeout
+  name: EffectiveTimeout
+  nameWithType: ToyopucConnectionOptions.EffectiveTimeout
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_Timeout
+  name: Timeout
+  nameWithType: ToyopucConnectionOptions.Timeout
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Timeout
+- uid: System.TimeSpan
+  commentId: T:System.TimeSpan
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.timespan
+  name: TimeSpan
+  nameWithType: TimeSpan
+  fullName: System.TimeSpan
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Transport*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.Transport
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_Transport
+  name: Transport
+  nameWithType: ToyopucConnectionOptions.Transport
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Transport
+- uid: PlcComm.Toyopuc.ToyopucTransportMode
+  commentId: T:PlcComm.Toyopuc.ToyopucTransportMode
+  parent: PlcComm.Toyopuc
+  href: PlcComm.Toyopuc.ToyopucTransportMode.html
+  name: ToyopucTransportMode
+  nameWithType: ToyopucTransportMode
+  fullName: PlcComm.Toyopuc.ToyopucTransportMode
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_PlcProfile
+  name: PlcProfile
+  nameWithType: ToyopucConnectionOptions.PlcProfile
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.PlcProfile
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_RelayHops
+  name: RelayHops
+  nameWithType: ToyopucConnectionOptions.RelayHops
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.RelayHops
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_LocalPort
+  name: LocalPort
+  nameWithType: ToyopucConnectionOptions.LocalPort
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.LocalPort
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.Retries*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.Retries
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_Retries
+  name: Retries
+  nameWithType: ToyopucConnectionOptions.Retries
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.Retries
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_RetryDelay
+  name: RetryDelay
+  nameWithType: ToyopucConnectionOptions.RetryDelay
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.RetryDelay
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_RecvBufsize
+  name: RecvBufsize
+  nameWithType: ToyopucConnectionOptions.RecvBufsize
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.RecvBufsize
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_EffectiveTimeout
+  name: EffectiveTimeout
+  nameWithType: ToyopucConnectionOptions.EffectiveTimeout
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveTimeout
+- uid: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay*
+  commentId: Overload:PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay
+  href: PlcComm.Toyopuc.ToyopucConnectionOptions.html#PlcComm_Toyopuc_ToyopucConnectionOptions_EffectiveRetryDelay
+  name: EffectiveRetryDelay
+  nameWithType: ToyopucConnectionOptions.EffectiveRetryDelay
+  fullName: PlcComm.Toyopuc.ToyopucConnectionOptions.EffectiveRetryDelay

@@ -8,4 +8,4 @@ This file tracks the remaining tasks and known issues for the Toyopuc Computer L
 
 ## 2. Cross-Library API Alignment
 
-- [ ] **Unify PLC profile naming across libraries**: Review `DeviceProfile` as the public Computer Link selector and align it with the cross-library `PlcProfile` naming policy where practical. Standard saved/displayed profile names should converge on one canonical form, with legacy names accepted only as input aliases.
+- [x] **Unify PLC profile naming across libraries**: `PlcProfile` is now the public Computer Link selector. Profile definitions use `ToyopucPlcProfile(s)` and canonical `toyopuc:<model>:<mode>` names only; legacy display names and short aliases are intentionally rejected.

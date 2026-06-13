@@ -10,17 +10,17 @@ public sealed class LibraryResolverContractTests
 
     public static TheoryData<string> ReviewedProfiles => new()
     {
-        "Generic",
-        "TOYOPUC-Plus:Plus Standard mode",
-        "TOYOPUC-Plus:Plus Extended mode",
-        "Nano 10GX:Nano 10GX mode",
-        "Nano 10GX:Compatible mode",
-        "PC10G:PC10 standard/PC3JG mode",
-        "PC10G:PC10 mode",
-        "PC3JX:PC3 separate mode",
-        "PC3JX:Plus expansion mode",
-        "PC3JG:PC3JG mode",
-        "PC3JG:PC3 separate mode",
+        "toyopuc:generic",
+        "toyopuc:plus:standard",
+        "toyopuc:plus:extended",
+        "toyopuc:nano-10gx:native",
+        "toyopuc:nano-10gx:compatible",
+        "toyopuc:pc10g:standard-pc3jg",
+        "toyopuc:pc10g:pc10",
+        "toyopuc:pc3jx:pc3-separate",
+        "toyopuc:pc3jx:plus-expansion",
+        "toyopuc:pc3jg:pc3jg",
+        "toyopuc:pc3jg:pc3-separate",
     };
 
     public static TheoryData<string> PrefixedAcceptCases => new()
@@ -49,8 +49,8 @@ public sealed class LibraryResolverContractTests
         { "GMFFFW", null, "GM", true, false },
         { "GMFFFL", null, "GM", false, true },
         { "GMFFFH", null, "GM", false, true },
-        { "P1-M17FW", "PC10G:PC10 mode", "M", true, true },
-        { "P1-M17FL", "PC10G:PC10 mode", "M", false, true },
+        { "P1-M17FW", "toyopuc:pc10g:pc10", "M", true, true },
+        { "P1-M17FL", "toyopuc:pc10g:pc10", "M", false, true },
     };
 
     public static TheoryData<string, string?> DerivedRejectCases => new()
@@ -67,16 +67,16 @@ public sealed class LibraryResolverContractTests
         { "GM1000W", null },
         { "GM1000L", null },
         { "GM1000H", null },
-        { "P1-M0000W", "PC10G:PC10 mode" },
+        { "P1-M0000W", "toyopuc:pc10g:pc10" },
     };
 
     public static TheoryData<string, string, string?> CanonicalRoundTripCases => new()
     {
-        { "P1-D0000", "P1-D0000", "PC10G:PC10 mode" },
-        { "P1-D0000L", "P1-D0000L", "PC10G:PC10 mode" },
-        { "P1-M000W", "P1-M000W", "PC10G:PC10 mode" },
-        { "GX000W", "GX000W", "PC10G:PC10 mode" },
-        { "GY000W", "GY000W", "PC10G:PC10 mode" },
+        { "P1-D0000", "P1-D0000", "toyopuc:pc10g:pc10" },
+        { "P1-D0000L", "P1-D0000L", "toyopuc:pc10g:pc10" },
+        { "P1-M000W", "P1-M000W", "toyopuc:pc10g:pc10" },
+        { "GX000W", "GX000W", "toyopuc:pc10g:pc10" },
+        { "GY000W", "GY000W", "toyopuc:pc10g:pc10" },
     };
 
     [Theory]

@@ -3,7 +3,7 @@ param(
     [int]$Port = 1025,
     [ValidateSet('tcp', 'udp')]
     [string]$Protocol = 'tcp',
-    [string]$Profile = 'Nano 10GX:Compatible mode',
+    [string]$Profile = 'toyopuc:nano-10gx:compatible',
     [string]$Hops = 'P1-L2:N4,P1-L2:N6,P1-L2:N2',
     [string]$StartDevice = 'FR000000',
     [string]$Count = '0x200000',

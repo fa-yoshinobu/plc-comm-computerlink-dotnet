@@ -113,7 +113,7 @@ ToyopucDeviceClient CreateClient()
         transport: Enum.Parse<ToyopucTransportMode>(options.Transport, ignoreCase: true),
         timeout: TimeSpan.FromSeconds(options.TimeoutSeconds),
         addressingOptions: options.AddressingOptions,
-        deviceProfile: options.Profile);
+        plcProfile: options.Profile);
 }
 
 int[] ReadWords(ToyopucDeviceClient client, string device, int count)
@@ -210,7 +210,7 @@ static void PrintUsage()
     Console.WriteLine("  --host <name>              default: 192.168.250.100");
     Console.WriteLine("  --port <number>            default: 1025");
     Console.WriteLine("  --protocol <tcp|udp>       default: tcp");
-    Console.WriteLine("  --profile <name>           required; no device profile is inferred");
+    Console.WriteLine("  --profile <name>           required; no PLC profile is inferred");
     Console.WriteLine("  --cases <spec,...>         default: P1-D0000:622:623:0x4100,U00000:621:622:0x4200,U08000:621:622:0x4300,EB00000:621:622:0x4400");
     Console.WriteLine("  --summary-json <path>      default: logs\\direct_length_limit_pc10g_rerun\\summary.json");
     Console.WriteLine("  --timeout <seconds>        default: 5.0");
@@ -306,7 +306,7 @@ sealed record ProbeOptions
 
         if (string.IsNullOrWhiteSpace(options.Profile))
         {
-            throw new ArgumentException("--profile is required. Specify it explicitly; no device profile is inferred from defaults.", nameof(args));
+            throw new ArgumentException("--profile is required. Specify it explicitly; no PLC profile is inferred from defaults.", nameof(args));
         }
 
         _ = options.AddressingOptions;

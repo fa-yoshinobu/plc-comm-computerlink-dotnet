@@ -114,7 +114,7 @@ Target:
 - `192.168.250.100:1027/udp`
 - relay target: Nano 10GX
 - hops: `P1-L1:N2`
-- profile: `Nano 10GX:Compatible mode`
+- profile: `toyopuc:nano-10gx:compatible`
 
 Verified:
 
@@ -149,8 +149,8 @@ Release blockers:
 Future coverage only:
 
 - deferred profile read-only sweeps:
-  - `TOYOPUC-Plus:Plus Standard mode`
-  - `Nano 10GX:Nano 10GX mode`
-  - `PC3JX:PC3 separate mode`
-  - `PC3JG:PC3JG mode`
-  - `PC3JG:PC3 separate mode`
+  - `toyopuc:plus:standard`
+  - `toyopuc:nano-10gx:native`
+  - `toyopuc:pc3jx:pc3-separate`
+  - `toyopuc:pc3jg:pc3jg`
+  - `toyopuc:pc3jg:pc3-separate`

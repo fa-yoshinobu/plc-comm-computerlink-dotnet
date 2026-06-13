@@ -1,4 +1,4 @@
-# Library Device Profile Specification
+# Library PLC Profile Specification
 
 This document describes the machine presets and range rules implemented by the
 .NET library.
@@ -16,11 +16,11 @@ The source of truth is code, not UI logic.
 
 | Concern | Source |
 | --- | --- |
-| profile definitions | [`../../src/Toyopuc/ToyopucDeviceProfiles.cs`](../../src/Toyopuc/ToyopucDeviceProfiles.cs) |
-| profile data types | [`../../src/Toyopuc/ToyopucDeviceProfile.cs`](../../src/Toyopuc/ToyopucDeviceProfile.cs) |
+| profile definitions | [`../../src/Toyopuc/ToyopucPlcProfiles.cs`](../../src/Toyopuc/ToyopucPlcProfiles.cs) |
+| profile data types | [`../../src/Toyopuc/ToyopucPlcProfile.cs`](../../src/Toyopuc/ToyopucPlcProfile.cs) |
 | lookup API | [`../../src/Toyopuc/ToyopucDeviceCatalog.cs`](../../src/Toyopuc/ToyopucDeviceCatalog.cs) |
 | addressing option switches | [`../../src/Toyopuc/ToyopucAddressingOptions.cs`](../../src/Toyopuc/ToyopucAddressingOptions.cs) |
-| reviewed range matrix | [`device_profile_matrix_r2.csv`](./device_profile_matrix_r2.csv) |
+| reviewed range matrix | [`plc_profile_matrix_r2.csv`](./plc_profile_matrix_r2.csv) |
 
 Applications built on `PlcComm.Toyopuc` must not maintain their own area
 tables or model-specific upper bounds.
@@ -30,19 +30,19 @@ tables or model-specific upper bounds.
 The library currently exposes these canonical profile names:
 
 - `Generic`
-- `TOYOPUC-Plus:Plus Standard mode`
-- `TOYOPUC-Plus:Plus Extended mode`
-- `Nano 10GX:Nano 10GX mode`
-- `Nano 10GX:Compatible mode`
-- `PC10G:PC10 standard/PC3JG mode`
-- `PC10G:PC10 mode`
-- `PC3JX:PC3 separate mode`
-- `PC3JX:Plus expansion mode`
-- `PC3JG:PC3JG mode`
-- `PC3JG:PC3 separate mode`
+- `toyopuc:plus:standard`
+- `toyopuc:plus:extended`
+- `toyopuc:nano-10gx:native`
+- `toyopuc:nano-10gx:compatible`
+- `toyopuc:pc10g:standard-pc3jg`
+- `toyopuc:pc10g:pc10`
+- `toyopuc:pc3jx:pc3-separate`
+- `toyopuc:pc3jx:plus-expansion`
+- `toyopuc:pc3jg:pc3jg`
+- `toyopuc:pc3jg:pc3-separate`
 
 The exact per-area matrix is maintained in
-[`device_profile_matrix_r2.csv`](./device_profile_matrix_r2.csv).
+[`plc_profile_matrix_r2.csv`](./plc_profile_matrix_r2.csv).
 
 ## Data Model
 
@@ -73,8 +73,8 @@ Applications are expected to query model information through
 
 | API | Purpose |
 | --- | --- |
-| `ToyopucDeviceProfiles.GetNames()` | list exposed profile names |
-| `ToyopucDeviceProfiles.FromName(profile)` | resolve a canonical profile name |
+| `ToyopucPlcProfiles.GetNames()` | list exposed profile names |
+| `ToyopucPlcProfiles.FromName(profile)` | resolve a canonical profile name |
 | `ToyopucDeviceCatalog.GetAreas(prefixed, profile)` | list usable areas for direct or prefixed access |
 | `ToyopucDeviceCatalog.GetAreaDescriptor(area, profile)` | get metadata for one area |
 | `ToyopucDeviceCatalog.GetSupportedRanges(area, prefixed, profile)` | get all implemented ranges for one area |
@@ -94,16 +94,16 @@ used by the resolver and high-level client.
 | Profile | `UseUpperUPc10` | `UseEbPc10` | `UseFrPc10` | `UseUpperBitPc10` | `UseUpperMBitPc10` |
 | --- | --- | --- | --- | --- | --- |
 | `Generic` | `true` | `true` | `true` | `true` | `true` |
-| `TOYOPUC-Plus:Plus Standard mode` | `false` | `false` | `false` | `false` | `false` |
-| `TOYOPUC-Plus:Plus Extended mode` | `false` | `false` | `false` | `false` | `false` |
-| `Nano 10GX:Nano 10GX mode` | `true` | `true` | `true` | `true` | `true` |
-| `Nano 10GX:Compatible mode` | `true` | `true` | `true` | `true` | `true` |
-| `PC10G:PC10 standard/PC3JG mode` | `false` | `true` | `false` | `false` | `false` |
-| `PC10G:PC10 mode` | `true` | `true` | `true` | `true` | `true` |
-| `PC3JX:PC3 separate mode` | `false` | `false` | `false` | `false` | `false` |
-| `PC3JX:Plus expansion mode` | `false` | `false` | `false` | `false` | `false` |
-| `PC3JG:PC3JG mode` | `false` | `true` | `false` | `false` | `false` |
-| `PC3JG:PC3 separate mode` | `false` | `false` | `false` | `false` | `false` |
+| `toyopuc:plus:standard` | `false` | `false` | `false` | `false` | `false` |
+| `toyopuc:plus:extended` | `false` | `false` | `false` | `false` | `false` |
+| `toyopuc:nano-10gx:native` | `true` | `true` | `true` | `true` | `true` |
+| `toyopuc:nano-10gx:compatible` | `true` | `true` | `true` | `true` | `true` |
+| `toyopuc:pc10g:standard-pc3jg` | `false` | `true` | `false` | `false` | `false` |
+| `toyopuc:pc10g:pc10` | `true` | `true` | `true` | `true` | `true` |
+| `toyopuc:pc3jx:pc3-separate` | `false` | `false` | `false` | `false` | `false` |
+| `toyopuc:pc3jx:plus-expansion` | `false` | `false` | `false` | `false` | `false` |
+| `toyopuc:pc3jg:pc3jg` | `false` | `true` | `false` | `false` | `false` |
+| `toyopuc:pc3jg:pc3-separate` | `false` | `false` | `false` | `false` | `false` |
 
 ## Area Metadata
 
@@ -120,13 +120,13 @@ used by the resolver and high-level client.
 These are short reminders only. For exact ranges, use the CSV or code.
 
 - `Generic` is the library superset. Basic families `P/K/V/T/C/L/X/Y/M/S/N/R/D` are prefixed-only, while `B` and extended families stay direct.
-- `TOYOPUC-Plus:Plus Standard mode` keeps prefixed basic families and lower extended families, but does not expose `B`, `U`, `GM/GX/GY`, `EB`, or `FR`.
-- `TOYOPUC-Plus:Plus Extended mode` keeps prefixed basic families and adds `GM/GX/GY` and lower `U`.
-- `Nano 10GX:Nano 10GX mode` and `Nano 10GX:Compatible mode` currently expose the same matrix in the library.
+- `toyopuc:plus:standard` keeps prefixed basic families and lower extended families, but does not expose `B`, `U`, `GM/GX/GY`, `EB`, or `FR`.
+- `toyopuc:plus:extended` keeps prefixed basic families and adds `GM/GX/GY` and lower `U`.
+- `toyopuc:nano-10gx:native` and `toyopuc:nano-10gx:compatible` currently expose the same matrix in the library.
 - On the verified `Nano 10GX` relay target, packed-word access aliases `ET` with `EC`, `EX` with `EY`, and `GX` with `GY`.
-- `PC10G:PC10 mode` keeps upper `P/V/T/C/L/M/S/N` segments.
-- `PC3JX:PC3 separate mode` keeps `B` but does not expose `GM/GX/GY`.
-- `PC3JG:PC3 separate mode` exposes `EB` without exposing `U`.
+- `toyopuc:pc10g:pc10` keeps upper `P/V/T/C/L/M/S/N` segments.
+- `toyopuc:pc3jx:pc3-separate` keeps `B` but does not expose `GM/GX/GY`.
+- `toyopuc:pc3jg:pc3-separate` exposes `EB` without exposing `U`.
 
 ## Monitor Behavior Rules
 
@@ -153,8 +153,8 @@ When changing supported ranges:
 
 | Step | Action |
 | --- | --- |
-| 1 | update `device_profile_matrix_r2.csv` if the reviewed matrix changed |
-| 2 | update `ToyopucDeviceProfiles` |
+| 1 | update `plc_profile_matrix_r2.csv` if the reviewed matrix changed |
+| 2 | update `ToyopucPlcProfiles` |
 | 3 | verify `ToyopucAddressingOptions` still matches the profile intent |
 | 4 | update [`../../tests/Toyopuc.Tests/AddressAndResolverTests.cs`](../../tests/Toyopuc.Tests/AddressAndResolverTests.cs) |
 | 5 | update this document |

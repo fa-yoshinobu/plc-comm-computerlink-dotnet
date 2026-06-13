@@ -4,7 +4,7 @@ Last updated: `2026-06-12`
 
 This document records the latest checked results per target. Verification dates are section-specific.
 
-Current profile rule: when `deviceProfile` / `--profile` is enforced, basic families `P/K/V/T/C/L/X/Y/M/S/N/R/D` are treated as prefixed-only. Raw log files are kept local and are not tracked in this repository.
+Current profile rule: when `plcProfile` / `--profile` is enforced, basic families `P/K/V/T/C/L/X/Y/M/S/N/R/D` are treated as prefixed-only. Raw log files are kept local and are not tracked in this repository.
 In command examples, `--log` / `--csv` / `--summary-json` paths are illustrative local paths.
 
 ## Environment
@@ -27,19 +27,19 @@ Connection:
 - host: `192.168.250.100`
 - port: `1025`
 - protocol: `tcp`
-- profile: `TOYOPUC-Plus:Plus Extended mode`
+- profile: `toyopuc:plus:extended`
 
 ### Read-only Suite
 
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --suite "TOYOPUC-Plus:Plus Extended mode" --verbose --log logs\plus_suite.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --suite "toyopuc:plus:extended" --verbose --log logs\plus_suite.log
 ```
 
 Result:
 
-- `summary : suite=TOYOPUC-Plus:Plus Extended mode ok=6 skip=3 ng=0`
+- `summary : suite=toyopuc:plus:extended ok=6 skip=3 ng=0`
 
 Verified points:
 
@@ -70,7 +70,7 @@ Verified: `2026-03-12`
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_plus_extended.csv --summary-json logs\bit_pattern_plus_extended.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_plus_extended.csv --summary-json logs\bit_pattern_plus_extended.json
 ```
 
 Observed result:
@@ -92,7 +92,7 @@ Accepted target-specific packed readback mismatches for this profile:
 Notes:
 
 - For these 15 points, readback differences are treated as target-specific behavior when restore succeeds.
-- The above 15 points are registered in `PlcComm.Toyopuc.BitPatternProbe` expected mismatch rules for `TOYOPUC-Plus:Plus Extended mode`.
+- The above 15 points are registered in `PlcComm.Toyopuc.BitPatternProbe` expected mismatch rules for `toyopuc:plus:extended`.
 
 ### Bit-to-packed Readback Probe Retest (`V/X/Y/EV`) + SocketError Follow-up
 
@@ -101,7 +101,7 @@ Verified: `2026-03-12`
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_plus_extended_vxyev.csv --summary-json logs\bit_pattern_plus_extended_vxyev.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_plus_extended_vxyev.csv --summary-json logs\bit_pattern_plus_extended_vxyev.json
 ```
 
 Observed result:
@@ -132,14 +132,14 @@ Verified: `2026-03-12`
 Commands:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --suite "TOYOPUC-Plus:Plus Extended mode" --verbose --log logs\plus_suite_regression_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --device P1-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\plus_word_restore_regression_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\plus_bit_restore_regression_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --suite "toyopuc:plus:extended" --verbose --log logs\plus_suite_regression_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --device P1-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\plus_word_restore_regression_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\plus_bit_restore_regression_20260312.log
 ```
 
 Observed result:
 
-- read-only suite: `summary : suite=TOYOPUC-Plus:Plus Extended mode ok=6 skip=3 ng=0`
+- read-only suite: `summary : suite=toyopuc:plus:extended ok=6 skip=3 ng=0`
 - `P1-D0000` write / verify / restore / recheck: `0x0000 -> 0x1234 -> 0x0000` (`OK`)
 - `P1-M0000` write / verify / restore / recheck: `0 -> 1 -> 0` (`OK`)
 - all three runs exited with code `0`
@@ -153,21 +153,21 @@ Connection:
 - host: `192.168.250.100`
 - port: `1025`
 - protocol: `tcp`
-- profile: `Nano 10GX:Compatible mode`
+- profile: `toyopuc:nano-10gx:compatible`
 - hops: `P1-L2:N4,P1-L2:N6,P1-L2:N2`
 
 Canonical commands:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target relay-10gx
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --suite "full:Nano 10GX:Compatible mode" --verbose --log logs\relay_suite_10gx_full_r2.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --suite "full:toyopuc:nano-10gx:compatible" --verbose --log logs\relay_suite_10gx_full_r2.log
 ```
 
 ### Summary
 
 - `run_validation.ps1 -Target relay-10gx`: `OK`
-- Standard suite: `summary : suite=Nano 10GX:Compatible mode ok=9 skip=0 ng=0`
-- Full generated suite: `summary : suite=full:Nano 10GX:Compatible mode ok=221 skip=0 ng=0`
+- Standard suite: `summary : suite=toyopuc:nano-10gx:compatible ok=9 skip=0 ng=0`
+- Full generated suite: `summary : suite=full:toyopuc:nano-10gx:compatible ok=221 skip=0 ng=0`
 - `2026-06-12` `P1-L1:N2` relay recheck: CPU status, `P1-D0000` read/write/readback, read count probe `1/8/16/32/64/128/256`, UDP relay read, and TCP+UDP simultaneous read-only stress were `OK`.
 - `2026-06-12` 30-minute relay write/readback soak: `1029` alternating writes to `P1-D0000` (`0x1111` / `0x2222`), `0` failures, final restore to `0x270F` verified.
 - Build + tests stayed green while fixing validation gaps:
@@ -181,7 +181,7 @@ Connection:
 - host: `192.168.250.100`
 - port: `1025`
 - protocol: `tcp`
-- profile: `Nano 10GX:Compatible mode`
+- profile: `toyopuc:nano-10gx:compatible`
 - hops: `P1-L1:N2`
 
 Observed results:
@@ -205,10 +205,10 @@ Interpretation:
 Short write probe:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x1111 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x1111.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x2222 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x2222.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x3333 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x3333.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x270F --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x270F.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x1111 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x1111.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x2222 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x2222.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x3333 --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x3333.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --hops "P1-L1:N2" --device P1-D0000 --write-value 0x270F --skip-clock-read --log logs\relay_p1_l1_n2_write_20260612_202542_0x270F.log
 ```
 
 Result:
@@ -351,7 +351,7 @@ Connection:
 - host: `192.168.250.100`
 - port: `1025`
 - protocol: `tcp`
-- profile: `PC10G:PC10 mode`
+- profile: `toyopuc:pc10g:pc10`
 
 ### Example Smoke / Soak Refresh
 
@@ -359,7 +359,7 @@ Verified: `2026-05-02`
 
 Scope:
 
-- direct TCP connection to PC10G in `PC10G:PC10 mode`
+- direct TCP connection to PC10G in `toyopuc:pc10g:pc10`
 - `MinimalRead` read-only sample
 - `SmokeTest` read-only full suite
 - `SmokeTest` restored word and bit writes
@@ -369,18 +369,18 @@ Commands:
 
 ```powershell
 dotnet build .\PlcComm.Toyopuc.sln -c Release
-dotnet run --project .\examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 "PC10G:PC10 mode"
-dotnet run --project .\examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "PC10G:PC10 mode" --suite "full:PC10G:PC10 mode" --verbose --log logs\pc10g_suite_20260502_153036.log
-dotnet run --project .\examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "PC10G:PC10 mode" --device P1-D0100 --write-value 0x1234 --restore-after-write --verbose --log logs\pc10g_word_restore_20260502_153036.log
-dotnet run --project .\examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "PC10G:PC10 mode" --device P1-M0000 --toggle-bit-write --restore-after-write --verbose --log logs\pc10g_bit_restore_20260502_153036.log
-dotnet run --project .\examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "PC10G:PC10 mode" --devices P1-D0000,P1-D0100,P1-M0000 --interval 1s --duration 60s --success-log-interval 15 --log logs\pc10g_soak_20260502_153036.log --poll-csv logs\pc10g_soak_20260502_153036.csv --summary-json logs\pc10g_soak_20260502_153036.json
+dotnet run --project .\examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 "toyopuc:pc10g:pc10"
+dotnet run --project .\examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:pc10g:pc10" --suite "full:toyopuc:pc10g:pc10" --verbose --log logs\pc10g_suite_20260502_153036.log
+dotnet run --project .\examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:pc10g:pc10" --device P1-D0100 --write-value 0x1234 --restore-after-write --verbose --log logs\pc10g_word_restore_20260502_153036.log
+dotnet run --project .\examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:pc10g:pc10" --device P1-M0000 --toggle-bit-write --restore-after-write --verbose --log logs\pc10g_bit_restore_20260502_153036.log
+dotnet run --project .\examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:pc10g:pc10" --devices P1-D0000,P1-D0100,P1-M0000 --interval 1s --duration 60s --success-log-interval 15 --log logs\pc10g_soak_20260502_153036.log --poll-csv logs\pc10g_soak_20260502_153036.csv --summary-json logs\pc10g_soak_20260502_153036.json
 ```
 
 Result:
 
 - release build: `OK` (0 warnings, 0 errors)
 - minimal sample: CPU status, clock, and `P1-D0000` read `OK`
-- full suite: `summary : suite=full:PC10G:PC10 mode ok=212 skip=0 ng=0`
+- full suite: `summary : suite=full:toyopuc:pc10g:pc10 ok=212 skip=0 ng=0`
 - restored word write: `P1-D0100 0x0000 -> 0x1234 -> 0x0000` (`OK`)
 - restored bit write: `P1-M0000 0 -> 1 -> 0` (`OK`)
 - 60-second soak: `stop=duration-complete polls=60 ok=60 ng=0 reconnects=0 sessions=1`
@@ -394,10 +394,10 @@ powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target pc1
 ### Summary
 
 - `run_validation.ps1 -Target pc10g-direct`: `OK`
-- Read-only suite: `summary : suite=PC10G:PC10 mode ok=212 skip=0 ng=0`
+- Read-only suite: `summary : suite=toyopuc:pc10g:pc10 ok=212 skip=0 ng=0`
 - Read-only suite rerun on `2026-04-30` after scan-control and split-range formatter changes:
-  - command: `dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC10G:PC10 mode" --suite "PC10G:PC10 mode" --timeout 5 --retries 3 --verbose --log logs\pc10g_pc10_mode_suite_20260430.log`
-  - result: `summary : suite=PC10G:PC10 mode ok=212 skip=0 ng=0`
+  - command: `dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc10g:pc10" --suite "toyopuc:pc10g:pc10" --timeout 5 --retries 3 --verbose --log logs\pc10g_pc10_mode_suite_20260430.log`
+  - result: `summary : suite=toyopuc:pc10g:pc10 ok=212 skip=0 ng=0`
   - CPU status before suite: `42 00 00 00 00 00 00 00`
   - PC10 flags: `upper-u=on eb=on fr=on`
   - split-range probes such as `P1-P0000`, `P1-P01FF`, `P1-P1000`, `P1-P17FF`, `P1-S0000`, `P1-S03FF`, `P1-S1000`, and `P1-S13FF` completed `OK`
@@ -408,10 +408,10 @@ powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target pc1
   - CPU status: before `42 00 00 00 00 00 00 00`, after stop `62 00 00 00 00 00 00 00`, after resume `82 00 00 00 00 00 00 0E`
   - log: `logs\pc10g_pc10_mode_scan_control_20260430.log`
 - Short soak rerun on `2026-04-30`:
-  - command: `dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC10G:PC10 mode" --devices P1-D0000,P1-P01F0,P1-P1000,P1-S03F0,P1-S1000,EB00000 --interval 1s --duration 2m --retries 3 --success-log-interval 30 --log logs\pc10g_pc10_mode_soak_2m_20260430.log --poll-csv logs\pc10g_pc10_mode_soak_2m_20260430.csv --summary-json logs\pc10g_pc10_mode_soak_2m_20260430.json`
+  - command: `dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc10g:pc10" --devices P1-D0000,P1-P01F0,P1-P1000,P1-S03F0,P1-S1000,EB00000 --interval 1s --duration 2m --retries 3 --success-log-interval 30 --log logs\pc10g_pc10_mode_soak_2m_20260430.log --poll-csv logs\pc10g_pc10_mode_soak_2m_20260430.csv --summary-json logs\pc10g_pc10_mode_soak_2m_20260430.json`
   - result: `stop=duration-complete polls=120 ok=120 ng=0 reconnects=0 sessions=1 elapsed=02:00`
   - sampled devices included split-range boundary points `P1-P01F0`, `P1-P1000`, `P1-S03F0`, and `P1-S1000`
-- `device_profile_matrix_r2.csv` correction for `M` was confirmed in code and on hardware
+- `plc_profile_matrix_r2.csv` correction for `M` was confirmed in code and on hardware
   - `P1-M1000`, `P1-M17FF`, `P1-M100W`
   - `P2-M1000`, `P3-M1000`
 - Direct sequential read count limit was measured on hardware
@@ -428,7 +428,7 @@ powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target pc1
   - failure mode at the first failing count: connection drop / `Socket error`
   - safe rerun on `2026-03-12` re-read the PLC after each failing write count and observed `0` changed words for all four targets
 - Bit-to-packed readback probe across sampled starts
-  - command: `dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --profile "PC10G:PC10 mode"`
+  - command: `dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --profile "toyopuc:pc10g:pc10"`
   - sampled scope: `P/K/V/T/C/L/X/Y/M` for `P1/P2/P3`, plus `EP/EK/EV/ET/EC/EL/EX/EY/EM/GM/GX/GY`
   - result: `385` strict `OK`, `5` expected mismatches, `0` unexpected failures
   - logs: `logs\bit_pattern_pc10g_direct_20260312_r2.csv`, `logs\bit_pattern_pc10g_direct_20260312_r2.json`
@@ -534,12 +534,12 @@ Timeout and malformed-response handling were also checked against local stub ser
 
 ### Negative Checks
 
-- `M1800` -> `Address out of range for profile 'PC10G:PC10 mode': M1800`
-- `P1-M1800` -> `Address out of range for profile 'PC10G:PC10 mode': P1-M1800`
-- `U20000` -> `Address out of range for profile 'PC10G:PC10 mode': U20000`
-- `EB40000` -> `Address out of range for profile 'PC10G:PC10 mode': EB40000`
-- `P1-D3000` -> `Address out of range for profile 'PC10G:PC10 mode': P1-D3000`
-- `FR200000` -> `Address out of range for profile 'PC10G:PC10 mode': FR200000`
+- `M1800` -> `Address out of range for profile 'toyopuc:pc10g:pc10': M1800`
+- `P1-M1800` -> `Address out of range for profile 'toyopuc:pc10g:pc10': P1-M1800`
+- `U20000` -> `Address out of range for profile 'toyopuc:pc10g:pc10': U20000`
+- `EB40000` -> `Address out of range for profile 'toyopuc:pc10g:pc10': EB40000`
+- `P1-D3000` -> `Address out of range for profile 'toyopuc:pc10g:pc10': P1-D3000`
+- `FR200000` -> `Address out of range for profile 'toyopuc:pc10g:pc10': FR200000`
 
 
 
@@ -552,17 +552,17 @@ Connection:
 - host: `192.168.250.100`
 - port: `1025`
 - protocol: `tcp`
-- profile: `PC10G:PC10 standard/PC3JG mode`
+- profile: `toyopuc:pc10g:standard-pc3jg`
 
 Canonical command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC10G:PC10 standard/PC3JG mode" --suite "PC10G:PC10 standard/PC3JG mode" --verbose --log logs\pc10g_std_pc3jg_suite_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc10g:standard-pc3jg" --suite "toyopuc:pc10g:standard-pc3jg" --verbose --log logs\pc10g_std_pc3jg_suite_20260312.log
 ```
 
 ### Summary
 
-- Read-only suite: `summary : suite=PC10G:PC10 standard/PC3JG mode ok=166 skip=0 ng=0`
+- Read-only suite: `summary : suite=toyopuc:pc10g:standard-pc3jg ok=166 skip=0 ng=0`
 - safe write / verify / restore `OK` on stable word targets
   - `P1-D0000`
   - `P1-D0FF0 count=0x10`
@@ -599,7 +599,7 @@ dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.10
 
 ### Acceptance Notes
 
-- `FR` is not supported in this profile. `FR000000` returns `Unknown area for profile 'PC10G:PC10 standard/PC3JG mode': FR`.
+- `FR` is not supported in this profile. `FR000000` returns `Unknown area for profile 'toyopuc:pc10g:standard-pc3jg': FR`.
 - `V` is not treated as a strict bit write / readback target on this PLC/profile.
   - `P1-V0000`, `P2-V0000`, and `P3-V0000` bit writes returned `verify mismatch`
   - factual packed reads at the same start were `P1-V000W = 0x0058`, `P2-V000W = 0x0058`, `P3-V000W = 0x0058`
@@ -616,19 +616,19 @@ Connection:
 - host: `192.168.250.100`
 - port: `1025`
 - protocol: `tcp`
-- profile: `PC3JX:Plus expansion mode`
+- profile: `toyopuc:pc3jx:plus-expansion`
 
 Canonical commands:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --suite "PC3JX:Plus expansion mode" --verbose --log logs\pc3jx_plus_expansion_suite_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_word_restore_20260312_rerun.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_bit_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --suite "toyopuc:pc3jx:plus-expansion" --verbose --log logs\pc3jx_plus_expansion_suite_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_word_restore_20260312_rerun.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_bit_restore_20260312.log
 ```
 
 ### Summary
 
-- Read-only suite: `summary : suite=PC3JX:Plus expansion mode ok=158 skip=0 ng=0`
+- Read-only suite: `summary : suite=toyopuc:pc3jx:plus-expansion ok=158 skip=0 ng=0`
 - word write / verify / restore `OK`: `P1-D0000` (`0x0000 -> 0x1234 -> 0x0000`)
 - bit write / verify / restore `OK`: `P1-M0000` (`0 -> 1 -> 0`)
 
@@ -637,7 +637,7 @@ dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.10
 Bit-to-packed readback probe (`V/X/Y/EV`):
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.csv --summary-json logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.csv --summary-json logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.json
 ```
 
 - summary: `ok=90 expected=0 total=90/100 failed=10`
@@ -652,10 +652,10 @@ dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.
 Prefix expansion write / restore (`P2/P3`):
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P2-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_d0000_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P3-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_d0000_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P2-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_m0000_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P3-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_m0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P2-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_d0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P3-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_d0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P2-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_m0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P3-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_m0000_restore_20260312.log
 ```
 
 - `P2-D0000`, `P3-D0000`: verify/recheck `OK`
@@ -664,9 +664,9 @@ dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.10
 Byte / packed-word write / restore:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-D0000L --write-value 0x34 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000l_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-D0000H --write-value 0x12 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000h_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-M000W --write-value 0xA55A --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_m000w_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-D0000L --write-value 0x34 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000l_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-D0000H --write-value 0x12 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000h_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-M000W --write-value 0xA55A --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_m000w_restore_20260312.log
 ```
 
 - `P1-D0000L`, `P1-D0000H`, `P1-M000W`: verify/recheck `OK`
@@ -685,20 +685,20 @@ Connection:
 - host: `192.168.250.100`
 - port: `1025`
 - protocol: `tcp`
-- profile: `Nano 10GX:Compatible mode`
+- profile: `toyopuc:nano-10gx:compatible`
 - relay hops: none (direct)
 
 Canonical commands:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --suite "Nano 10GX:Compatible mode" --timeout 5 --retries 3 --verbose --log logs\nano10gx_compatible_direct_suite_20260312_r3.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --device P1-D0000 --write-value 0x1357 --restore-after-write --timeout 5 --retries 3 --verbose --log logs\nano10gx_compatible_direct_word_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --device P1-M0000 --write-value 1 --restore-after-write --timeout 5 --retries 3 --verbose --log logs\nano10gx_compatible_direct_bit_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --suite "toyopuc:nano-10gx:compatible" --timeout 5 --retries 3 --verbose --log logs\nano10gx_compatible_direct_suite_20260312_r3.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --device P1-D0000 --write-value 0x1357 --restore-after-write --timeout 5 --retries 3 --verbose --log logs\nano10gx_compatible_direct_word_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --device P1-M0000 --write-value 1 --restore-after-write --timeout 5 --retries 3 --verbose --log logs\nano10gx_compatible_direct_bit_restore_20260312.log
 ```
 
 ### Summary
 
-- read-only suite: `summary : suite=Nano 10GX:Compatible mode ok=9 skip=0 ng=0`
+- read-only suite: `summary : suite=toyopuc:nano-10gx:compatible ok=9 skip=0 ng=0`
 - `P1-D0000` write / verify / restore / recheck: `0x0000 -> 0x1357 -> 0x0000` (`OK`)
 - `P1-M0000` write / verify / restore / recheck: `0 -> 1 -> 0` (`OK`)
 - prefix expansion checks:
@@ -757,7 +757,7 @@ Note:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_nano10gx_compatible_direct_vxyev_20260312.csv --summary-json logs\bit_pattern_nano10gx_compatible_direct_vxyev_20260312.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_nano10gx_compatible_direct_vxyev_20260312.csv --summary-json logs\bit_pattern_nano10gx_compatible_direct_vxyev_20260312.json
 ```
 
 Observed result:
@@ -781,13 +781,13 @@ Scope:
 Representative commands:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --device P1-D0000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_p1d_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 8 --retries 3 --profile "Nano 10GX:Compatible mode" --device P1-D0000 --probe-counts 624,630,640,700,800 --log logs\nano10gx_compatible_direct_probecounts_p1d_mid_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 8 --retries 3 --profile "Nano 10GX:Compatible mode" --device P1-D0000 --probe-counts 631,632,633,634,635,636,637,638,639 --log logs\nano10gx_compatible_direct_probecounts_p1d_edge_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --device U00000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_u00000_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --device U08000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_u08000_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --device EB00000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_eb00000_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "Nano 10GX:Compatible mode" --device FR000000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_fr000000_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --device P1-D0000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_p1d_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 8 --retries 3 --profile "toyopuc:nano-10gx:compatible" --device P1-D0000 --probe-counts 624,630,640,700,800 --log logs\nano10gx_compatible_direct_probecounts_p1d_mid_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 8 --retries 3 --profile "toyopuc:nano-10gx:compatible" --device P1-D0000 --probe-counts 631,632,633,634,635,636,637,638,639 --log logs\nano10gx_compatible_direct_probecounts_p1d_edge_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --device U00000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_u00000_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --device U08000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_u08000_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --device EB00000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_eb00000_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --timeout 5 --retries 3 --profile "toyopuc:nano-10gx:compatible" --device FR000000 --probe-counts 620,621,622,623 --log logs\nano10gx_compatible_direct_probecounts_fr000000_20260312.log
 ```
 
 Observed result:
@@ -804,7 +804,7 @@ Observed result:
 
 Current conclusion:
 
-- direct `Nano 10GX:Compatible mode` supports at least `count=623` for all tested representative areas.
+- direct `toyopuc:nano-10gx:compatible` supports at least `count=623` for all tested representative areas.
 - `P1-D0000` showed a provisional edge at `634` success and `>=635` unstable/failing behavior in this run window.
 - final maximum-length conclusion is pending a rerun after the direct line is stable.
 
@@ -820,7 +820,7 @@ Verified: `2026-03-10`
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 "TOYOPUC-Plus:Plus Extended mode"
+dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 "toyopuc:plus:extended"
 ```
 
 Result:
@@ -869,9 +869,9 @@ Result:
 
 Profiles reserved for later validation:
 
-- `TOYOPUC-Plus:Plus Standard mode`
-- `Nano 10GX:Nano 10GX mode`
-- `PC3JX:PC3 separate mode`
-- `PC3JG:PC3JG mode`
-- `PC3JG:PC3 separate mode`
+- `toyopuc:plus:standard`
+- `toyopuc:nano-10gx:native`
+- `toyopuc:pc3jx:pc3-separate`
+- `toyopuc:pc3jg:pc3jg`
+- `toyopuc:pc3jg:pc3-separate`
 

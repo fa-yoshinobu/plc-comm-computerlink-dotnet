@@ -1,5 +1,5 @@
 {
-  "source_base_path": "D:/PLC_COMM_PROJ/plc-comm-computerlink-dotnet",
+  "source_base_path": "D:/_github_plc/plc-comm-computerlink-dotnet",
   "xrefmap": "xrefmap.yml",
   "files": [
     {
@@ -16,6 +16,46 @@
       "output": {
         ".html": {
           "relative_path": "README.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "RELEASING.md",
+      "output": {
+        ".html": {
+          "relative_path": "RELEASING.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docsrc/user/GETTING_STARTED.md",
+      "output": {
+        ".html": {
+          "relative_path": "user/GETTING_STARTED.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docsrc/user/LATEST_COMMUNICATION_VERIFICATION.md",
+      "output": {
+        ".html": {
+          "relative_path": "user/LATEST_COMMUNICATION_VERIFICATION.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docsrc/user/SUPPORTED_REGISTERS.md",
+      "output": {
+        ".html": {
+          "relative_path": "user/SUPPORTED_REGISTERS.html"
         }
       },
       "version": ""
@@ -61,7 +101,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ClockData.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ClockData",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -71,7 +115,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.CpuStatusData.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.CpuStatusData",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -81,7 +129,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ExNoAddress32.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ExNoAddress32",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -91,7 +143,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ExtNoAddress.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ExtNoAddress",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -101,7 +157,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ParsedAddress.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ParsedAddress",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -111,7 +171,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.QueuedToyopucDeviceClient.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.QueuedToyopucDeviceClient",
+      "Summary": "<p sourcefile=\"obj/api/PlcComm.Toyopuc.QueuedToyopucDeviceClient.yml\" sourcestartlinenumber=\"1\">A wrapper for <xref href=\"PlcComm.Toyopuc.ToyopucDeviceClient\" data-throw-if-not-resolved=\"false\"></xref> that serializes compound async operations.</p>\n"
     },
     {
       "type": "ManagedReference",
@@ -121,7 +185,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.RelayLayer.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.RelayLayer",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -131,7 +199,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ResolvedDevice.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ResolvedDevice",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -141,7 +213,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ResponseFrame.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ResponseFrame",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -151,7 +227,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAddress.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucAddress",
+      "Summary": "<p sourcefile=\"obj/api/PlcComm.Toyopuc.ToyopucAddress.yml\" sourcestartlinenumber=\"1\">Public helpers for TOYOPUC address parsing, formatting, normalization, and low-level encoding.</p>\n"
     },
     {
       "type": "ManagedReference",
@@ -161,7 +241,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAddressRange.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucAddressRange",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -171,7 +255,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAddressingOptions.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucAddressingOptions",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -181,7 +269,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucAreaDescriptor.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucAreaDescriptor",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -191,7 +283,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucClient.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucClient",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -201,7 +297,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucConnectionOptions.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucConnectionOptions",
+      "Summary": "<p sourcefile=\"obj/api/PlcComm.Toyopuc.ToyopucConnectionOptions.yml\" sourcestartlinenumber=\"1\">Explicit connection options for a stable TOYOPUC device session.</p>\n"
     },
     {
       "type": "ManagedReference",
@@ -211,7 +311,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceCatalog.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucDeviceCatalog",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -221,7 +325,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceClient.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucDeviceClient",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -231,7 +339,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceClientExtensions.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucDeviceClientExtensions",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -241,27 +353,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceClientFactory.html"
         }
       },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceProfile.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceProfile.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucDeviceProfiles.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceProfiles.html"
-        }
-      },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucDeviceClientFactory",
+      "Summary": "<p sourcefile=\"obj/api/PlcComm.Toyopuc.ToyopucDeviceClientFactory.yml\" sourcestartlinenumber=\"1\">Factory helpers for creating connected queued TOYOPUC clients.</p>\n"
     },
     {
       "type": "ManagedReference",
@@ -271,7 +367,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucDeviceResolver.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucDeviceResolver",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -281,7 +381,39 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucError.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucError",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucPlcProfile.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucPlcProfile.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucPlcProfile",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "obj/api/PlcComm.Toyopuc.ToyopucPlcProfiles.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucPlcProfiles.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucPlcProfiles",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -291,7 +423,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucProtocol.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucProtocol",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -301,7 +437,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucProtocolError.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucProtocolError",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -311,7 +451,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucRelay.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucRelay",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -321,7 +465,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTimeoutError.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucTimeoutError",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -331,7 +479,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTraceDirection.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucTraceDirection",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -341,7 +493,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTraceFrame.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucTraceFrame",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -351,7 +507,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.ToyopucTransportMode.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.ToyopucTransportMode",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -361,7 +521,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.TransportTraceFrame.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc.TransportTraceFrame",
+      "Summary": null
     },
     {
       "type": "ManagedReference",
@@ -371,7 +535,11 @@
           "relative_path": "api/obj/api/PlcComm.Toyopuc.html"
         }
       },
-      "version": ""
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "PlcComm.Toyopuc",
+      "Summary": null
     },
     {
       "type": "Toc",

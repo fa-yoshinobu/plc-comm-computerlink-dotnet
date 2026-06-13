@@ -108,7 +108,7 @@ On top of that client, use these high-level helpers when they match your task:</
 var options = new ToyopucConnectionOptions(&quot;192.168.250.100&quot;)
 {
     Port = 1025,
-    DeviceProfile = &quot;TOYOPUC-Plus:Plus Extended mode&quot;,
+    PlcProfile = &quot;toyopuc:plus:extended&quot;,
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
@@ -131,9 +131,9 @@ device family such as <code>D</code>, <code>M</code>, <code>ES</code>, <code>FR<
 <li><code>Address</code>
 decimal or hexadecimal device number</li>
 </ul>
-<p>When a profile is in use, basic families <code>P/K/V/T/C/L/X/Y/M/S/N/R/D</code> should be written as <code>P1-*</code>, <code>P2-*</code>, or <code>P3-*</code>.</p>
+<p>Basic families <code>P/K/V/T/C/L/X/Y/M/S/N/R/D</code> must be written as <code>P1-*</code>, <code>P2-*</code>, or <code>P3-*</code>.</p>
 <p>Use <code>ToyopucAddress.Normalize</code> when you want a stable string form:</p>
-<pre><code class="lang-csharp">string canonical = ToyopucAddress.Normalize(&quot;p1-d0000&quot;, profile: &quot;TOYOPUC-Plus:Plus Extended mode&quot;);
+<pre><code class="lang-csharp">string canonical = ToyopucAddress.Normalize(&quot;p1-d0000&quot;, profile: &quot;toyopuc:plus:extended&quot;);
 Console.WriteLine(canonical); // P1-D0000
 </code></pre>
 <h3 id="common-device-families">Common Device Families</h3>

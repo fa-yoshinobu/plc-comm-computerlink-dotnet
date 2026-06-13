@@ -1,79 +1,100 @@
 ### YamlMime:TableOfContent
 items:
-- uid: Toyopuc
-  name: Toyopuc
+- uid: PlcComm.Toyopuc
+  name: PlcComm.Toyopuc
   type: Namespace
   items:
-  - uid: Toyopuc.ClockData
+  - uid: PlcComm.Toyopuc.ClockData
     name: ClockData
     type: Class
-  - uid: Toyopuc.CpuStatusData
+  - uid: PlcComm.Toyopuc.CpuStatusData
     name: CpuStatusData
     type: Class
-  - uid: Toyopuc.ExNoAddress32
+  - uid: PlcComm.Toyopuc.ExNoAddress32
     name: ExNoAddress32
     type: Class
-  - uid: Toyopuc.ExtNoAddress
+  - uid: PlcComm.Toyopuc.ExtNoAddress
     name: ExtNoAddress
     type: Class
-  - uid: Toyopuc.ParsedAddress
+  - uid: PlcComm.Toyopuc.ParsedAddress
     name: ParsedAddress
     type: Class
-  - uid: Toyopuc.RelayLayer
+  - uid: PlcComm.Toyopuc.QueuedToyopucDeviceClient
+    name: QueuedToyopucDeviceClient
+    type: Class
+  - uid: PlcComm.Toyopuc.RelayLayer
     name: RelayLayer
     type: Class
-  - uid: Toyopuc.ResolvedDevice
+  - uid: PlcComm.Toyopuc.ResolvedDevice
     name: ResolvedDevice
     type: Class
-  - uid: Toyopuc.ResponseFrame
+  - uid: PlcComm.Toyopuc.ResponseFrame
     name: ResponseFrame
     type: Class
-  - uid: Toyopuc.ToyopucAddress
+  - uid: PlcComm.Toyopuc.ToyopucAddress
     name: ToyopucAddress
     type: Class
-  - uid: Toyopuc.ToyopucAddressRange
+  - uid: PlcComm.Toyopuc.ToyopucAddressRange
     name: ToyopucAddressRange
     type: Class
-  - uid: Toyopuc.ToyopucAddressingOptions
+  - uid: PlcComm.Toyopuc.ToyopucAddressingOptions
     name: ToyopucAddressingOptions
     type: Class
-  - uid: Toyopuc.ToyopucAreaDescriptor
+  - uid: PlcComm.Toyopuc.ToyopucAreaDescriptor
     name: ToyopucAreaDescriptor
     type: Class
-  - uid: Toyopuc.ToyopucClient
+  - uid: PlcComm.Toyopuc.ToyopucClient
     name: ToyopucClient
     type: Class
-  - uid: Toyopuc.ToyopucDeviceCatalog
+  - uid: PlcComm.Toyopuc.ToyopucConnectionOptions
+    name: ToyopucConnectionOptions
+    type: Class
+  - uid: PlcComm.Toyopuc.ToyopucDeviceCatalog
     name: ToyopucDeviceCatalog
     type: Class
-  - uid: Toyopuc.ToyopucDeviceClient
+  - uid: PlcComm.Toyopuc.ToyopucDeviceClient
     name: ToyopucDeviceClient
     type: Class
-  - uid: Toyopuc.ToyopucDeviceProfile
-    name: ToyopucDeviceProfile
+  - uid: PlcComm.Toyopuc.ToyopucDeviceClientExtensions
+    name: ToyopucDeviceClientExtensions
     type: Class
-  - uid: Toyopuc.ToyopucDeviceProfiles
-    name: ToyopucDeviceProfiles
+  - uid: PlcComm.Toyopuc.ToyopucDeviceClientFactory
+    name: ToyopucDeviceClientFactory
     type: Class
-  - uid: Toyopuc.ToyopucDeviceResolver
+  - uid: PlcComm.Toyopuc.ToyopucDeviceResolver
     name: ToyopucDeviceResolver
     type: Class
-  - uid: Toyopuc.ToyopucError
+  - uid: PlcComm.Toyopuc.ToyopucError
     name: ToyopucError
     type: Class
-  - uid: Toyopuc.ToyopucProtocol
+  - uid: PlcComm.Toyopuc.ToyopucPlcProfile
+    name: ToyopucPlcProfile
+    type: Class
+  - uid: PlcComm.Toyopuc.ToyopucPlcProfiles
+    name: ToyopucPlcProfiles
+    type: Class
+  - uid: PlcComm.Toyopuc.ToyopucProtocol
     name: ToyopucProtocol
     type: Class
-  - uid: Toyopuc.ToyopucProtocolError
+  - uid: PlcComm.Toyopuc.ToyopucProtocolError
     name: ToyopucProtocolError
     type: Class
-  - uid: Toyopuc.ToyopucRelay
+  - uid: PlcComm.Toyopuc.ToyopucRelay
     name: ToyopucRelay
     type: Class
-  - uid: Toyopuc.ToyopucTimeoutError
+  - uid: PlcComm.Toyopuc.ToyopucTimeoutError
     name: ToyopucTimeoutError
     type: Class
-  - uid: Toyopuc.TransportTraceFrame
+  - uid: PlcComm.Toyopuc.ToyopucTraceDirection
+    name: ToyopucTraceDirection
+    type: Enum
+  - uid: PlcComm.Toyopuc.ToyopucTraceFrame
+    name: ToyopucTraceFrame
+    type: Class
+  - uid: PlcComm.Toyopuc.ToyopucTransportMode
+    name: ToyopucTransportMode
+    type: Enum
+  - uid: PlcComm.Toyopuc.TransportTraceFrame
     name: TransportTraceFrame
     type: Class
 memberLayout: SamePage

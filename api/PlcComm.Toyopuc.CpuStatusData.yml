@@ -1,0 +1,2220 @@
+### YamlMime:ManagedReference
+items:
+- uid: PlcComm.Toyopuc.CpuStatusData
+  commentId: T:PlcComm.Toyopuc.CpuStatusData
+  id: CpuStatusData
+  parent: PlcComm.Toyopuc
+  children:
+  - PlcComm.Toyopuc.CpuStatusData.#ctor(System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte)
+  - PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun
+  - PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo
+  - PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister
+  - PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo
+  - PlcComm.Toyopuc.CpuStatusData.Alarm
+  - PlcComm.Toyopuc.CpuStatusData.Data1
+  - PlcComm.Toyopuc.CpuStatusData.Data2
+  - PlcComm.Toyopuc.CpuStatusData.Data3
+  - PlcComm.Toyopuc.CpuStatusData.Data4
+  - PlcComm.Toyopuc.CpuStatusData.Data5
+  - PlcComm.Toyopuc.CpuStatusData.Data6
+  - PlcComm.Toyopuc.CpuStatusData.Data7
+  - PlcComm.Toyopuc.CpuStatusData.Data8
+  - PlcComm.Toyopuc.CpuStatusData.DebugMode
+  - PlcComm.Toyopuc.CpuStatusData.EnableDetected
+  - PlcComm.Toyopuc.CpuStatusData.FaintFailure
+  - PlcComm.Toyopuc.CpuStatusData.FatalFailure
+  - PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered
+  - PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode
+  - PlcComm.Toyopuc.CpuStatusData.IoOffline
+  - PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation
+  - PlcComm.Toyopuc.CpuStatusData.OneBlockStep
+  - PlcComm.Toyopuc.CpuStatusData.OneInstructionStep
+  - PlcComm.Toyopuc.CpuStatusData.OneScanStep
+  - PlcComm.Toyopuc.CpuStatusData.Pc10Mode
+  - PlcComm.Toyopuc.CpuStatusData.Pc3Mode
+  - PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace
+  - PlcComm.Toyopuc.CpuStatusData.Program1Running
+  - PlcComm.Toyopuc.CpuStatusData.Program2Running
+  - PlcComm.Toyopuc.CpuStatusData.Program3Running
+  - PlcComm.Toyopuc.CpuStatusData.RawBytes
+  - PlcComm.Toyopuc.CpuStatusData.RawBytesHex
+  - PlcComm.Toyopuc.CpuStatusData.RawHex
+  - PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo
+  - PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory
+  - PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting
+  - PlcComm.Toyopuc.CpuStatusData.Run
+  - PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace
+  - PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting
+  - PlcComm.Toyopuc.CpuStatusData.Trace
+  - PlcComm.Toyopuc.CpuStatusData.TriggerDetected
+  - PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop
+  - PlcComm.Toyopuc.CpuStatusData.UnderStop
+  - PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity
+  - PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun
+  - PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister
+  - PlcComm.Toyopuc.CpuStatusData.WithMemoryCard
+  - PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo
+  - PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo
+  - PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo
+  - PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory
+  langs:
+  - csharp
+  - vb
+  name: CpuStatusData
+  nameWithType: CpuStatusData
+  fullName: PlcComm.Toyopuc.CpuStatusData
+  type: Class
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: CpuStatusData
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 32
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public sealed class CpuStatusData
+    content.vb: Public NotInheritable Class CpuStatusData
+  inheritance:
+  - System.Object
+  inheritedMembers:
+  - System.Object.Equals(System.Object)
+  - System.Object.Equals(System.Object,System.Object)
+  - System.Object.GetHashCode
+  - System.Object.GetType
+  - System.Object.ReferenceEquals(System.Object,System.Object)
+  - System.Object.ToString
+- uid: PlcComm.Toyopuc.CpuStatusData.#ctor(System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte)
+  commentId: M:PlcComm.Toyopuc.CpuStatusData.#ctor(System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte)
+  id: '#ctor(System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte,System.Byte)'
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: CpuStatusData(byte, byte, byte, byte, byte, byte, byte, byte)
+  nameWithType: CpuStatusData.CpuStatusData(byte, byte, byte, byte, byte, byte, byte, byte)
+  fullName: PlcComm.Toyopuc.CpuStatusData.CpuStatusData(byte, byte, byte, byte, byte, byte, byte, byte)
+  type: Constructor
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: .ctor
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 34
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public CpuStatusData(byte data1, byte data2, byte data3, byte data4, byte data5, byte data6, byte data7, byte data8)
+    parameters:
+    - id: data1
+      type: System.Byte
+    - id: data2
+      type: System.Byte
+    - id: data3
+      type: System.Byte
+    - id: data4
+      type: System.Byte
+    - id: data5
+      type: System.Byte
+    - id: data6
+      type: System.Byte
+    - id: data7
+      type: System.Byte
+    - id: data8
+      type: System.Byte
+    content.vb: Public Sub New(data1 As Byte, data2 As Byte, data3 As Byte, data4 As Byte, data5 As Byte, data6 As Byte, data7 As Byte, data8 As Byte)
+  overload: PlcComm.Toyopuc.CpuStatusData.#ctor*
+  nameWithType.vb: CpuStatusData.New(Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
+  fullName.vb: PlcComm.Toyopuc.CpuStatusData.New(Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
+  name.vb: New(Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
+- uid: PlcComm.Toyopuc.CpuStatusData.Data1
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data1
+  id: Data1
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data1
+  nameWithType: CpuStatusData.Data1
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data1
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data1
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 54
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data1 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data1 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data1*
+- uid: PlcComm.Toyopuc.CpuStatusData.Data2
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data2
+  id: Data2
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data2
+  nameWithType: CpuStatusData.Data2
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data2
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data2
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 55
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data2 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data2 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data2*
+- uid: PlcComm.Toyopuc.CpuStatusData.Data3
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data3
+  id: Data3
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data3
+  nameWithType: CpuStatusData.Data3
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data3
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data3
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 56
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data3 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data3 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data3*
+- uid: PlcComm.Toyopuc.CpuStatusData.Data4
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data4
+  id: Data4
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data4
+  nameWithType: CpuStatusData.Data4
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data4
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data4
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 57
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data4 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data4 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data4*
+- uid: PlcComm.Toyopuc.CpuStatusData.Data5
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data5
+  id: Data5
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data5
+  nameWithType: CpuStatusData.Data5
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data5
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data5
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 58
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data5 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data5 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data5*
+- uid: PlcComm.Toyopuc.CpuStatusData.Data6
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data6
+  id: Data6
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data6
+  nameWithType: CpuStatusData.Data6
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data6
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data6
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 59
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data6 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data6 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data6*
+- uid: PlcComm.Toyopuc.CpuStatusData.Data7
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data7
+  id: Data7
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data7
+  nameWithType: CpuStatusData.Data7
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data7
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data7
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 60
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data7 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data7 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data7*
+- uid: PlcComm.Toyopuc.CpuStatusData.Data8
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Data8
+  id: Data8
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Data8
+  nameWithType: CpuStatusData.Data8
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data8
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Data8
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 61
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte Data8 { get; }
+    parameters: []
+    return:
+      type: System.Byte
+    content.vb: Public ReadOnly Property Data8 As Byte
+  overload: PlcComm.Toyopuc.CpuStatusData.Data8*
+- uid: PlcComm.Toyopuc.CpuStatusData.RawBytes
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.RawBytes
+  id: RawBytes
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: RawBytes
+  nameWithType: CpuStatusData.RawBytes
+  fullName: PlcComm.Toyopuc.CpuStatusData.RawBytes
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: RawBytes
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 63
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public byte[] RawBytes { get; }
+    parameters: []
+    return:
+      type: System.Byte[]
+    content.vb: Public ReadOnly Property RawBytes As Byte()
+  overload: PlcComm.Toyopuc.CpuStatusData.RawBytes*
+- uid: PlcComm.Toyopuc.CpuStatusData.RawBytesHex
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.RawBytesHex
+  id: RawBytesHex
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: RawBytesHex
+  nameWithType: CpuStatusData.RawBytesHex
+  fullName: PlcComm.Toyopuc.CpuStatusData.RawBytesHex
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: RawBytesHex
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 65
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public string RawBytesHex { get; }
+    parameters: []
+    return:
+      type: System.String
+    content.vb: Public ReadOnly Property RawBytesHex As String
+  overload: PlcComm.Toyopuc.CpuStatusData.RawBytesHex*
+- uid: PlcComm.Toyopuc.CpuStatusData.RawHex
+  commentId: M:PlcComm.Toyopuc.CpuStatusData.RawHex
+  id: RawHex
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: RawHex()
+  nameWithType: CpuStatusData.RawHex()
+  fullName: PlcComm.Toyopuc.CpuStatusData.RawHex()
+  type: Method
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: RawHex
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 67
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public string RawHex()
+    return:
+      type: System.String
+    content.vb: Public Function RawHex() As String
+  overload: PlcComm.Toyopuc.CpuStatusData.RawHex*
+- uid: PlcComm.Toyopuc.CpuStatusData.Run
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Run
+  id: Run
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Run
+  nameWithType: CpuStatusData.Run
+  fullName: PlcComm.Toyopuc.CpuStatusData.Run
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Run
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 72
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Run { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Run As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Run*
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderStop
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.UnderStop
+  id: UnderStop
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: UnderStop
+  nameWithType: CpuStatusData.UnderStop
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderStop
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: UnderStop
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 73
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool UnderStop { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property UnderStop As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.UnderStop*
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity
+  id: UnderStopRequestContinuity
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: UnderStopRequestContinuity
+  nameWithType: CpuStatusData.UnderStopRequestContinuity
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: UnderStopRequestContinuity
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 74
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool UnderStopRequestContinuity { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property UnderStopRequestContinuity As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity*
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop
+  id: UnderPseudoStop
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: UnderPseudoStop
+  nameWithType: CpuStatusData.UnderPseudoStop
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: UnderPseudoStop
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 75
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool UnderPseudoStop { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property UnderPseudoStop As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop*
+- uid: PlcComm.Toyopuc.CpuStatusData.DebugMode
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.DebugMode
+  id: DebugMode
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: DebugMode
+  nameWithType: CpuStatusData.DebugMode
+  fullName: PlcComm.Toyopuc.CpuStatusData.DebugMode
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: DebugMode
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 76
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool DebugMode { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property DebugMode As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.DebugMode*
+- uid: PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode
+  id: IoMonitorUserMode
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: IoMonitorUserMode
+  nameWithType: CpuStatusData.IoMonitorUserMode
+  fullName: PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: IoMonitorUserMode
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 77
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool IoMonitorUserMode { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property IoMonitorUserMode As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode*
+- uid: PlcComm.Toyopuc.CpuStatusData.Pc3Mode
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Pc3Mode
+  id: Pc3Mode
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Pc3Mode
+  nameWithType: CpuStatusData.Pc3Mode
+  fullName: PlcComm.Toyopuc.CpuStatusData.Pc3Mode
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Pc3Mode
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 78
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Pc3Mode { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Pc3Mode As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Pc3Mode*
+- uid: PlcComm.Toyopuc.CpuStatusData.Pc10Mode
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Pc10Mode
+  id: Pc10Mode
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Pc10Mode
+  nameWithType: CpuStatusData.Pc10Mode
+  fullName: PlcComm.Toyopuc.CpuStatusData.Pc10Mode
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Pc10Mode
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 79
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Pc10Mode { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Pc10Mode As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Pc10Mode*
+- uid: PlcComm.Toyopuc.CpuStatusData.FatalFailure
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.FatalFailure
+  id: FatalFailure
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: FatalFailure
+  nameWithType: CpuStatusData.FatalFailure
+  fullName: PlcComm.Toyopuc.CpuStatusData.FatalFailure
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: FatalFailure
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 81
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool FatalFailure { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property FatalFailure As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.FatalFailure*
+- uid: PlcComm.Toyopuc.CpuStatusData.FaintFailure
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.FaintFailure
+  id: FaintFailure
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: FaintFailure
+  nameWithType: CpuStatusData.FaintFailure
+  fullName: PlcComm.Toyopuc.CpuStatusData.FaintFailure
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: FaintFailure
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 82
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool FaintFailure { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property FaintFailure As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.FaintFailure*
+- uid: PlcComm.Toyopuc.CpuStatusData.Alarm
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Alarm
+  id: Alarm
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Alarm
+  nameWithType: CpuStatusData.Alarm
+  fullName: PlcComm.Toyopuc.CpuStatusData.Alarm
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Alarm
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 83
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Alarm { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Alarm As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Alarm*
+- uid: PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered
+  id: IoAllocationParameterAltered
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: IoAllocationParameterAltered
+  nameWithType: CpuStatusData.IoAllocationParameterAltered
+  fullName: PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: IoAllocationParameterAltered
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 84
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool IoAllocationParameterAltered { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property IoAllocationParameterAltered As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered*
+- uid: PlcComm.Toyopuc.CpuStatusData.WithMemoryCard
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.WithMemoryCard
+  id: WithMemoryCard
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: WithMemoryCard
+  nameWithType: CpuStatusData.WithMemoryCard
+  fullName: PlcComm.Toyopuc.CpuStatusData.WithMemoryCard
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: WithMemoryCard
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 85
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool WithMemoryCard { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property WithMemoryCard As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.WithMemoryCard*
+- uid: PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation
+  id: MemoryCardOperation
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: MemoryCardOperation
+  nameWithType: CpuStatusData.MemoryCardOperation
+  fullName: PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: MemoryCardOperation
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 87
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool MemoryCardOperation { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property MemoryCardOperation As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation*
+- uid: PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo
+  id: WriteProtectedProgramInfo
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: WriteProtectedProgramInfo
+  nameWithType: CpuStatusData.WriteProtectedProgramInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: WriteProtectedProgramInfo
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 88
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool WriteProtectedProgramInfo { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property WriteProtectedProgramInfo As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo*
+- uid: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory
+  id: ReadProtectedSystemMemory
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: ReadProtectedSystemMemory
+  nameWithType: CpuStatusData.ReadProtectedSystemMemory
+  fullName: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: ReadProtectedSystemMemory
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 90
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool ReadProtectedSystemMemory { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property ReadProtectedSystemMemory As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory*
+- uid: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory
+  id: WriteProtectedSystemMemory
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: WriteProtectedSystemMemory
+  nameWithType: CpuStatusData.WriteProtectedSystemMemory
+  fullName: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: WriteProtectedSystemMemory
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 91
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool WriteProtectedSystemMemory { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property WriteProtectedSystemMemory As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory*
+- uid: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo
+  id: ReadProtectedSystemIo
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: ReadProtectedSystemIo
+  nameWithType: CpuStatusData.ReadProtectedSystemIo
+  fullName: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: ReadProtectedSystemIo
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 92
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool ReadProtectedSystemIo { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property ReadProtectedSystemIo As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo*
+- uid: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo
+  id: WriteProtectedSystemIo
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: WriteProtectedSystemIo
+  nameWithType: CpuStatusData.WriteProtectedSystemIo
+  fullName: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: WriteProtectedSystemIo
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 93
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool WriteProtectedSystemIo { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property WriteProtectedSystemIo As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo*
+- uid: PlcComm.Toyopuc.CpuStatusData.Trace
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Trace
+  id: Trace
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Trace
+  nameWithType: CpuStatusData.Trace
+  fullName: PlcComm.Toyopuc.CpuStatusData.Trace
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Trace
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 95
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Trace { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Trace As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Trace*
+- uid: PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace
+  id: ScanSamplingTrace
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: ScanSamplingTrace
+  nameWithType: CpuStatusData.ScanSamplingTrace
+  fullName: PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: ScanSamplingTrace
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 96
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool ScanSamplingTrace { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property ScanSamplingTrace As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace*
+- uid: PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace
+  id: PeriodicSamplingTrace
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: PeriodicSamplingTrace
+  nameWithType: CpuStatusData.PeriodicSamplingTrace
+  fullName: PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: PeriodicSamplingTrace
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 97
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool PeriodicSamplingTrace { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property PeriodicSamplingTrace As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace*
+- uid: PlcComm.Toyopuc.CpuStatusData.EnableDetected
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.EnableDetected
+  id: EnableDetected
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: EnableDetected
+  nameWithType: CpuStatusData.EnableDetected
+  fullName: PlcComm.Toyopuc.CpuStatusData.EnableDetected
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: EnableDetected
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 98
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool EnableDetected { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property EnableDetected As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.EnableDetected*
+- uid: PlcComm.Toyopuc.CpuStatusData.TriggerDetected
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.TriggerDetected
+  id: TriggerDetected
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: TriggerDetected
+  nameWithType: CpuStatusData.TriggerDetected
+  fullName: PlcComm.Toyopuc.CpuStatusData.TriggerDetected
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: TriggerDetected
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 99
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool TriggerDetected { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property TriggerDetected As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.TriggerDetected*
+- uid: PlcComm.Toyopuc.CpuStatusData.OneScanStep
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.OneScanStep
+  id: OneScanStep
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: OneScanStep
+  nameWithType: CpuStatusData.OneScanStep
+  fullName: PlcComm.Toyopuc.CpuStatusData.OneScanStep
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: OneScanStep
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 100
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool OneScanStep { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property OneScanStep As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.OneScanStep*
+- uid: PlcComm.Toyopuc.CpuStatusData.OneBlockStep
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.OneBlockStep
+  id: OneBlockStep
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: OneBlockStep
+  nameWithType: CpuStatusData.OneBlockStep
+  fullName: PlcComm.Toyopuc.CpuStatusData.OneBlockStep
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: OneBlockStep
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 101
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool OneBlockStep { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property OneBlockStep As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.OneBlockStep*
+- uid: PlcComm.Toyopuc.CpuStatusData.OneInstructionStep
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.OneInstructionStep
+  id: OneInstructionStep
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: OneInstructionStep
+  nameWithType: CpuStatusData.OneInstructionStep
+  fullName: PlcComm.Toyopuc.CpuStatusData.OneInstructionStep
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: OneInstructionStep
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 102
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool OneInstructionStep { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property OneInstructionStep As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.OneInstructionStep*
+- uid: PlcComm.Toyopuc.CpuStatusData.IoOffline
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.IoOffline
+  id: IoOffline
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: IoOffline
+  nameWithType: CpuStatusData.IoOffline
+  fullName: PlcComm.Toyopuc.CpuStatusData.IoOffline
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: IoOffline
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 104
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool IoOffline { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property IoOffline As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.IoOffline*
+- uid: PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting
+  id: RemoteRunSetting
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: RemoteRunSetting
+  nameWithType: CpuStatusData.RemoteRunSetting
+  fullName: PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: RemoteRunSetting
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 105
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool RemoteRunSetting { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property RemoteRunSetting As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting*
+- uid: PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting
+  id: StatusLatchSetting
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: StatusLatchSetting
+  nameWithType: CpuStatusData.StatusLatchSetting
+  fullName: PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: StatusLatchSetting
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 106
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool StatusLatchSetting { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property StatusLatchSetting As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting*
+- uid: PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo
+  id: WritePriorityLimitedProgramInfo
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: WritePriorityLimitedProgramInfo
+  nameWithType: CpuStatusData.WritePriorityLimitedProgramInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: WritePriorityLimitedProgramInfo
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 108
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool WritePriorityLimitedProgramInfo { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property WritePriorityLimitedProgramInfo As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo*
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister
+  id: AbnormalWriteFlashRegister
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: AbnormalWriteFlashRegister
+  nameWithType: CpuStatusData.AbnormalWriteFlashRegister
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: AbnormalWriteFlashRegister
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 109
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool AbnormalWriteFlashRegister { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property AbnormalWriteFlashRegister As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister*
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister
+  id: UnderWritingFlashRegister
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: UnderWritingFlashRegister
+  nameWithType: CpuStatusData.UnderWritingFlashRegister
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: UnderWritingFlashRegister
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 110
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool UnderWritingFlashRegister { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property UnderWritingFlashRegister As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister*
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo
+  id: AbnormalWriteEquipmentInfo
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: AbnormalWriteEquipmentInfo
+  nameWithType: CpuStatusData.AbnormalWriteEquipmentInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: AbnormalWriteEquipmentInfo
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 111
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool AbnormalWriteEquipmentInfo { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property AbnormalWriteEquipmentInfo As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo*
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo
+  id: AbnormalWritingEquipmentInfo
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: AbnormalWritingEquipmentInfo
+  nameWithType: CpuStatusData.AbnormalWritingEquipmentInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: AbnormalWritingEquipmentInfo
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 112
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool AbnormalWritingEquipmentInfo { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property AbnormalWritingEquipmentInfo As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo*
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun
+  id: AbnormalWriteDuringRun
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: AbnormalWriteDuringRun
+  nameWithType: CpuStatusData.AbnormalWriteDuringRun
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: AbnormalWriteDuringRun
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 113
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool AbnormalWriteDuringRun { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property AbnormalWriteDuringRun As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun*
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun
+  id: UnderWritingDuringRun
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: UnderWritingDuringRun
+  nameWithType: CpuStatusData.UnderWritingDuringRun
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: UnderWritingDuringRun
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 114
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool UnderWritingDuringRun { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property UnderWritingDuringRun As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun*
+- uid: PlcComm.Toyopuc.CpuStatusData.Program3Running
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Program3Running
+  id: Program3Running
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Program3Running
+  nameWithType: CpuStatusData.Program3Running
+  fullName: PlcComm.Toyopuc.CpuStatusData.Program3Running
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Program3Running
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 116
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Program3Running { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Program3Running As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Program3Running*
+- uid: PlcComm.Toyopuc.CpuStatusData.Program2Running
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Program2Running
+  id: Program2Running
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Program2Running
+  nameWithType: CpuStatusData.Program2Running
+  fullName: PlcComm.Toyopuc.CpuStatusData.Program2Running
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Program2Running
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 117
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Program2Running { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Program2Running As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Program2Running*
+- uid: PlcComm.Toyopuc.CpuStatusData.Program1Running
+  commentId: P:PlcComm.Toyopuc.CpuStatusData.Program1Running
+  id: Program1Running
+  parent: PlcComm.Toyopuc.CpuStatusData
+  langs:
+  - csharp
+  - vb
+  name: Program1Running
+  nameWithType: CpuStatusData.Program1Running
+  fullName: PlcComm.Toyopuc.CpuStatusData.Program1Running
+  type: Property
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Program1Running
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 118
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public bool Program1Running { get; }
+    parameters: []
+    return:
+      type: System.Boolean
+    content.vb: Public ReadOnly Property Program1Running As Boolean
+  overload: PlcComm.Toyopuc.CpuStatusData.Program1Running*
+references:
+- uid: PlcComm.Toyopuc
+  commentId: N:PlcComm.Toyopuc
+  href: PlcComm.html
+  name: PlcComm.Toyopuc
+  nameWithType: PlcComm.Toyopuc
+  fullName: PlcComm.Toyopuc
+  spec.csharp:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+  spec.vb:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+- uid: System.Object
+  commentId: T:System.Object
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object
+  name: object
+  nameWithType: object
+  fullName: object
+  nameWithType.vb: Object
+  fullName.vb: Object
+  name.vb: Object
+- uid: System.Object.Equals(System.Object)
+  commentId: M:System.Object.Equals(System.Object)
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)
+  name: Equals(object)
+  nameWithType: object.Equals(object)
+  fullName: object.Equals(object)
+  nameWithType.vb: Object.Equals(Object)
+  fullName.vb: Object.Equals(Object)
+  name.vb: Equals(Object)
+  spec.csharp:
+  - uid: System.Object.Equals(System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)
+  - name: (
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+  spec.vb:
+  - uid: System.Object.Equals(System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)
+  - name: (
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+- uid: System.Object.Equals(System.Object,System.Object)
+  commentId: M:System.Object.Equals(System.Object,System.Object)
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)
+  name: Equals(object, object)
+  nameWithType: object.Equals(object, object)
+  fullName: object.Equals(object, object)
+  nameWithType.vb: Object.Equals(Object, Object)
+  fullName.vb: Object.Equals(Object, Object)
+  name.vb: Equals(Object, Object)
+  spec.csharp:
+  - uid: System.Object.Equals(System.Object,System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)
+  - name: (
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+  spec.vb:
+  - uid: System.Object.Equals(System.Object,System.Object)
+    name: Equals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)
+  - name: (
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+- uid: System.Object.GetHashCode
+  commentId: M:System.Object.GetHashCode
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.gethashcode
+  name: GetHashCode()
+  nameWithType: object.GetHashCode()
+  fullName: object.GetHashCode()
+  nameWithType.vb: Object.GetHashCode()
+  fullName.vb: Object.GetHashCode()
+  spec.csharp:
+  - uid: System.Object.GetHashCode
+    name: GetHashCode
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gethashcode
+  - name: (
+  - name: )
+  spec.vb:
+  - uid: System.Object.GetHashCode
+    name: GetHashCode
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gethashcode
+  - name: (
+  - name: )
+- uid: System.Object.GetType
+  commentId: M:System.Object.GetType
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.gettype
+  name: GetType()
+  nameWithType: object.GetType()
+  fullName: object.GetType()
+  nameWithType.vb: Object.GetType()
+  fullName.vb: Object.GetType()
+  spec.csharp:
+  - uid: System.Object.GetType
+    name: GetType
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gettype
+  - name: (
+  - name: )
+  spec.vb:
+  - uid: System.Object.GetType
+    name: GetType
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.gettype
+  - name: (
+  - name: )
+- uid: System.Object.ReferenceEquals(System.Object,System.Object)
+  commentId: M:System.Object.ReferenceEquals(System.Object,System.Object)
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.referenceequals
+  name: ReferenceEquals(object, object)
+  nameWithType: object.ReferenceEquals(object, object)
+  fullName: object.ReferenceEquals(object, object)
+  nameWithType.vb: Object.ReferenceEquals(Object, Object)
+  fullName.vb: Object.ReferenceEquals(Object, Object)
+  name.vb: ReferenceEquals(Object, Object)
+  spec.csharp:
+  - uid: System.Object.ReferenceEquals(System.Object,System.Object)
+    name: ReferenceEquals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.referenceequals
+  - name: (
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+  spec.vb:
+  - uid: System.Object.ReferenceEquals(System.Object,System.Object)
+    name: ReferenceEquals
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.referenceequals
+  - name: (
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: ','
+  - name: " "
+  - uid: System.Object
+    name: Object
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object
+  - name: )
+- uid: System.Object.ToString
+  commentId: M:System.Object.ToString
+  parent: System.Object
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.object.tostring
+  name: ToString()
+  nameWithType: object.ToString()
+  fullName: object.ToString()
+  nameWithType.vb: Object.ToString()
+  fullName.vb: Object.ToString()
+  spec.csharp:
+  - uid: System.Object.ToString
+    name: ToString
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.tostring
+  - name: (
+  - name: )
+  spec.vb:
+  - uid: System.Object.ToString
+    name: ToString
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.object.tostring
+  - name: (
+  - name: )
+- uid: System
+  commentId: N:System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system
+  name: System
+  nameWithType: System
+  fullName: System
+- uid: PlcComm.Toyopuc.CpuStatusData.#ctor*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.#ctor
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData__ctor_System_Byte_System_Byte_System_Byte_System_Byte_System_Byte_System_Byte_System_Byte_System_Byte_
+  name: CpuStatusData
+  nameWithType: CpuStatusData.CpuStatusData
+  fullName: PlcComm.Toyopuc.CpuStatusData.CpuStatusData
+  nameWithType.vb: CpuStatusData.New
+  fullName.vb: PlcComm.Toyopuc.CpuStatusData.New
+  name.vb: New
+- uid: System.Byte
+  commentId: T:System.Byte
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.byte
+  name: byte
+  nameWithType: byte
+  fullName: byte
+  nameWithType.vb: Byte
+  fullName.vb: Byte
+  name.vb: Byte
+- uid: PlcComm.Toyopuc.CpuStatusData.Data1*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data1
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data1
+  name: Data1
+  nameWithType: CpuStatusData.Data1
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data1
+- uid: PlcComm.Toyopuc.CpuStatusData.Data2*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data2
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data2
+  name: Data2
+  nameWithType: CpuStatusData.Data2
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data2
+- uid: PlcComm.Toyopuc.CpuStatusData.Data3*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data3
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data3
+  name: Data3
+  nameWithType: CpuStatusData.Data3
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data3
+- uid: PlcComm.Toyopuc.CpuStatusData.Data4*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data4
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data4
+  name: Data4
+  nameWithType: CpuStatusData.Data4
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data4
+- uid: PlcComm.Toyopuc.CpuStatusData.Data5*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data5
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data5
+  name: Data5
+  nameWithType: CpuStatusData.Data5
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data5
+- uid: PlcComm.Toyopuc.CpuStatusData.Data6*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data6
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data6
+  name: Data6
+  nameWithType: CpuStatusData.Data6
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data6
+- uid: PlcComm.Toyopuc.CpuStatusData.Data7*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data7
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data7
+  name: Data7
+  nameWithType: CpuStatusData.Data7
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data7
+- uid: PlcComm.Toyopuc.CpuStatusData.Data8*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Data8
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Data8
+  name: Data8
+  nameWithType: CpuStatusData.Data8
+  fullName: PlcComm.Toyopuc.CpuStatusData.Data8
+- uid: PlcComm.Toyopuc.CpuStatusData.RawBytes*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.RawBytes
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_RawBytes
+  name: RawBytes
+  nameWithType: CpuStatusData.RawBytes
+  fullName: PlcComm.Toyopuc.CpuStatusData.RawBytes
+- uid: System.Byte[]
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.byte
+  name: byte[]
+  nameWithType: byte[]
+  fullName: byte[]
+  nameWithType.vb: Byte()
+  fullName.vb: Byte()
+  name.vb: Byte()
+  spec.csharp:
+  - uid: System.Byte
+    name: byte
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.byte
+  - name: '['
+  - name: ']'
+  spec.vb:
+  - uid: System.Byte
+    name: Byte
+    isExternal: true
+    href: https://learn.microsoft.com/dotnet/api/system.byte
+  - name: (
+  - name: )
+- uid: PlcComm.Toyopuc.CpuStatusData.RawBytesHex*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.RawBytesHex
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_RawBytesHex
+  name: RawBytesHex
+  nameWithType: CpuStatusData.RawBytesHex
+  fullName: PlcComm.Toyopuc.CpuStatusData.RawBytesHex
+- uid: System.String
+  commentId: T:System.String
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.string
+  name: string
+  nameWithType: string
+  fullName: string
+  nameWithType.vb: String
+  fullName.vb: String
+  name.vb: String
+- uid: PlcComm.Toyopuc.CpuStatusData.RawHex*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.RawHex
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_RawHex
+  name: RawHex
+  nameWithType: CpuStatusData.RawHex
+  fullName: PlcComm.Toyopuc.CpuStatusData.RawHex
+- uid: PlcComm.Toyopuc.CpuStatusData.Run*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Run
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Run
+  name: Run
+  nameWithType: CpuStatusData.Run
+  fullName: PlcComm.Toyopuc.CpuStatusData.Run
+- uid: System.Boolean
+  commentId: T:System.Boolean
+  parent: System
+  isExternal: true
+  href: https://learn.microsoft.com/dotnet/api/system.boolean
+  name: bool
+  nameWithType: bool
+  fullName: bool
+  nameWithType.vb: Boolean
+  fullName.vb: Boolean
+  name.vb: Boolean
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderStop*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.UnderStop
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_UnderStop
+  name: UnderStop
+  nameWithType: CpuStatusData.UnderStop
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderStop
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_UnderStopRequestContinuity
+  name: UnderStopRequestContinuity
+  nameWithType: CpuStatusData.UnderStopRequestContinuity
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderStopRequestContinuity
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_UnderPseudoStop
+  name: UnderPseudoStop
+  nameWithType: CpuStatusData.UnderPseudoStop
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderPseudoStop
+- uid: PlcComm.Toyopuc.CpuStatusData.DebugMode*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.DebugMode
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_DebugMode
+  name: DebugMode
+  nameWithType: CpuStatusData.DebugMode
+  fullName: PlcComm.Toyopuc.CpuStatusData.DebugMode
+- uid: PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_IoMonitorUserMode
+  name: IoMonitorUserMode
+  nameWithType: CpuStatusData.IoMonitorUserMode
+  fullName: PlcComm.Toyopuc.CpuStatusData.IoMonitorUserMode
+- uid: PlcComm.Toyopuc.CpuStatusData.Pc3Mode*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Pc3Mode
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Pc3Mode
+  name: Pc3Mode
+  nameWithType: CpuStatusData.Pc3Mode
+  fullName: PlcComm.Toyopuc.CpuStatusData.Pc3Mode
+- uid: PlcComm.Toyopuc.CpuStatusData.Pc10Mode*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Pc10Mode
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Pc10Mode
+  name: Pc10Mode
+  nameWithType: CpuStatusData.Pc10Mode
+  fullName: PlcComm.Toyopuc.CpuStatusData.Pc10Mode
+- uid: PlcComm.Toyopuc.CpuStatusData.FatalFailure*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.FatalFailure
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_FatalFailure
+  name: FatalFailure
+  nameWithType: CpuStatusData.FatalFailure
+  fullName: PlcComm.Toyopuc.CpuStatusData.FatalFailure
+- uid: PlcComm.Toyopuc.CpuStatusData.FaintFailure*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.FaintFailure
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_FaintFailure
+  name: FaintFailure
+  nameWithType: CpuStatusData.FaintFailure
+  fullName: PlcComm.Toyopuc.CpuStatusData.FaintFailure
+- uid: PlcComm.Toyopuc.CpuStatusData.Alarm*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Alarm
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Alarm
+  name: Alarm
+  nameWithType: CpuStatusData.Alarm
+  fullName: PlcComm.Toyopuc.CpuStatusData.Alarm
+- uid: PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_IoAllocationParameterAltered
+  name: IoAllocationParameterAltered
+  nameWithType: CpuStatusData.IoAllocationParameterAltered
+  fullName: PlcComm.Toyopuc.CpuStatusData.IoAllocationParameterAltered
+- uid: PlcComm.Toyopuc.CpuStatusData.WithMemoryCard*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.WithMemoryCard
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_WithMemoryCard
+  name: WithMemoryCard
+  nameWithType: CpuStatusData.WithMemoryCard
+  fullName: PlcComm.Toyopuc.CpuStatusData.WithMemoryCard
+- uid: PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_MemoryCardOperation
+  name: MemoryCardOperation
+  nameWithType: CpuStatusData.MemoryCardOperation
+  fullName: PlcComm.Toyopuc.CpuStatusData.MemoryCardOperation
+- uid: PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_WriteProtectedProgramInfo
+  name: WriteProtectedProgramInfo
+  nameWithType: CpuStatusData.WriteProtectedProgramInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.WriteProtectedProgramInfo
+- uid: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_ReadProtectedSystemMemory
+  name: ReadProtectedSystemMemory
+  nameWithType: CpuStatusData.ReadProtectedSystemMemory
+  fullName: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemMemory
+- uid: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_WriteProtectedSystemMemory
+  name: WriteProtectedSystemMemory
+  nameWithType: CpuStatusData.WriteProtectedSystemMemory
+  fullName: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemMemory
+- uid: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_ReadProtectedSystemIo
+  name: ReadProtectedSystemIo
+  nameWithType: CpuStatusData.ReadProtectedSystemIo
+  fullName: PlcComm.Toyopuc.CpuStatusData.ReadProtectedSystemIo
+- uid: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_WriteProtectedSystemIo
+  name: WriteProtectedSystemIo
+  nameWithType: CpuStatusData.WriteProtectedSystemIo
+  fullName: PlcComm.Toyopuc.CpuStatusData.WriteProtectedSystemIo
+- uid: PlcComm.Toyopuc.CpuStatusData.Trace*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Trace
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Trace
+  name: Trace
+  nameWithType: CpuStatusData.Trace
+  fullName: PlcComm.Toyopuc.CpuStatusData.Trace
+- uid: PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_ScanSamplingTrace
+  name: ScanSamplingTrace
+  nameWithType: CpuStatusData.ScanSamplingTrace
+  fullName: PlcComm.Toyopuc.CpuStatusData.ScanSamplingTrace
+- uid: PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_PeriodicSamplingTrace
+  name: PeriodicSamplingTrace
+  nameWithType: CpuStatusData.PeriodicSamplingTrace
+  fullName: PlcComm.Toyopuc.CpuStatusData.PeriodicSamplingTrace
+- uid: PlcComm.Toyopuc.CpuStatusData.EnableDetected*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.EnableDetected
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_EnableDetected
+  name: EnableDetected
+  nameWithType: CpuStatusData.EnableDetected
+  fullName: PlcComm.Toyopuc.CpuStatusData.EnableDetected
+- uid: PlcComm.Toyopuc.CpuStatusData.TriggerDetected*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.TriggerDetected
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_TriggerDetected
+  name: TriggerDetected
+  nameWithType: CpuStatusData.TriggerDetected
+  fullName: PlcComm.Toyopuc.CpuStatusData.TriggerDetected
+- uid: PlcComm.Toyopuc.CpuStatusData.OneScanStep*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.OneScanStep
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_OneScanStep
+  name: OneScanStep
+  nameWithType: CpuStatusData.OneScanStep
+  fullName: PlcComm.Toyopuc.CpuStatusData.OneScanStep
+- uid: PlcComm.Toyopuc.CpuStatusData.OneBlockStep*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.OneBlockStep
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_OneBlockStep
+  name: OneBlockStep
+  nameWithType: CpuStatusData.OneBlockStep
+  fullName: PlcComm.Toyopuc.CpuStatusData.OneBlockStep
+- uid: PlcComm.Toyopuc.CpuStatusData.OneInstructionStep*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.OneInstructionStep
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_OneInstructionStep
+  name: OneInstructionStep
+  nameWithType: CpuStatusData.OneInstructionStep
+  fullName: PlcComm.Toyopuc.CpuStatusData.OneInstructionStep
+- uid: PlcComm.Toyopuc.CpuStatusData.IoOffline*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.IoOffline
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_IoOffline
+  name: IoOffline
+  nameWithType: CpuStatusData.IoOffline
+  fullName: PlcComm.Toyopuc.CpuStatusData.IoOffline
+- uid: PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_RemoteRunSetting
+  name: RemoteRunSetting
+  nameWithType: CpuStatusData.RemoteRunSetting
+  fullName: PlcComm.Toyopuc.CpuStatusData.RemoteRunSetting
+- uid: PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_StatusLatchSetting
+  name: StatusLatchSetting
+  nameWithType: CpuStatusData.StatusLatchSetting
+  fullName: PlcComm.Toyopuc.CpuStatusData.StatusLatchSetting
+- uid: PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_WritePriorityLimitedProgramInfo
+  name: WritePriorityLimitedProgramInfo
+  nameWithType: CpuStatusData.WritePriorityLimitedProgramInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.WritePriorityLimitedProgramInfo
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_AbnormalWriteFlashRegister
+  name: AbnormalWriteFlashRegister
+  nameWithType: CpuStatusData.AbnormalWriteFlashRegister
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteFlashRegister
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_UnderWritingFlashRegister
+  name: UnderWritingFlashRegister
+  nameWithType: CpuStatusData.UnderWritingFlashRegister
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderWritingFlashRegister
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_AbnormalWriteEquipmentInfo
+  name: AbnormalWriteEquipmentInfo
+  nameWithType: CpuStatusData.AbnormalWriteEquipmentInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteEquipmentInfo
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_AbnormalWritingEquipmentInfo
+  name: AbnormalWritingEquipmentInfo
+  nameWithType: CpuStatusData.AbnormalWritingEquipmentInfo
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWritingEquipmentInfo
+- uid: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_AbnormalWriteDuringRun
+  name: AbnormalWriteDuringRun
+  nameWithType: CpuStatusData.AbnormalWriteDuringRun
+  fullName: PlcComm.Toyopuc.CpuStatusData.AbnormalWriteDuringRun
+- uid: PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_UnderWritingDuringRun
+  name: UnderWritingDuringRun
+  nameWithType: CpuStatusData.UnderWritingDuringRun
+  fullName: PlcComm.Toyopuc.CpuStatusData.UnderWritingDuringRun
+- uid: PlcComm.Toyopuc.CpuStatusData.Program3Running*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Program3Running
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Program3Running
+  name: Program3Running
+  nameWithType: CpuStatusData.Program3Running
+  fullName: PlcComm.Toyopuc.CpuStatusData.Program3Running
+- uid: PlcComm.Toyopuc.CpuStatusData.Program2Running*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Program2Running
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Program2Running
+  name: Program2Running
+  nameWithType: CpuStatusData.Program2Running
+  fullName: PlcComm.Toyopuc.CpuStatusData.Program2Running
+- uid: PlcComm.Toyopuc.CpuStatusData.Program1Running*
+  commentId: Overload:PlcComm.Toyopuc.CpuStatusData.Program1Running
+  href: PlcComm.Toyopuc.CpuStatusData.html#PlcComm_Toyopuc_CpuStatusData_Program1Running
+  name: Program1Running
+  nameWithType: CpuStatusData.Program1Running
+  fullName: PlcComm.Toyopuc.CpuStatusData.Program1Running

@@ -41,26 +41,26 @@ internal static class Program
 
     private static readonly ExpectedMismatchRule[] ExpectedMismatchRules =
     [
-        new("PC10G:PC10 mode", "P1-V0000", "PC10G direct V low-base packed readback is target-specific at P1-V0000."),
-        new("PC10G:PC10 mode", "P1-V00F0", "PC10G direct V low-base packed readback is target-specific at P1-V00F0."),
-        new("PC10G:PC10 mode", "P2-V0000", "PC10G direct V low-base packed readback is target-specific at P2-V0000."),
-        new("PC10G:PC10 mode", "P3-V0000", "PC10G direct V low-base packed readback is target-specific at P3-V0000."),
-        new("PC10G:PC10 mode", "EV0E20", "PC10G direct EV packed readback is target-specific at EV0E20."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P1-V0000", "TOYOPUC-Plus direct V packed readback is target-specific at P1-V0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P1-V0010", "TOYOPUC-Plus direct V packed readback is target-specific at P1-V0010."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P1-V00D0", "TOYOPUC-Plus direct V low/high-byte readback is target-specific at P1-V00D0."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P1-V00F0", "TOYOPUC-Plus direct V low/high-byte readback is target-specific at P1-V00F0."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P2-V0000", "TOYOPUC-Plus direct V packed readback is target-specific at P2-V0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P2-V0010", "TOYOPUC-Plus direct V packed readback is target-specific at P2-V0010."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P3-V0000", "TOYOPUC-Plus direct V low-byte readback is target-specific at P3-V0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P3-V0010", "TOYOPUC-Plus direct V packed readback is target-specific at P3-V0010."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P1-X0000", "TOYOPUC-Plus direct X low-base packed readback is target-specific at P1-X0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P2-X0000", "TOYOPUC-Plus direct X low-base packed readback is target-specific at P2-X0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P3-X0000", "TOYOPUC-Plus direct X low-byte readback is target-specific at P3-X0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P1-Y0000", "TOYOPUC-Plus direct Y low-base packed readback is target-specific at P1-Y0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P2-Y0000", "TOYOPUC-Plus direct Y low-base packed readback is target-specific at P2-Y0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "P3-Y0000", "TOYOPUC-Plus direct Y low-byte readback is target-specific at P3-Y0000."),
-        new("TOYOPUC-Plus:Plus Extended mode", "EV0E20", "TOYOPUC-Plus direct EV low/high-byte readback is target-specific at EV0E20."),
+        new("toyopuc:pc10g:pc10", "P1-V0000", "PC10G direct V low-base packed readback is target-specific at P1-V0000."),
+        new("toyopuc:pc10g:pc10", "P1-V00F0", "PC10G direct V low-base packed readback is target-specific at P1-V00F0."),
+        new("toyopuc:pc10g:pc10", "P2-V0000", "PC10G direct V low-base packed readback is target-specific at P2-V0000."),
+        new("toyopuc:pc10g:pc10", "P3-V0000", "PC10G direct V low-base packed readback is target-specific at P3-V0000."),
+        new("toyopuc:pc10g:pc10", "EV0E20", "PC10G direct EV packed readback is target-specific at EV0E20."),
+        new("toyopuc:plus:extended", "P1-V0000", "TOYOPUC-Plus direct V packed readback is target-specific at P1-V0000."),
+        new("toyopuc:plus:extended", "P1-V0010", "TOYOPUC-Plus direct V packed readback is target-specific at P1-V0010."),
+        new("toyopuc:plus:extended", "P1-V00D0", "TOYOPUC-Plus direct V low/high-byte readback is target-specific at P1-V00D0."),
+        new("toyopuc:plus:extended", "P1-V00F0", "TOYOPUC-Plus direct V low/high-byte readback is target-specific at P1-V00F0."),
+        new("toyopuc:plus:extended", "P2-V0000", "TOYOPUC-Plus direct V packed readback is target-specific at P2-V0000."),
+        new("toyopuc:plus:extended", "P2-V0010", "TOYOPUC-Plus direct V packed readback is target-specific at P2-V0010."),
+        new("toyopuc:plus:extended", "P3-V0000", "TOYOPUC-Plus direct V low-byte readback is target-specific at P3-V0000."),
+        new("toyopuc:plus:extended", "P3-V0010", "TOYOPUC-Plus direct V packed readback is target-specific at P3-V0010."),
+        new("toyopuc:plus:extended", "P1-X0000", "TOYOPUC-Plus direct X low-base packed readback is target-specific at P1-X0000."),
+        new("toyopuc:plus:extended", "P2-X0000", "TOYOPUC-Plus direct X low-base packed readback is target-specific at P2-X0000."),
+        new("toyopuc:plus:extended", "P3-X0000", "TOYOPUC-Plus direct X low-byte readback is target-specific at P3-X0000."),
+        new("toyopuc:plus:extended", "P1-Y0000", "TOYOPUC-Plus direct Y low-base packed readback is target-specific at P1-Y0000."),
+        new("toyopuc:plus:extended", "P2-Y0000", "TOYOPUC-Plus direct Y low-base packed readback is target-specific at P2-Y0000."),
+        new("toyopuc:plus:extended", "P3-Y0000", "TOYOPUC-Plus direct Y low-byte readback is target-specific at P3-Y0000."),
+        new("toyopuc:plus:extended", "EV0E20", "TOYOPUC-Plus direct EV low/high-byte readback is target-specific at EV0E20."),
     ];
 
     public static int Main(string[] args)
@@ -342,7 +342,7 @@ internal static class Program
             timeout: TimeSpan.FromSeconds(options.TimeoutSeconds),
             retries: options.Retries,
             retryDelay: TimeSpan.FromSeconds(options.RetryDelaySeconds),
-            deviceProfile: options.Profile);
+            plcProfile: options.Profile);
     }
 
     private static IReadOnlyList<ProbeCase> BuildCases(ProbeOptions options)
@@ -655,7 +655,7 @@ internal static class Program
         Console.WriteLine("  --host <name>           default: 192.168.250.100");
         Console.WriteLine("  --port <number>         default: 1025");
         Console.WriteLine("  --protocol <tcp|udp>    default: tcp");
-        Console.WriteLine("  --profile <name>        required; no device profile is inferred");
+        Console.WriteLine("  --profile <name>        required; no PLC profile is inferred");
         Console.WriteLine("  --areas <csv>           default: P,K,V,T,C,L,X,Y,M,EP,EK,EV,ET,EC,EL,EX,EY,EM,GM,GX,GY");
         Console.WriteLine("  --sample-count <n>      default: 10");
         Console.WriteLine("  --timeout <seconds>     default: 5.0");
@@ -759,10 +759,10 @@ internal sealed record ProbeOptions
 
         if (string.IsNullOrWhiteSpace(options.Profile))
         {
-            throw new ArgumentException("--profile is required. Specify it explicitly; no device profile is inferred from defaults.", nameof(args));
+            throw new ArgumentException("--profile is required. Specify it explicitly; no PLC profile is inferred from defaults.", nameof(args));
         }
 
-        return options with { Profile = ToyopucDeviceProfiles.NormalizeName(options.Profile) };
+        return options with { Profile = ToyopucPlcProfiles.NormalizeName(options.Profile) };
     }
 
     private static string ReadValue(string[] args, ref int index, string optionName)

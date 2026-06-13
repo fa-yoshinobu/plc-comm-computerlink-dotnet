@@ -5,6 +5,9 @@ set "TEMP_DOCFX_JSON=.tmp_docfx.json"
 echo [DOCS] Building Toyopuc .NET Docs with DocFX...
 echo [DOCS] Output: %DOCS_OUTPUT_DIR%
 
+if exist "obj\api" rmdir /s /q "obj\api"
+if exist "%DOCS_OUTPUT_DIR%" rmdir /s /q "%DOCS_OUTPUT_DIR%"
+
 powershell -NoProfile -Command "$content = Get-Content 'docfx.json'; $content = $content -replace '\"dest\": \"_site\"', '\"dest\": \".\"'; Set-Content -Path '%TEMP_DOCFX_JSON%' -Value $content"
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to prepare temporary DocFX configuration.

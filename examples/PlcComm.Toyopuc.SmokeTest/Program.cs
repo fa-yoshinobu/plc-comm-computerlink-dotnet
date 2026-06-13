@@ -47,7 +47,7 @@ try
         timeout: TimeSpan.FromSeconds(options.Timeout),
         retries: options.Retries,
         addressingOptions: addressingOptions,
-        deviceProfile: options.Profile);
+        plcProfile: options.Profile);
     plc.CaptureTraceFrames = options.Verbose;
 
     if (!options.SkipStatusRead)
@@ -1011,7 +1011,7 @@ static IReadOnlyList<SuiteProbe> BuildSuiteProbes(string? suite)
         return Array.Empty<SuiteProbe>();
     }
 
-    if (suite.Equals("TOYOPUC-Plus:Plus Extended mode", StringComparison.OrdinalIgnoreCase))
+    if (suite.Equals("toyopuc:plus:extended", StringComparison.OrdinalIgnoreCase))
     {
         return new[]
         {
@@ -1027,7 +1027,7 @@ static IReadOnlyList<SuiteProbe> BuildSuiteProbes(string? suite)
         };
     }
 
-    if (suite.Equals("Nano 10GX:Compatible mode", StringComparison.OrdinalIgnoreCase))
+    if (suite.Equals("toyopuc:nano-10gx:compatible", StringComparison.OrdinalIgnoreCase))
     {
         return new[]
         {
@@ -1062,7 +1062,7 @@ static bool TryResolveGeneratedSuiteProfile(string suite, out string profile)
 
     try
     {
-        profile = ToyopucDeviceProfiles.FromName(candidate).Name;
+        profile = ToyopucPlcProfiles.FromName(candidate).Name;
         return true;
     }
     catch
@@ -1296,7 +1296,7 @@ internal sealed record SmokeTestOptions
     public bool FrRangeVerifyOnly { get; private init; }
     public string? FrRangeDumpCsvPath { get; private init; }
     public bool RestoreAfterWrite { get; private init; }
-    public string Profile { get; private init; } = "Generic";
+    public string Profile { get; private init; } = "toyopuc:generic";
     public bool? UseUpperUPc10 { get; private init; }
     public bool? UseEbPc10 { get; private init; }
     public bool? UseFrPc10 { get; private init; }
@@ -1314,7 +1314,7 @@ internal sealed record SmokeTestOptions
     public bool IsCountProbeRequested => ProbeCounts.Length > 0;
 
     public bool ShouldLogAddressingProfile =>
-        !string.Equals(Profile, "Generic", StringComparison.OrdinalIgnoreCase)
+        !string.Equals(Profile, "toyopuc:generic", StringComparison.OrdinalIgnoreCase)
         || UseUpperUPc10 is not null
         || UseEbPc10 is not null
         || UseFrPc10 is not null;
@@ -1595,7 +1595,7 @@ internal sealed record SmokeTestOptions
         Console.WriteLine("  --write-pattern <name>    fill | ramp for sequential writes, default: fill");
         Console.WriteLine("  --toggle-bit-write        optional bit write using the inverse of the current value");
         Console.WriteLine("  --hops <relay hops>       optional relay path, e.g. P1-L2:N2");
-        Console.WriteLine("  --suite <name>            read-only validation suite, e.g. \"TOYOPUC-Plus:Plus Extended mode\" or \"full:PC10G:PC10 mode\"");
+        Console.WriteLine("  --suite <name>            read-only validation suite, e.g. \"toyopuc:plus:extended\" or \"full:toyopuc:pc10g:pc10\"");
         Console.WriteLine("  --fr-device <addr>        optional FR device, e.g. FR000000");
         Console.WriteLine("  --fr-write-value <value>  optional FR write value");
         Console.WriteLine("  --fr-commit               commit FR write");
@@ -1607,7 +1607,7 @@ internal sealed record SmokeTestOptions
         Console.WriteLine("  --fr-range-verify-only    read-only FR range verification against the pattern");
         Console.WriteLine("  --fr-range-dump-csv <path> read-only FR range dump to CSV");
         Console.WriteLine("  --restore-after-write     restore original value after verify");
-        Console.WriteLine("  --profile <name>          \"Generic\" | \"TOYOPUC-Plus:Plus Standard mode\" | \"TOYOPUC-Plus:Plus Extended mode\" | \"Nano 10GX:Nano 10GX mode\" | \"Nano 10GX:Compatible mode\" | \"PC10G:PC10 standard/PC3JG mode\" | \"PC10G:PC10 mode\" | \"PC3JX:PC3 separate mode\" | \"PC3JX:Plus expansion mode\" | \"PC3JG:PC3JG mode\" | \"PC3JG:PC3 separate mode\"");
+        Console.WriteLine("  --profile <name>          \"Generic\" | \"toyopuc:plus:standard\" | \"toyopuc:plus:extended\" | \"toyopuc:nano-10gx:native\" | \"toyopuc:nano-10gx:compatible\" | \"toyopuc:pc10g:standard-pc3jg\" | \"toyopuc:pc10g:pc10\" | \"toyopuc:pc3jx:pc3-separate\" | \"toyopuc:pc3jx:plus-expansion\" | \"toyopuc:pc3jg:pc3jg\" | \"toyopuc:pc3jg:pc3-separate\"");
         Console.WriteLine("  --skip-status-read        skip initial CPU status read");
         Console.WriteLine("  --skip-clock-read         skip initial clock read");
         Console.WriteLine("  --enable-u-pc10           force PC10 for U08000+");

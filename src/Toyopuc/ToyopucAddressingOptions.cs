@@ -53,6 +53,6 @@ public sealed record ToyopucAddressingOptions(
 
     public static ToyopucAddressingOptions FromProfile(string? profile)
     {
-        return ToyopucDeviceProfiles.FromName(profile).AddressingOptions;
+        return ToyopucPlcProfiles.FromName(profile).AddressingOptions;
     }
 }

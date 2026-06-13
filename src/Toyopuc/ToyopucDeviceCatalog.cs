@@ -6,7 +6,7 @@ public static class ToyopucDeviceCatalog
 {
     public static IReadOnlyList<ToyopucAreaDescriptor> GetAreaDescriptors(string? profile = null)
     {
-        return ToyopucDeviceProfiles.FromName(profile).Areas;
+        return ToyopucPlcProfiles.FromName(profile).Areas;
     }
 
     public static IReadOnlyList<string> GetAreas(bool prefixed, string? profile = null)
@@ -37,7 +37,7 @@ public static class ToyopucDeviceCatalog
             }
         }
 
-        throw new ArgumentException($"Unknown area for profile '{profile ?? "Generic"}': {area}", nameof(area));
+        throw new ArgumentException($"Unknown area for profile '{profile ?? "toyopuc:generic"}': {area}", nameof(area));
     }
 
     public static IReadOnlyList<ToyopucAddressRange> GetSupportedRanges(string area, bool prefixed, string? profile = null)
@@ -89,7 +89,7 @@ public static class ToyopucDeviceCatalog
         }
 
         throw new InvalidOperationException(
-            $"Area {area} for profile '{profile ?? "Generic"}' has multiple ranges; use {nameof(GetSupportedRanges)} instead.");
+            $"Area {area} for profile '{profile ?? "toyopuc:generic"}' has multiple ranges; use {nameof(GetSupportedRanges)} instead.");
     }
 
     public static ToyopucAddressRange GetSupportedRange(
@@ -106,7 +106,7 @@ public static class ToyopucDeviceCatalog
         }
 
         throw new InvalidOperationException(
-            $"Area {area} for profile '{profile ?? "Generic"}' has multiple ranges; use {nameof(GetSupportedRanges)} instead.");
+            $"Area {area} for profile '{profile ?? "toyopuc:generic"}' has multiple ranges; use {nameof(GetSupportedRanges)} instead.");
     }
 
     public static bool IsSupportedIndex(string area, int index, bool prefixed, string? profile = null)
@@ -147,7 +147,7 @@ public static class ToyopucDeviceCatalog
         var descriptor = GetAreaDescriptor(area, profile);
         var unit = descriptor.SupportsPackedWord ? "bit" : "word";
         var ranges = GetSupportedRanges(descriptor, prefixed, unit, packed: false);
-        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed: false, ToyopucDeviceProfiles.FromName(profile).AddressingOptions);
+        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed: false, ToyopucPlcProfiles.FromName(profile).AddressingOptions);
     }
 
     public static IReadOnlyList<string> GetSuggestedStartAddresses(
@@ -179,7 +179,7 @@ public static class ToyopucDeviceCatalog
         var prefixed = !string.IsNullOrWhiteSpace(prefix);
         var descriptor = GetAreaDescriptor(area, profile);
         var ranges = GetSupportedRanges(descriptor, prefixed, unit, packed);
-        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed, ToyopucDeviceProfiles.FromName(profile).AddressingOptions);
+        return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed, ToyopucPlcProfiles.FromName(profile).AddressingOptions);
     }
 
     private static IReadOnlyList<string> GetSuggestedStartAddresses(

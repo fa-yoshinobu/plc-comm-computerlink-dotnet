@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Renamed profile-facing APIs from `DeviceProfile` to `PlcProfile` (`ToyopucPlcProfile` / `ToyopucPlcProfiles`) to align with the other PLC communication libraries.
+- Replaced display-style profile names with canonical lower-case `toyopuc:<model>:<mode>` values such as `toyopuc:plus:extended` and `toyopuc:pc10g:pc10`.
+- Removed legacy profile-name aliases; callers must use the canonical PLC profile strings.
+
 ## [0.1.9] - 2026-06-12
 
 ### Fixed

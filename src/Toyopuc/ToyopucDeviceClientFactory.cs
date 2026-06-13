@@ -38,9 +38,9 @@ public static class ToyopucDeviceClientFactory
         if (options.RecvBufsize < 1)
             throw new ArgumentOutOfRangeException(nameof(options), "RecvBufsize must be 1 or greater.");
 
-        string? normalizedProfile = string.IsNullOrWhiteSpace(options.DeviceProfile)
+        string? normalizedProfile = string.IsNullOrWhiteSpace(options.PlcProfile)
             ? null
-            : ToyopucDeviceProfiles.NormalizeName(options.DeviceProfile);
+            : ToyopucPlcProfiles.NormalizeName(options.PlcProfile);
 
         var inner = new ToyopucDeviceClient(
             options.Host,
@@ -51,7 +51,7 @@ public static class ToyopucDeviceClientFactory
             options.Retries,
             options.EffectiveRetryDelay,
             options.RecvBufsize,
-            deviceProfile: normalizedProfile);
+            plcProfile: normalizedProfile);
 
         var queued = new QueuedToyopucDeviceClient(inner, options.RelayHops);
         await queued.OpenAsync(cancellationToken).ConfigureAwait(false);

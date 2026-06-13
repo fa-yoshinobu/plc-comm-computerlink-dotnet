@@ -37,7 +37,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     };
 
     public ToyopucAddressingOptions AddressingOptions { get; }
-    public string? DeviceProfile { get; }
+    public string? PlcProfile { get; }
     private readonly ConcurrentDictionary<string, ResolvedDevice> _resolvedDeviceCache = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, int[]> _runPlanCache = new(StringComparer.Ordinal);
 
@@ -51,16 +51,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
         TimeSpan retryDelay = default,
         int recvBufsize = ToyopucClient.UdpReceiveBufferSize,
         ToyopucAddressingOptions? addressingOptions = null,
-        string? deviceProfile = null)
+        string? plcProfile = null)
         : base(host, port, localPort, transport, timeout, retries, retryDelay, recvBufsize)
     {
-        DeviceProfile = string.IsNullOrWhiteSpace(deviceProfile)
+        PlcProfile = string.IsNullOrWhiteSpace(plcProfile)
             ? null
-            : ToyopucDeviceProfiles.NormalizeName(deviceProfile);
+            : ToyopucPlcProfiles.NormalizeName(plcProfile);
         AddressingOptions = addressingOptions
-            ?? (DeviceProfile is null
+            ?? (PlcProfile is null
                 ? ToyopucAddressingOptions.Default
-                : ToyopucAddressingOptions.FromProfile(DeviceProfile));
+                : ToyopucAddressingOptions.FromProfile(PlcProfile));
     }
 
     public ResolvedDevice ResolveDevice(string device)
@@ -74,8 +74,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return _resolvedDeviceCache.GetOrAdd(
             key,
             static (cacheKey, state) =>
-                ToyopucDeviceResolver.ResolveDevice(cacheKey, state.AddressingOptions, state.DeviceProfile),
-            (AddressingOptions, DeviceProfile));
+                ToyopucDeviceResolver.ResolveDevice(cacheKey, state.AddressingOptions, state.PlcProfile),
+            (AddressingOptions, PlcProfile));
     }
 
     public object RelayRead(object hops, object device, int count = 1)

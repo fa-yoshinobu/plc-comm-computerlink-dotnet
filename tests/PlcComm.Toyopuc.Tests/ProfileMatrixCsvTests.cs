@@ -7,15 +7,15 @@ public sealed class ProfileMatrixCsvTests
     [Fact]
     public void MatrixHeader_MatchesCanonicalProfileNames()
     {
-        var matrix = DeviceProfileMatrix.Load();
+        var matrix = PlcProfileMatrix.Load();
 
-        Assert.Equal(ToyopucDeviceProfiles.GetNames(), matrix.ProfileNames);
+        Assert.Equal(ToyopucPlcProfiles.GetNames(), matrix.ProfileNames);
     }
 
     [Fact]
     public void MatrixSupportedAreas_MatchCatalogForEveryProfileAndAccessMode()
     {
-        var matrix = DeviceProfileMatrix.Load();
+        var matrix = PlcProfileMatrix.Load();
 
         foreach (var profile in matrix.ProfileNames)
         {
@@ -41,7 +41,7 @@ public sealed class ProfileMatrixCsvTests
     [Fact]
     public void MatrixRows_MatchCatalogMetadataAndRanges()
     {
-        var matrix = DeviceProfileMatrix.Load();
+        var matrix = PlcProfileMatrix.Load();
 
         foreach (var row in matrix.Rows)
         {
@@ -65,20 +65,20 @@ public sealed class ProfileMatrixCsvTests
         }
     }
 
-    private sealed record DeviceProfileMatrix(
+    private sealed record PlcProfileMatrix(
         IReadOnlyList<string> ProfileNames,
         IReadOnlyList<MatrixRow> Rows)
     {
-        private static readonly Lazy<DeviceProfileMatrix> Cached = new(LoadCore);
+        private static readonly Lazy<PlcProfileMatrix> Cached = new(LoadCore);
 
-        public static DeviceProfileMatrix Load()
+        public static PlcProfileMatrix Load()
         {
             return Cached.Value;
         }
 
-        private static DeviceProfileMatrix LoadCore()
+        private static PlcProfileMatrix LoadCore()
         {
-            var path = Path.Combine(AppContext.BaseDirectory, "device_profile_matrix_r2.csv");
+            var path = Path.Combine(AppContext.BaseDirectory, "plc_profile_matrix_r2.csv");
             var lines = File.ReadAllLines(path);
 
             Assert.NotEmpty(lines);
@@ -113,7 +113,7 @@ public sealed class ProfileMatrixCsvTests
                     RangesByProfile: rangesByProfile));
             }
 
-            return new DeviceProfileMatrix(profileNames, rows);
+            return new PlcProfileMatrix(profileNames, rows);
         }
 
         private static List<string> ParseCsvLine(string line)

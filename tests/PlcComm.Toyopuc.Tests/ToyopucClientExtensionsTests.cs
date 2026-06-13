@@ -14,8 +14,8 @@ public sealed class ToyopucClientExtensionsTests
     {
         var normalized = ToyopucAddress.Normalize(
             "p1-d0000l",
-            ToyopucAddressingOptions.FromProfile("PC10G:PC10 mode"),
-            "PC10G:PC10 mode");
+            ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10"),
+            "toyopuc:pc10g:pc10");
 
         Assert.Equal("P1-D0000L", normalized);
     }
@@ -33,14 +33,14 @@ public sealed class ToyopucClientExtensionsTests
             {
                 Port = port,
                 RelayHops = "P1-L2:N2",
-                DeviceProfile = "PC10G:PC10 mode",
+                PlcProfile = "toyopuc:pc10g:pc10",
             });
 
         using var server = await acceptTask;
 
         Assert.True(client.IsOpen);
         Assert.True(client.UsesRelay);
-        Assert.Equal("PC10G:PC10 mode", client.DeviceProfile);
+        Assert.Equal("toyopuc:pc10g:pc10", client.PlcProfile);
         Assert.Single(client.RelayHops!);
         Assert.Equal((0x12, 2), client.RelayHops![0]);
     }

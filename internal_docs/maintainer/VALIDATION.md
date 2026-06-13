@@ -29,12 +29,12 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --suite "TOYOPUC-Plus:Plus Extended mode" --verbose --log logs\plus_suite.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --suite "toyopuc:plus:extended" --verbose --log logs\plus_suite.log
 ```
 
 Expected result:
 
-- `summary : suite=TOYOPUC-Plus:Plus Extended mode ok=6 skip=3 ng=0`
+- `summary : suite=toyopuc:plus:extended ok=6 skip=3 ng=0`
 - `U08000`, `EB00000`, and `FR000000` show `SKIP`
 
 ### 1-2. Safe Word Write / Readback / Restore
@@ -48,7 +48,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --device P1-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\plus_word_restore.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --device P1-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\plus_word_restore.log
 ```
 
 Expected result:
@@ -68,7 +68,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\plus_bit_restore.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\plus_bit_restore.log
 ```
 
 ### 1-4. Sampled Bit-to-packed Readback Probe (supplemental)
@@ -83,7 +83,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_plus_extended.csv --summary-json logs\bit_pattern_plus_extended.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_plus_extended.csv --summary-json logs\bit_pattern_plus_extended.json
 ```
 
 Acceptance notes for this profile:
@@ -107,7 +107,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "TOYOPUC-Plus:Plus Extended mode" --devices P1-D0000,P1-M0000,P1-V0000,EV0E20 --interval 1s --duration 30m --retries 3 --success-log-interval 10 --log logs\plus_soak_30m.log --poll-csv logs\plus_soak_30m.csv --summary-json logs\plus_soak_30m.json
+dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:plus:extended" --devices P1-D0000,P1-M0000,P1-V0000,EV0E20 --interval 1s --duration 30m --retries 3 --success-log-interval 10 --log logs\plus_soak_30m.log --poll-csv logs\plus_soak_30m.csv --summary-json logs\plus_soak_30m.json
 ```
 
 Expected result:
@@ -132,12 +132,12 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --suite "Nano 10GX:Compatible mode" --verbose --log logs\relay_suite_10gx.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --suite "toyopuc:nano-10gx:compatible" --verbose --log logs\relay_suite_10gx.log
 ```
 
 Expected result:
 
-- `summary : suite=Nano 10GX:Compatible mode ok=9 skip=0 ng=0`
+- `summary : suite=toyopuc:nano-10gx:compatible ok=9 skip=0 ng=0`
 
 ### 2-2. Relay Word Write / Readback / Restore
 
@@ -150,7 +150,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --device P1-D0000 --write-value 0x1357 --restore-after-write --verbose --log logs\relay_word_restore.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --device P1-D0000 --write-value 0x1357 --restore-after-write --verbose --log logs\relay_word_restore.log
 ```
 
 Expected result:
@@ -167,7 +167,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\relay_bit_restore.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --device P1-M0000 --write-value 1 --restore-after-write --verbose --log logs\relay_bit_restore.log
 ```
 
 ### 2-4. Relay FR Write + Commit + Restore
@@ -182,7 +182,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --fr-device FR000000 --fr-write-value 0x55AB --fr-commit --restore-after-write --verbose --log logs\relay_fr_commit_restore.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --fr-device FR000000 --fr-write-value 0x55AB --fr-commit --restore-after-write --verbose --log logs\relay_fr_commit_restore.log
 ```
 
 Expected result:
@@ -205,7 +205,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC10G:PC10 mode" --csv logs\bit_pattern_pc10g_direct.csv --summary-json logs\bit_pattern_pc10g_direct.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc10g:pc10" --csv logs\bit_pattern_pc10g_direct.csv --summary-json logs\bit_pattern_pc10g_direct.json
 ```
 
 Expected result:
@@ -239,12 +239,12 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --suite "PC3JX:Plus expansion mode" --verbose --log logs\pc3jx_plus_expansion_suite_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --suite "toyopuc:pc3jx:plus-expansion" --verbose --log logs\pc3jx_plus_expansion_suite_20260312.log
 ```
 
 Expected result:
 
-- `summary : suite=PC3JX:Plus expansion mode ok=158 skip=0 ng=0`
+- `summary : suite=toyopuc:pc3jx:plus-expansion ok=158 skip=0 ng=0`
 
 ### 4-2. Prefix-expanded Safe Write / Readback / Restore
 
@@ -255,10 +255,10 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P2-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_d0000_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P3-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_d0000_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P2-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_m0000_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P3-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_m0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P2-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_d0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P3-D0000 --write-value 0x1234 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_d0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P2-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p2_m0000_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P3-M0000 --write-value 1 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p3_m0000_restore_20260312.log
 ```
 
 Expected result:
@@ -274,9 +274,9 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-D0000L --write-value 0x34 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000l_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-D0000H --write-value 0x12 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000h_restore_20260312.log
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --device P1-M000W --write-value 0xA55A --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_m000w_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-D0000L --write-value 0x34 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000l_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-D0000H --write-value 0x12 --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_d0000h_restore_20260312.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --device P1-M000W --write-value 0xA55A --restore-after-write --verbose --log logs\pc3jx_plus_expansion_p1_m000w_restore_20260312.log
 ```
 
 Expected result:
@@ -292,7 +292,7 @@ Purpose:
 Command:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "PC3JX:Plus expansion mode" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.csv --summary-json logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc3jx:plus-expansion" --areas V,X,Y,EV --retries 3 --retry-delay 0.5 --csv logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.csv --summary-json logs\bit_pattern_pc3jx_plus_expansion_vxyev_20260312.json
 ```
 
 Expected result:
@@ -306,7 +306,7 @@ Expected result:
 - `OK`
   - communication succeeded and the observed value matched the expectation
   - for [PlcComm.Toyopuc.BitPatternProbe](../../examples/PlcComm.Toyopuc.BitPatternProbe/Program.cs) on direct `PC10G`, documented `V` / `EV` target-specific mismatches are also accepted when restore succeeds
-  - for [PlcComm.Toyopuc.BitPatternProbe](../../examples/PlcComm.Toyopuc.BitPatternProbe/Program.cs) on direct `TOYOPUC-Plus:Plus Extended mode`, documented `V` / `EV` and low-base `X` / `Y` target-specific mismatches are also accepted when restore succeeds
+  - for [PlcComm.Toyopuc.BitPatternProbe](../../examples/PlcComm.Toyopuc.BitPatternProbe/Program.cs) on direct `toyopuc:plus:extended`, documented `V` / `EV` and low-base `X` / `Y` target-specific mismatches are also accepted when restore succeeds
 - `SKIP`
   - the area is confirmed unsupported for that machine profile
 - `NG`
@@ -318,5 +318,5 @@ Expected result:
 ## Notes
 
 - The direct `TOYOPUC-Plus` target and relay `Nano 10GX` target use different profiles.
-- Use `--profile "Nano 10GX:Compatible mode"` on the relay target.
+- Use `--profile "toyopuc:nano-10gx:compatible"` on the relay target.
 - Relay FR completion wait automatically falls back to CPU-status polling if `A0 01 10` is not accepted.

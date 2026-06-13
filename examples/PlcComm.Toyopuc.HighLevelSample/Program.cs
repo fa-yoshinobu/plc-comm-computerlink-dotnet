@@ -14,7 +14,7 @@ var transport = TryParseTransport(args.ElementAtOrDefault(2), ToyopucTransportMo
 var profileName = args.ElementAtOrDefault(3);
 if (string.IsNullOrWhiteSpace(profileName))
 {
-    Console.Error.WriteLine("profile is required. Specify it explicitly; no device profile is inferred from defaults.");
+    Console.Error.WriteLine("profile is required. Specify it explicitly; no PLC profile is inferred from defaults.");
     PrintUsage();
     Environment.ExitCode = 1;
     return;
@@ -29,7 +29,7 @@ await using var client = new ToyopucDeviceClient(
     retries: 2,
     retryDelay: TimeSpan.FromMilliseconds(200),
     addressingOptions: profile,
-    deviceProfile: profileName);
+    plcProfile: profileName);
 
 await client.OpenAsync();
 
@@ -165,12 +165,12 @@ static void PrintUsage()
     Console.WriteLine("Usage:");
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- [host] [port] [tcp|udp] <profile>");
     Console.WriteLine();
-    Console.WriteLine("Profile is required; the sample does not infer a device profile.");
+    Console.WriteLine("Profile is required; the sample does not infer a PLC profile.");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp \"TOYOPUC-Plus:Plus Extended mode\"");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1027 udp \"TOYOPUC-Plus:Plus Extended mode\"");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp \"PC10G:PC10 mode\"");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp \"toyopuc:plus:extended\"");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1027 udp \"toyopuc:plus:extended\"");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp \"toyopuc:pc10g:pc10\"");
     Console.WriteLine();
     Console.WriteLine("This sample demonstrates ReadAsync, WriteAsync, ReadManyAsync, WriteManyAsync,");
     Console.WriteLine("ReadTypedAsync, WriteTypedAsync, ReadWordsSingleRequestAsync, ReadDWordsSingleRequestAsync,");

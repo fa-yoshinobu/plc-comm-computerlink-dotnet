@@ -28,21 +28,21 @@ syntax shown in these examples.
 Minimal read:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 "TOYOPUC-Plus:Plus Extended mode"
-dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1027 udp P1-D0000 "TOYOPUC-Plus:Plus Extended mode"
+dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 "toyopuc:plus:extended"
+dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1027 udp P1-D0000 "toyopuc:plus:extended"
 ```
 
 High-level cookbook:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp "TOYOPUC-Plus:Plus Extended mode"
-dotnet run --project examples\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp "PC10G:PC10 mode"
+dotnet run --project examples\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp "toyopuc:plus:extended"
+dotnet run --project examples\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp "toyopuc:pc10g:pc10"
 ```
 
 Dedicated soak monitor:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --devices P1-D0000,P1-M0000,U08000 --interval 2s --duration 30m --retries 3 --log logs\soak.log --poll-csv logs\soak.csv --summary-json logs\soak_summary.json
+dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --devices P1-D0000,P1-M0000,U08000 --interval 2s --duration 30m --retries 3 --log logs\soak.log --poll-csv logs\soak.csv --summary-json logs\soak_summary.json
 ```
 
 ## Choose an Example by Task
@@ -87,13 +87,13 @@ These projects are useful for validation and investigation, but they are not the
 Write-limit probe:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File examples\probe_direct_length_limits.ps1 -Profile "PC10G:PC10 mode"
+powershell -ExecutionPolicy Bypass -File examples\probe_direct_length_limits.ps1 -Profile "toyopuc:pc10g:pc10"
 ```
 
 Bit-pattern probe:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --profile "PC10G:PC10 mode" --csv logs\bit_pattern_pc10g_direct.csv --summary-json logs\bit_pattern_pc10g_direct.json
+dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --profile "toyopuc:pc10g:pc10" --csv logs\bit_pattern_pc10g_direct.csv --summary-json logs\bit_pattern_pc10g_direct.json
 ```
 
 Profile-driven validation:
@@ -106,7 +106,7 @@ powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target rel
 Relay FR write + commit with restore:
 
 ```powershell
-dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "Nano 10GX:Compatible mode" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --fr-device FR000000 --fr-write-value 0x55AB --fr-commit --restore-after-write --verbose --log logs\relay_fr_commit_restore.log
+dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:nano-10gx:compatible" --hops "P1-L2:N4,P1-L2:N6,P1-L2:N2" --fr-device FR000000 --fr-write-value 0x55AB --fr-commit --restore-after-write --verbose --log logs\relay_fr_commit_restore.log
 ```
 
 ## Publish

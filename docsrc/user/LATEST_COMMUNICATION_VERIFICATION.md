@@ -11,7 +11,7 @@ This page keeps the current public summary only. Older detailed notes are not ke
 
 ## Latest Direct PC10G Result
 
-The latest direct `PC10G:PC10 mode` refresh was run on `2026-05-02` against
+The latest direct `toyopuc:pc10g:pc10` refresh was run on `2026-05-02` against
 `192.168.250.100:1025` over TCP.
 
 - release build: `OK`

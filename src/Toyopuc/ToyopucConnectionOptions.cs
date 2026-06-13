@@ -21,12 +21,12 @@ public sealed record ToyopucConnectionOptions(string Host)
     /// <summary>Gets or sets the transport protocol.</summary>
     public ToyopucTransportMode Transport { get; init; } = ToyopucTransportMode.Tcp;
 
-    /// <summary>Gets or sets the optional device profile name.</summary>
+    /// <summary>Gets or sets the optional PLC profile name.</summary>
     /// <remarks>
     /// Supply a known profile name when you want documented profile-based address resolution instead of
     /// a fully generic session.
     /// </remarks>
-    public string? DeviceProfile { get; init; }
+    public string? PlcProfile { get; init; }
 
     /// <summary>Gets or sets the optional relay hop chain text.</summary>
     /// <remarks>Leave this empty for direct connections; provide relay hops for routed sessions.</remarks>

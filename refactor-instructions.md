@@ -52,7 +52,7 @@ JTEKT TOYOPUC PLC と Computer Link プロトコル(イーサネット TCP/UDP)�
 | `ToyopucClient.cs` | 1,089 | 低レベル同期クライアント(トランスポート + コマンド) |
 | `ToyopucClient.Async.cs` / `ToyopucDeviceClient.Async.cs` | 451 / 360 | async ラッパ(partial) |
 | `ToyopucDeviceClientExtensions.cs` | 711 | 契約ヘルパ(`ReadTypedAsync` / `PollAsync` / single-request / chunked) |
-| `ToyopucDeviceProfiles.cs` / `ToyopucDeviceResolver.cs` / `ToyopucAddress.cs` | 612 / 476 / 564 | プロファイル・アドレス解決(データ + 純粋ロジック) |
+| `ToyopucPlcProfiles.cs` / `ToyopucDeviceResolver.cs` / `ToyopucAddress.cs` | 612 / 476 / 564 | プロファイル・アドレス解決(データ + 純粋ロジック) |
 | `ToyopucProtocol.cs` | 535 | フレーム組立・パース(純粋。健全) |
 | ほか | — | Queued ラッパ、Factory、Options、Relay、Models、Errors |
 
@@ -240,7 +240,7 @@ dotnet format PlcComm.Toyopuc.sln --verify-no-changes
 - 公開 API の変更・追加・整理(`object` API の型安全化を含む。提案のみ)
 - 送信フレームバイト列・ランプラン分割規則・キャッシュセマンティクスの変更
 - sync/async 構造(`.Async.cs` partial)の再設計
-- `ToyopucProtocol` / `ToyopucAddress` / `ToyopucDeviceProfiles` の変更
+- `ToyopucProtocol` / `ToyopucAddress` / `ToyopucPlcProfiles` の変更
   (プロファイルデータは実機検証に紐づく)
 - `examples/` の変更、既存テストファイルの分割・既存アサーション変更
 - バージョン番号変更、`CHANGELOG.md` 更新、NuGet publish

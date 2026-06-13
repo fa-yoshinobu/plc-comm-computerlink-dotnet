@@ -59,7 +59,7 @@ public static class ToyopucDeviceResolver
     {
         var normalizedProfile = string.IsNullOrWhiteSpace(profile)
             ? null
-            : ToyopucDeviceProfiles.NormalizeName(profile);
+            : ToyopucPlcProfiles.NormalizeName(profile);
         options ??= normalizedProfile is null
             ? ToyopucAddressingOptions.Default
             : ToyopucAddressingOptions.FromProfile(normalizedProfile);
@@ -463,7 +463,7 @@ public static class ToyopucDeviceResolver
 
     private static void ValidateProfileAccess(ParsedAddress parsedAddress, string? prefix, string? profile, string device)
     {
-        var profileName = profile ?? "Generic";
+        var profileName = profile ?? "toyopuc:generic";
         var descriptor = ToyopucDeviceCatalog.GetAreaDescriptor(parsedAddress.Area, profile);
         if (parsedAddress.Packed && !descriptor.SupportsPackedWord)
         {

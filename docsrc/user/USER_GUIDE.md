@@ -25,7 +25,7 @@ using PlcComm.Toyopuc;
 var options = new ToyopucConnectionOptions("192.168.250.100")
 {
     Port = 1025,
-    DeviceProfile = "TOYOPUC-Plus:Plus Extended mode",
+    PlcProfile = "toyopuc:plus:extended",
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
@@ -57,7 +57,7 @@ Basic families `P/K/V/T/C/L/X/Y/M/S/N/R/D` must be written as `P1-*`, `P2-*`, or
 Use `ToyopucAddress.Normalize` when you want a stable string form:
 
 ```csharp
-string canonical = ToyopucAddress.Normalize("p1-d0000", profile: "TOYOPUC-Plus:Plus Extended mode");
+string canonical = ToyopucAddress.Normalize("p1-d0000", profile: "toyopuc:plus:extended");
 Console.WriteLine(canonical); // P1-D0000
 ```
 

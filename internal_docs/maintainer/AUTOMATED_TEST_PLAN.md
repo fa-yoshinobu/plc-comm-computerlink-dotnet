@@ -17,7 +17,7 @@ The target is not "write to every address on every PLC". The target is "exhausti
 
 Run on every local build and CI run.
 
-- Treat [`device_profile_matrix_r2.csv`](./device_profile_matrix_r2.csv) as the reviewed source of truth.
+- Treat [`plc_profile_matrix_r2.csv`](./plc_profile_matrix_r2.csv) as the reviewed source of truth.
 - Verify all canonical profile names match the matrix header.
 - Verify every `area x access` row matches the runtime catalog:
   - supported / unsupported
@@ -139,15 +139,15 @@ Run manually or by explicit workflow dispatch.
 
 - Run the long-duration monitoring with `examples/PlcComm.Toyopuc.SoakMonitor`.
 - Real hardware validation is deferred for the following profiles:
-  - `TOYOPUC-Plus:Plus Standard mode`
-  - `Nano 10GX:Nano 10GX mode`
-  - `PC3JX:PC3 separate mode`
-  - `PC3JG:PC3JG mode`
-  - `PC3JG:PC3 separate mode`
+  - `toyopuc:plus:standard`
+  - `toyopuc:nano-10gx:native`
+  - `toyopuc:pc3jx:pc3-separate`
+  - `toyopuc:pc3jg:pc3jg`
+  - `toyopuc:pc3jg:pc3-separate`
 - For each deferred profile, run a read-only suite first and compare it with a nearest already-verified profile before any write/restore checks.
-- Before any write test in `Nano 10GX:Nano 10GX mode`, run the same read-only suite used for `Nano 10GX:Compatible mode` and compare the results.
+- Before any write test in `toyopuc:nano-10gx:native`, run the same read-only suite used for `toyopuc:nano-10gx:compatible` and compare the results.
 - Relay continuous-length limit characterization is still open.
-  - Current provisional observation on `Nano 10GX:Compatible mode` via relay:
+  - Current provisional observation on `toyopuc:nano-10gx:compatible` via relay:
     - `D0000` read succeeded up to `0x00F0` words (`240 words`) once
   - This is not a confirmed hard limit yet.
   - Follow-up is blocked by intermittent `rc=0x10 / error_code=0x73` relay-command-collision responses and subsequent socket errors on the same relay path.

@@ -7,7 +7,7 @@ upstream Python implementation.
 
 ### PC10 packed-word `ReadMany` may return all zeros on non-consecutive lists
 
-Discovered on `2026-03-12` during direct `Nano 10GX:Compatible mode` checks in
+Discovered on `2026-03-12` during direct `toyopuc:nano-10gx:compatible` checks in
 the .NET implementation (before library-side fix).
 
 Resolution status:
@@ -56,7 +56,7 @@ It is complete and no longer represents open work.
 ### 1. Preconditions
 
 - [x] PLC/profile where packed-word PC10 access is available (for example
-      `Nano 10GX:Compatible mode` direct).
+      `toyopuc:nano-10gx:compatible` direct).
 - [x] Frame logging enabled (to confirm command type and payload).
 - [x] A packed-word area that has known non-zero points at the test time.
 

@@ -28,7 +28,7 @@ public sealed record ToyopucConnectionOptions(
     int Port = 1025,
     TimeSpan Timeout = default,
     ToyopucTransport Transport = ToyopucTransport.Tcp,
-    string? DeviceProfile = null,
+    string? PlcProfile = null,
     string? RelayHops = null,
     int LocalPort = 0,
     int Retries = 0,

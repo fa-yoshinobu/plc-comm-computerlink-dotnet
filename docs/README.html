@@ -75,44 +75,45 @@
 <p><a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/actions/workflows/ci.yml"><img src="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <a href="https://www.nuget.org/packages/PlcComm.Toyopuc/"><img src="https://img.shields.io/nuget/v/PlcComm.Toyopuc.svg" alt="NuGet"></a>
 <a href="https://fa-yoshinobu.github.io/plc-comm-computerlink-dotnet/"><img src="https://img.shields.io/badge/docs-GitHub_Pages-blue.svg" alt="Documentation"></a>
-<a href="https://dotnet.microsoft.com/download/dotnet/9.0"><img src="https://img.shields.io/badge/.NET-9.0-blue.svg" alt=".NET 9.0"></a>
 <a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 <a href="https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format"><img src="https://img.shields.io/badge/Lint-dotnet%20format-blue.svg" alt="Static Analysis: dotnet format"></a></p>
 <h1 id="computer-link-protocol-for-net">Computer Link Protocol for .NET</h1>
 <p><img src="https://raw.githubusercontent.com/fa-yoshinobu/plc-comm-computerlink-dotnet/main/docsrc/assets/toyopuc.png" alt="Illustration"></p>
+<p><a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-9-512BD4?logo=dotnet&amp;logoColor=white" alt=".NET 9"></a>
+<a href="https://learn.microsoft.com/dotnet/csharp/"><img src="https://img.shields.io/badge/C%23-239120?logo=csharp&amp;logoColor=white" alt="C#"></a></p>
 <p>A user-focused .NET library for JTEKT TOYOPUC Computer Link communication.
-The recommended entry point is the high-level queued client created by
-<code>ToyopucDeviceClientFactory</code>.</p>
-<h2 id="key-features">Key Features</h2>
+The recommended entry point is the high-level queued client created by <code>ToyopucDeviceClientFactory</code>.</p>
+<p>Maintainer release steps are documented in <a href="RELEASING.html">Release Process</a>.</p>
+<p>This README intentionally covers the public high-level API only:</p>
 <ul>
-<li>High-level device access such as <code>P1-D0000</code>, <code>P1-M0000</code>, <code>ES0000</code>, and <code>FR000000</code></li>
-<li>Explicit connection options and optional relay-hops setup</li>
-<li>Typed helpers for <code>U</code>, <code>S</code>, <code>D</code>, <code>L</code>, and <code>F</code></li>
-<li>Snapshot helpers such as <code>ReadManyAsync</code>, <code>ReadNamedAsync</code>, and <code>PollAsync</code></li>
-<li>Explicit single-request and chunked contiguous block helpers</li>
-<li>Public address parsing and normalization helpers</li>
-<li>FR file-register helpers and relay helpers for common application work</li>
-<li>Ready-to-run examples for minimal reads, cookbook-style usage, monitoring, and soak runs</li>
+<li><code>ToyopucConnectionOptions</code></li>
+<li><code>ToyopucDeviceClientFactory.OpenAndConnectAsync</code></li>
+<li><code>ReadAsync</code> / <code>WriteAsync</code></li>
+<li><code>ReadTypedAsync</code> / <code>WriteTypedAsync</code></li>
+<li><code>WriteBitInWordAsync</code></li>
+<li><code>ReadManyAsync</code> / <code>ReadNamedAsync</code></li>
+<li><code>PollAsync</code></li>
+<li><code>ReadWordsSingleRequestAsync</code> / <code>ReadDWordsSingleRequestAsync</code></li>
+<li><code>ReadWordsChunkedAsync</code> / <code>ReadDWordsChunkedAsync</code></li>
+<li><code>ReadFrAsync</code> / <code>WriteFrAsync</code> / <code>CommitFrAsync</code></li>
 </ul>
 <h2 id="quick-start">Quick Start</h2>
 <h3 id="installation">Installation</h3>
-<p>Install from NuGet:</p>
 <ul>
 <li>Package page: <a href="https://www.nuget.org/packages/PlcComm.Toyopuc/">https://www.nuget.org/packages/PlcComm.Toyopuc/</a></li>
 </ul>
 <pre><code class="lang-powershell">dotnet add package PlcComm.Toyopuc
 </code></pre>
 <p>Or add a package reference directly:</p>
-<pre><code class="lang-xml">&lt;PackageReference Include=&quot;PlcComm.Toyopuc&quot; Version=&quot;0.1.3&quot; /&gt;
+<pre><code class="lang-xml">&lt;PackageReference Include=&quot;PlcComm.Toyopuc&quot; Version=&quot;0.1.9&quot; /&gt;
 </code></pre>
-<p>You can also reference <code>src/Toyopuc/PlcComm.Toyopuc.csproj</code> directly from a local solution during development.</p>
-<h3 id="high-level-example">High-level example</h3>
+<h3 id="high-level-example">High-Level Example</h3>
 <pre><code class="lang-csharp">using PlcComm.Toyopuc;
 
 var options = new ToyopucConnectionOptions(&quot;192.168.250.100&quot;)
 {
     Port = 1025,
-    DeviceProfile = &quot;TOYOPUC-Plus:Plus Extended mode&quot;,
+    PlcProfile = &quot;toyopuc:plus:extended&quot;,
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
@@ -129,27 +130,31 @@ Console.WriteLine($&quot;P1-D0200:F = {typed}&quot;);
 var snapshot = await client.ReadNamedAsync([&quot;P1-D0000&quot;, &quot;P1-D0200:F&quot;, &quot;P1-D0000.0&quot;]);
 Console.WriteLine(snapshot[&quot;P1-D0000&quot;]);
 </code></pre>
-<p>Basic area families <code>P/K/V/T/C/L/X/Y/M/S/N/R/D</code> should use a <code>P1-</code>, <code>P2-</code>, or <code>P3-</code> prefix when a profile is in use.</p>
-<h2 id="common-user-tasks">Common User Tasks</h2>
+<p>Basic area families <code>P/K/V/T/C/L/X/Y/M/S/N/R/D</code> require a <code>P1-</code>, <code>P2-</code>, or <code>P3-</code> prefix.</p>
+<h2 id="supported-plc-registers">Supported PLC Registers</h2>
+<p>Start with these public high-level families first:</p>
 <ul>
-<li>Read or write one device: <code>ReadAsync</code>, <code>WriteAsync</code></li>
-<li>Read several devices together: <code>ReadManyAsync</code>, <code>ReadNamedAsync</code></li>
-<li>Read 32-bit integers or float32 values: <code>ReadDWordsSingleRequestAsync</code>, <code>ReadTypedAsync</code></li>
-<li>Change one flag bit inside a word: <code>WriteBitInWordAsync</code></li>
-<li>Read contiguous word blocks: <code>ReadWordsSingleRequestAsync</code>, <code>ReadDWordsSingleRequestAsync</code></li>
-<li>Read large contiguous ranges explicitly: <code>ReadWordsChunkedAsync</code>, <code>ReadDWordsChunkedAsync</code></li>
-<li>Persist FR data: <code>ReadFrAsync</code>, <code>WriteFrAsync</code>, <code>CommitFrAsync</code></li>
-<li>Poll a small watch list repeatedly: <code>PollAsync</code></li>
+<li>prefixed word/register areas: <code>P1-D0000</code>, <code>P1-S0000</code>, <code>P1-N0100</code>, <code>P1-R0000</code></li>
+<li>prefixed bit/control areas: <code>P1-M0000</code>, <code>P1-X0000</code>, <code>P1-Y0000</code>, <code>P1-T0000</code></li>
+<li>extension areas: <code>ES0000</code>, <code>EN0000</code></li>
+<li>FR storage: <code>FR000000</code></li>
+<li>typed and bit views: <code>P1-D0100:S</code>, <code>P1-D0200:D</code>, <code>P1-D0300:F</code>, <code>P1-D0000.3</code></li>
 </ul>
-<p>Address helper:</p>
-<pre><code class="lang-csharp">string canonical = ToyopucAddress.Normalize(&quot;p1-d0000&quot;, profile: &quot;TOYOPUC-Plus:Plus Extended mode&quot;);
-Console.WriteLine(canonical); // P1-D0000
-</code></pre>
-<p>Use <code>*SingleRequestAsync</code> when one logical request must remain one protocol
-operation. Use <code>*ChunkedAsync</code> only when protocol-defined boundary splitting is
-acceptable for that device family and data set.</p>
-<h2 id="user-docs">User Docs</h2>
+<p>High-level address syntax is shared across the PLC helper libraries:</p>
 <ul>
+<li>use <code>:</code> for data types and special views: <code>P1-D0100:U</code>, <code>P1-D0100:S</code>,
+<code>P1-D0100:D</code>, <code>P1-D0100:L</code>, <code>P1-D0100:F</code></li>
+<li>use <code>.</code> only for bit-in-word access: <code>P1-D0100.0</code> through <code>P1-D0100.F</code></li>
+<li><code>P1-D0100.D</code> is bit <code>0xD</code> / bit 13, not a 32-bit data type request</li>
+<li>low-level Computer Link frames still encode the selected word/dword/float
+route internally; the <code>:D</code> / <code>:F</code> spelling is the public helper-layer form</li>
+</ul>
+<p>See the full public table in <a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/SUPPORTED_REGISTERS.md">Supported PLC Registers</a>.</p>
+<h2 id="public-documentation">Public Documentation</h2>
+<ul>
+<li><a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/GETTING_STARTED.md">Getting Started</a></li>
+<li><a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/SUPPORTED_REGISTERS.md">Supported PLC Registers</a></li>
+<li><a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/LATEST_COMMUNICATION_VERIFICATION.md">Latest Communication Verification</a></li>
 <li><a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/docsrc/user/USER_GUIDE.md">User Guide</a></li>
 <li><a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/examples/README.md">Examples Guide</a></li>
 <li><a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/HIGH_LEVEL_API_CONTRACT.md">High-Level API Contract</a></li>
@@ -160,7 +165,33 @@ acceptable for that device family and data set.</p>
 <li><code>examples/PlcComm.Toyopuc.HighLevelSample</code></li>
 <li><code>examples/PlcComm.Toyopuc.SoakMonitor</code></li>
 </ul>
-<p>Engineering and validation documents remain under <code>docsrc/maintainer/</code>.</p>
+<p>Profile-specific example apps and probe scripts require an explicit profile
+argument; omitted profile values are rejected instead of being interpreted as a
+default TOYOPUC model.</p>
+<p>Maintainer-only notes and retained evidence live under <code>internal_docs/</code>.</p>
+<h2 id="latest-communication-verification">Latest Communication Verification</h2>
+<p>Latest direct <code>toyopuc:pc10g:pc10</code> validation was refreshed on <code>2026-05-02</code> against
+<code>192.168.250.100:1025</code> over TCP.</p>
+<ul>
+<li>release build: <code>OK</code></li>
+<li>full <code>SmokeTest</code> suite: <code>ok=212 skip=0 ng=0</code></li>
+<li>restored word write: <code>P1-D0100 0x0000 -&gt; 0x1234 -&gt; 0x0000</code></li>
+<li>restored bit write: <code>P1-M0000 0 -&gt; 1 -&gt; 0</code></li>
+<li>60-second <code>SoakMonitor</code>: <code>polls=60 ok=60 ng=0 reconnects=0 sessions=1</code></li>
+</ul>
+<p>Detailed retained evidence is in
+<a href="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/internal_docs/maintainer/TESTRESULTS.md"><code>internal_docs/maintainer/TESTRESULTS.md</code></a>.</p>
+<h2 id="common-user-tasks">Common User Tasks</h2>
+<ul>
+<li>read or write one device: <code>ReadAsync</code>, <code>WriteAsync</code></li>
+<li>read several devices together: <code>ReadManyAsync</code>, <code>ReadNamedAsync</code></li>
+<li>read 32-bit integers or float32 values: <code>ReadDWordsSingleRequestAsync</code>, <code>ReadTypedAsync</code></li>
+<li>change one flag bit inside a word: <code>WriteBitInWordAsync</code></li>
+<li>read contiguous word blocks: <code>ReadWordsSingleRequestAsync</code>, <code>ReadDWordsSingleRequestAsync</code></li>
+<li>read large contiguous ranges explicitly: <code>ReadWordsChunkedAsync</code>, <code>ReadDWordsChunkedAsync</code></li>
+<li>persist FR data: <code>ReadFrAsync</code>, <code>WriteFrAsync</code>, <code>CommitFrAsync</code></li>
+<li>poll a small watch list repeatedly: <code>PollAsync</code></li>
+</ul>
 <h2 id="development-and-ci">Development and CI</h2>
 <p>Run local CI:</p>
 <pre><code class="lang-powershell">run_ci.bat

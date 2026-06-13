@@ -196,7 +196,7 @@ function Invoke-RelayWriteRestore {
 
     Invoke-ProfileWriteRestore `
         -Label $Label `
-        -Profile "Nano 10GX:Compatible mode" `
+        -Profile "toyopuc:nano-10gx:compatible" `
         -RelayHops $Hops `
         -Device $Device `
         -LogName $LogName `
@@ -220,7 +220,7 @@ function Invoke-RelayManyWriteRestore {
 
     Invoke-ProfileManyWriteRestore `
         -Label $Label `
-        -Profile "Nano 10GX:Compatible mode" `
+        -Profile "toyopuc:nano-10gx:compatible" `
         -RelayHops $Hops `
         -Devices $Devices `
         -WriteValues $WriteValues `
@@ -232,14 +232,14 @@ Push-Location $RepoRoot
 
 try {
     if ($Target -eq "plus") {
-        $suiteName = if ($FullSuite) { "full:TOYOPUC-Plus:Plus Extended mode" } else { "TOYOPUC-Plus:Plus Extended mode" }
+        $suiteName = if ($FullSuite) { "full:toyopuc:plus:extended" } else { "toyopuc:plus:extended" }
         $suiteLog = if ($FullSuite) { "plus_suite_full.log" } else { "plus_suite.log" }
 
         Invoke-SmokeStep -Label "Plus suite" -SmokeArgs @(
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "TOYOPUC-Plus:Plus Extended mode",
+            "--profile", "toyopuc:plus:extended",
             "--suite", $suiteName,
             "--verbose",
             "--log", (Join-Path $ResolvedLogDir $suiteLog)
@@ -249,7 +249,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "TOYOPUC-Plus:Plus Extended mode",
+            "--profile", "toyopuc:plus:extended",
             "--device", "P1-D0000",
             "--write-value", "0x1234",
             "--restore-after-write",
@@ -261,7 +261,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "TOYOPUC-Plus:Plus Extended mode",
+            "--profile", "toyopuc:plus:extended",
             "--device", "P1-M0000",
             "--toggle-bit-write",
             "--restore-after-write",
@@ -271,7 +271,7 @@ try {
     }
 
     if ($Target -eq "pc10g-direct") {
-        $profile = "PC10G:PC10 mode"
+        $profile = "toyopuc:pc10g:pc10"
         $suiteName = if ($FullSuite) { "full:${profile}" } else { $profile }
         $suiteLog = if ($FullSuite) { "pc10g_pc10mode_full.log" } else { "pc10g_pc10mode_suite.log" }
 
@@ -403,14 +403,14 @@ try {
     }
 
     if ($Target -eq "relay-10gx") {
-        $suiteName = if ($FullSuite) { "full:Nano 10GX:Compatible mode" } else { "Nano 10GX:Compatible mode" }
+        $suiteName = if ($FullSuite) { "full:toyopuc:nano-10gx:compatible" } else { "toyopuc:nano-10gx:compatible" }
         $suiteLog = if ($FullSuite) { "relay_suite_10gx_full.log" } else { "relay_suite_10gx.log" }
 
         Invoke-SmokeStep -Label "Relay Nano10GX suite" -SmokeArgs @(
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--suite", $suiteName,
             "--verbose",
@@ -421,7 +421,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D0000",
             "--write-value", "0x1357",
@@ -434,7 +434,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D2FF0",
             "--count", "0x10",
@@ -449,7 +449,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-M0000",
             "--toggle-bit-write",
@@ -462,7 +462,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--fr-device", "FR000000",
             "--fr-write-value", "0x55AB",
@@ -476,7 +476,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D2FFF",
             "--write-value", "0x1357",
@@ -489,7 +489,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D2FF0",
             "--count", "0x10",
@@ -504,7 +504,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D0000L",
             "--write-value", "0x12",
@@ -517,7 +517,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D00F8L",
             "--count", "0x20",
@@ -532,7 +532,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D0000H",
             "--write-value", "0x34",
@@ -545,7 +545,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-M000W",
             "--write-value", "0xA55A",
@@ -558,7 +558,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-M07FW",
             "--count", "0x10",
@@ -573,7 +573,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "U00000",
             "--write-value", "0x1111",
@@ -586,7 +586,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "U07FFF",
             "--write-value", "0x2222",
@@ -599,7 +599,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "U07FF0",
             "--count", "0x20",
@@ -614,7 +614,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "U08000",
             "--write-value", "0x3333",
@@ -627,7 +627,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "U1FFFF",
             "--write-value", "0x4444",
@@ -640,7 +640,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "EB00000",
             "--write-value", "0x5555",
@@ -653,7 +653,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "EB07FF0",
             "--count", "0x20",
@@ -668,7 +668,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "EB3FFFF",
             "--write-value", "0x6666",
@@ -681,7 +681,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--devices", "P1-D0000,U08000,EB00000,P2-D0002",
             "--write-values", "0x5100,0x5101,0x5102,0x5103",
@@ -694,7 +694,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--devices", "P1-M0000,P1-D0000,U08000,EB00000",
             "--write-values", "1,0x5201,0x5202,0x5203",
@@ -707,7 +707,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--devices", "P1-D2FFF,U07FFF,U08000,EB3FFFF,P2-D2FFE",
             "--write-values", "0x5300,0x5301,0x5302,0x5303,0x5304",
@@ -851,7 +851,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "U20000",
             "--verbose",
@@ -863,7 +863,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "EB40000",
             "--verbose",
@@ -875,7 +875,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--device", "P1-D3000",
             "--verbose",
@@ -887,7 +887,7 @@ try {
             "--host", $PlcHost,
             "--port", $Port,
             "--protocol", $Protocol,
-            "--profile", "Nano 10GX:Compatible mode",
+            "--profile", "toyopuc:nano-10gx:compatible",
             "--hops", $Hops,
             "--fr-device", "FR200000",
             "--verbose",

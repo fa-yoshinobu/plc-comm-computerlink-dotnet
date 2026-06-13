@@ -178,7 +178,7 @@ public static class ToyopucAddress
     /// <summary>Parses a canonical device string into a resolved device shape.</summary>
     /// <param name="text">Canonical or profile-aware device text such as <c>D0000</c>, <c>P1-D0000</c>, or <c>M0000</c>.</param>
     /// <param name="options">Optional explicit addressing options.</param>
-    /// <param name="profile">Optional device profile name used to resolve profile-specific address rules.</param>
+    /// <param name="profile">Optional PLC profile name used to resolve profile-specific address rules.</param>
     /// <returns>The resolved device shape.</returns>
     public static ResolvedDevice Parse(string text, ToyopucAddressingOptions? options = null, string? profile = null)
     {

@@ -1,0 +1,112 @@
+### YamlMime:ManagedReference
+items:
+- uid: PlcComm.Toyopuc.ToyopucTraceDirection
+  commentId: T:PlcComm.Toyopuc.ToyopucTraceDirection
+  id: ToyopucTraceDirection
+  parent: PlcComm.Toyopuc
+  children:
+  - PlcComm.Toyopuc.ToyopucTraceDirection.Receive
+  - PlcComm.Toyopuc.ToyopucTraceDirection.Send
+  langs:
+  - csharp
+  - vb
+  name: ToyopucTraceDirection
+  nameWithType: ToyopucTraceDirection
+  fullName: PlcComm.Toyopuc.ToyopucTraceDirection
+  type: Enum
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: ToyopucTraceDirection
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 10
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public enum ToyopucTraceDirection
+    content.vb: Public Enum ToyopucTraceDirection
+- uid: PlcComm.Toyopuc.ToyopucTraceDirection.Send
+  commentId: F:PlcComm.Toyopuc.ToyopucTraceDirection.Send
+  id: Send
+  parent: PlcComm.Toyopuc.ToyopucTraceDirection
+  langs:
+  - csharp
+  - vb
+  name: Send
+  nameWithType: ToyopucTraceDirection.Send
+  fullName: PlcComm.Toyopuc.ToyopucTraceDirection.Send
+  type: Field
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Send
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 10
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: Send = 0
+    return:
+      type: PlcComm.Toyopuc.ToyopucTraceDirection
+- uid: PlcComm.Toyopuc.ToyopucTraceDirection.Receive
+  commentId: F:PlcComm.Toyopuc.ToyopucTraceDirection.Receive
+  id: Receive
+  parent: PlcComm.Toyopuc.ToyopucTraceDirection
+  langs:
+  - csharp
+  - vb
+  name: Receive
+  nameWithType: ToyopucTraceDirection.Receive
+  fullName: PlcComm.Toyopuc.ToyopucTraceDirection.Receive
+  type: Field
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Receive
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 10
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: Receive = 1
+    return:
+      type: PlcComm.Toyopuc.ToyopucTraceDirection
+references:
+- uid: PlcComm.Toyopuc
+  commentId: N:PlcComm.Toyopuc
+  href: PlcComm.html
+  name: PlcComm.Toyopuc
+  nameWithType: PlcComm.Toyopuc
+  fullName: PlcComm.Toyopuc
+  spec.csharp:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+  spec.vb:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+- uid: PlcComm.Toyopuc.ToyopucTraceDirection
+  commentId: T:PlcComm.Toyopuc.ToyopucTraceDirection
+  parent: PlcComm.Toyopuc
+  href: PlcComm.Toyopuc.ToyopucTraceDirection.html
+  name: ToyopucTraceDirection
+  nameWithType: ToyopucTraceDirection
+  fullName: PlcComm.Toyopuc.ToyopucTraceDirection

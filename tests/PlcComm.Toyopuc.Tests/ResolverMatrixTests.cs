@@ -7,7 +7,7 @@ public sealed class ResolverMatrixTests
     [Fact]
     public void SupportedBoundaryDevices_ResolveForEveryProfile()
     {
-        foreach (var profile in ToyopucDeviceProfiles.GetNames())
+        foreach (var profile in ToyopucPlcProfiles.GetNames())
         {
             var options = ToyopucAddressingOptions.FromProfile(profile);
             AssertSupportedDevices(profile, prefixed: false, options);
@@ -18,7 +18,7 @@ public sealed class ResolverMatrixTests
     [Fact]
     public void UnsupportedBoundaryIndexes_AreRejectedByCatalogForEveryProfile()
     {
-        foreach (var profile in ToyopucDeviceProfiles.GetNames())
+        foreach (var profile in ToyopucPlcProfiles.GetNames())
         {
             AssertUnsupportedIndexes(profile, prefixed: false);
             AssertUnsupportedIndexes(profile, prefixed: true);
@@ -28,7 +28,7 @@ public sealed class ResolverMatrixTests
     [Fact]
     public void FrByteDevices_AreRejectedForProfilesThatSupportFr()
     {
-        foreach (var profile in ToyopucDeviceProfiles.GetNames())
+        foreach (var profile in ToyopucPlcProfiles.GetNames())
         {
             if (!ToyopucDeviceCatalog.GetAreas(prefixed: false, profile).Contains("FR", StringComparer.Ordinal))
             {

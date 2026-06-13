@@ -7,7 +7,7 @@ Use this package when you want the shortest .NET path to TOYOPUC Computer Link c
 Recommended first path:
 
 1. Install `PlcComm.Toyopuc`.
-2. Choose the correct `DeviceProfile`.
+2. Choose the correct `PlcProfile`.
 3. Open one queued client through `ToyopucDeviceClientFactory.OpenAndConnectAsync`.
 4. Read one safe word such as `P1-D0000`.
 5. Write only to a known-safe test word or bit after the first read is stable.
@@ -33,7 +33,7 @@ Do not start with these:
 var options = new ToyopucConnectionOptions("192.168.250.100")
 {
     Port = 1025,
-    DeviceProfile = "TOYOPUC-Plus:Plus Extended mode",
+    PlcProfile = "toyopuc:plus:extended",
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
@@ -61,7 +61,7 @@ Expected result:
 If the first read fails, check these in order:
 
 - correct host and port
-- correct `DeviceProfile`
+- correct `PlcProfile`
 - correct `P1-`, `P2-`, or `P3-` prefix
 - start with `P1-D0000` instead of `FR` or relay addresses
 

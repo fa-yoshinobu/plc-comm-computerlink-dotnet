@@ -213,7 +213,7 @@ static ToyopucDeviceClient CreateClient(SoakMonitorOptions options, ToyopucAddre
         timeout: TimeSpan.FromSeconds(options.Timeout),
         retries: options.Retries,
         addressingOptions: addressingOptions,
-        deviceProfile: options.Profile);
+        plcProfile: options.Profile);
 }
 
 static bool ShouldLogSuccess(SoakMonitorOptions options, int pollNumber)
@@ -303,7 +303,7 @@ internal sealed record SoakMonitorOptions
     public int LocalPort { get; private init; }
     public double Timeout { get; private init; } = 3.0;
     public int Retries { get; private init; }
-    public string Profile { get; private init; } = "Generic";
+    public string Profile { get; private init; } = "toyopuc:generic";
     public bool? UseUpperUPc10 { get; private init; }
     public bool? UseEbPc10 { get; private init; }
     public bool? UseFrPc10 { get; private init; }
@@ -322,7 +322,7 @@ internal sealed record SoakMonitorOptions
     public bool ShowHelp { get; private init; }
 
     public bool ShouldLogAddressingProfile =>
-        !string.Equals(Profile, "Generic", StringComparison.OrdinalIgnoreCase)
+        !string.Equals(Profile, "toyopuc:generic", StringComparison.OrdinalIgnoreCase)
         || UseUpperUPc10 is not null
         || UseEbPc10 is not null
         || UseFrPc10 is not null;
@@ -504,7 +504,7 @@ internal sealed record SoakMonitorOptions
         Console.WriteLine("  500ms   2s   1m   2h   00:30:00");
         Console.WriteLine();
         Console.WriteLine("Example:");
-        Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile \"Nano 10GX:Compatible mode\" --hops \"P1-L2:N4,P1-L2:N6,P1-L2:N2\" --devices P1-D0000,P1-M0000,U08000 --interval 2s --duration 30m --retries 3 --log logs\\soak.log --poll-csv logs\\soak.csv --summary-json logs\\soak_summary.json");
+        Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile \"toyopuc:nano-10gx:compatible\" --hops \"P1-L2:N4,P1-L2:N6,P1-L2:N2\" --devices P1-D0000,P1-M0000,U08000 --interval 2s --duration 30m --retries 3 --log logs\\soak.log --poll-csv logs\\soak.csv --summary-json logs\\soak_summary.json");
     }
 
     private static string ReadValue(string[] args, ref int index, string option)

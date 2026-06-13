@@ -53,7 +53,7 @@ using PlcComm.Toyopuc;
 var options = new ToyopucConnectionOptions("192.168.250.100")
 {
     Port = 1025,
-    DeviceProfile = "TOYOPUC-Plus:Plus Extended mode",
+    PlcProfile = "toyopuc:plus:extended",
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
@@ -117,7 +117,7 @@ Maintainer-only notes and retained evidence live under `internal_docs/`.
 
 ## Latest Communication Verification
 
-Latest direct `PC10G:PC10 mode` validation was refreshed on `2026-05-02` against
+Latest direct `toyopuc:pc10g:pc10` validation was refreshed on `2026-05-02` against
 `192.168.250.100:1025` over TCP.
 
 - release build: `OK`

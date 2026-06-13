@@ -1,0 +1,112 @@
+### YamlMime:ManagedReference
+items:
+- uid: PlcComm.Toyopuc.ToyopucTransportMode
+  commentId: T:PlcComm.Toyopuc.ToyopucTransportMode
+  id: ToyopucTransportMode
+  parent: PlcComm.Toyopuc
+  children:
+  - PlcComm.Toyopuc.ToyopucTransportMode.Tcp
+  - PlcComm.Toyopuc.ToyopucTransportMode.Udp
+  langs:
+  - csharp
+  - vb
+  name: ToyopucTransportMode
+  nameWithType: ToyopucTransportMode
+  fullName: PlcComm.Toyopuc.ToyopucTransportMode
+  type: Enum
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: ToyopucTransportMode
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 8
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: public enum ToyopucTransportMode
+    content.vb: Public Enum ToyopucTransportMode
+- uid: PlcComm.Toyopuc.ToyopucTransportMode.Tcp
+  commentId: F:PlcComm.Toyopuc.ToyopucTransportMode.Tcp
+  id: Tcp
+  parent: PlcComm.Toyopuc.ToyopucTransportMode
+  langs:
+  - csharp
+  - vb
+  name: Tcp
+  nameWithType: ToyopucTransportMode.Tcp
+  fullName: PlcComm.Toyopuc.ToyopucTransportMode.Tcp
+  type: Field
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Tcp
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 8
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: Tcp = 0
+    return:
+      type: PlcComm.Toyopuc.ToyopucTransportMode
+- uid: PlcComm.Toyopuc.ToyopucTransportMode.Udp
+  commentId: F:PlcComm.Toyopuc.ToyopucTransportMode.Udp
+  id: Udp
+  parent: PlcComm.Toyopuc.ToyopucTransportMode
+  langs:
+  - csharp
+  - vb
+  name: Udp
+  nameWithType: ToyopucTransportMode.Udp
+  fullName: PlcComm.Toyopuc.ToyopucTransportMode.Udp
+  type: Field
+  source:
+    remote:
+      path: src/Toyopuc/ToyopucModels.cs
+      branch: main
+      repo: https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet
+    id: Udp
+    path: src/Toyopuc/ToyopucModels.cs
+    startLine: 8
+  assemblies:
+  - PlcComm.Toyopuc
+  namespace: PlcComm.Toyopuc
+  syntax:
+    content: Udp = 1
+    return:
+      type: PlcComm.Toyopuc.ToyopucTransportMode
+references:
+- uid: PlcComm.Toyopuc
+  commentId: N:PlcComm.Toyopuc
+  href: PlcComm.html
+  name: PlcComm.Toyopuc
+  nameWithType: PlcComm.Toyopuc
+  fullName: PlcComm.Toyopuc
+  spec.csharp:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+  spec.vb:
+  - uid: PlcComm
+    name: PlcComm
+    href: PlcComm.html
+  - name: .
+  - uid: PlcComm.Toyopuc
+    name: Toyopuc
+    href: PlcComm.Toyopuc.html
+- uid: PlcComm.Toyopuc.ToyopucTransportMode
+  commentId: T:PlcComm.Toyopuc.ToyopucTransportMode
+  parent: PlcComm.Toyopuc
+  href: PlcComm.Toyopuc.ToyopucTransportMode.html
+  name: ToyopucTransportMode
+  nameWithType: ToyopucTransportMode
+  fullName: PlcComm.Toyopuc.ToyopucTransportMode

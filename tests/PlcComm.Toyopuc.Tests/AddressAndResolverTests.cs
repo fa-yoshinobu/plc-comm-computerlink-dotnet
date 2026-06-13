@@ -27,7 +27,7 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_SingleLetterAreaCanBeFollowedByHexDigitF()
     {
-        const string profile = "Nano 10GX:Compatible mode";
+        const string profile = "toyopuc:nano-10gx:compatible";
         var options = ToyopucAddressingOptions.FromProfile(profile);
 
         var parsed = ToyopucAddress.ParsePrefixedAddress("P1-DFFFF", "word").Address;
@@ -100,8 +100,8 @@ public class AddressAndResolverTests
     [Fact]
     public void AddressingOptions_FromProfile_ToyopucPlusModes_DisablePc10Switches()
     {
-        var standard = ToyopucAddressingOptions.FromProfile("TOYOPUC-Plus:Plus Standard mode");
-        var extended = ToyopucAddressingOptions.FromProfile("TOYOPUC-Plus:Plus Extended mode");
+        var standard = ToyopucAddressingOptions.FromProfile("toyopuc:plus:standard");
+        var extended = ToyopucAddressingOptions.FromProfile("toyopuc:plus:extended");
 
         Assert.False(standard.UseUpperUPc10);
         Assert.False(standard.UseEbPc10);
@@ -115,8 +115,8 @@ public class AddressAndResolverTests
     [Fact]
     public void AddressingOptions_FromProfile_Nano10GxProfiles_MapExpectedFlags()
     {
-        var mode = ToyopucAddressingOptions.FromProfile("Nano 10GX:Nano 10GX mode");
-        var compatible = ToyopucAddressingOptions.FromProfile("Nano 10GX:Compatible mode");
+        var mode = ToyopucAddressingOptions.FromProfile("toyopuc:nano-10gx:native");
+        var compatible = ToyopucAddressingOptions.FromProfile("toyopuc:nano-10gx:compatible");
 
         Assert.True(mode.UseUpperUPc10);
         Assert.True(mode.UseEbPc10);
@@ -134,7 +134,7 @@ public class AddressAndResolverTests
     [Fact]
     public void AddressingOptions_FromProfile_Pc10GStandard_DisablesFrPc10Only()
     {
-        var options = ToyopucAddressingOptions.FromProfile("PC10G:PC10 standard/PC3JG mode");
+        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:standard-pc3jg");
 
         Assert.False(options.UseUpperUPc10);
         Assert.True(options.UseEbPc10);
@@ -146,7 +146,7 @@ public class AddressAndResolverTests
     [Fact]
     public void AddressingOptions_FromProfile_Pc10GMode_EnablesFrPc10()
     {
-        var options = ToyopucAddressingOptions.FromProfile("PC10G:PC10 mode");
+        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10");
 
         Assert.True(options.UseUpperUPc10);
         Assert.True(options.UseEbPc10);
@@ -158,10 +158,10 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_WithProfile_AllowsUpperMOnPc10GMode()
     {
-        var options = ToyopucAddressingOptions.FromProfile("PC10G:PC10 mode");
-        var prefixed = ToyopucDeviceResolver.ResolveDevice("P1-M1000", options, "PC10G:PC10 mode");
+        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10");
+        var prefixed = ToyopucDeviceResolver.ResolveDevice("P1-M1000", options, "toyopuc:pc10g:pc10");
 
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M1000", options, "PC10G:PC10 mode"));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M1000", options, "toyopuc:pc10g:pc10"));
         Assert.Equal("program-bit", prefixed.Scheme);
         Assert.Equal(0x01, prefixed.No);
     }
@@ -169,7 +169,7 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_WithOptions_RejectsUnprefixedDerivedBasicBitAddresses()
     {
-        var options = ToyopucAddressingOptions.FromProfile("PC10G:PC10 mode");
+        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10");
 
         Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100W", options));
         Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100L", options));
@@ -179,17 +179,17 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_WithProfile_RejectsUnprefixedBasicAddresses()
     {
-        var options = ToyopucAddressingOptions.FromProfile("PC10G:PC10 mode");
+        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10");
 
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("D0000", options, "PC10G:PC10 mode"));
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100W", options, "PC10G:PC10 mode"));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("D0000", options, "toyopuc:pc10g:pc10"));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100W", options, "toyopuc:pc10g:pc10"));
     }
 
     [Fact]
     public void ResolveDevice_WithProfile_AllowsPrefixedAccessOnPlusStandard()
     {
-        var options = ToyopucAddressingOptions.FromProfile("TOYOPUC-Plus:Plus Standard mode");
-        var resolved = ToyopucDeviceResolver.ResolveDevice("P1-D0000", options, "TOYOPUC-Plus:Plus Standard mode");
+        var options = ToyopucAddressingOptions.FromProfile("toyopuc:plus:standard");
+        var resolved = ToyopucDeviceResolver.ResolveDevice("P1-D0000", options, "toyopuc:plus:standard");
 
         Assert.Equal("program-word", resolved.Scheme);
         Assert.Equal(0x01, resolved.No);
@@ -198,8 +198,8 @@ public class AddressAndResolverTests
     [Fact]
     public void AddressingOptions_FromProfile_Pc3JxProfiles_MapExpectedFlags()
     {
-        var pc3Mode = ToyopucAddressingOptions.FromProfile("PC3JX:PC3 separate mode");
-        var plusMode = ToyopucAddressingOptions.FromProfile("PC3JX:Plus expansion mode");
+        var pc3Mode = ToyopucAddressingOptions.FromProfile("toyopuc:pc3jx:pc3-separate");
+        var plusMode = ToyopucAddressingOptions.FromProfile("toyopuc:pc3jx:plus-expansion");
 
         Assert.False(pc3Mode.UseUpperUPc10);
         Assert.False(pc3Mode.UseEbPc10);
@@ -215,8 +215,8 @@ public class AddressAndResolverTests
     [Fact]
     public void AddressingOptions_FromProfile_Pc3JgProfiles_MapExpectedFlags()
     {
-        var pc3jgMode = ToyopucAddressingOptions.FromProfile("PC3JG:PC3JG mode");
-        var pc3SeparateMode = ToyopucAddressingOptions.FromProfile("PC3JG:PC3 separate mode");
+        var pc3jgMode = ToyopucAddressingOptions.FromProfile("toyopuc:pc3jg:pc3jg");
+        var pc3SeparateMode = ToyopucAddressingOptions.FromProfile("toyopuc:pc3jg:pc3-separate");
 
         Assert.False(pc3jgMode.UseUpperUPc10);
         Assert.True(pc3jgMode.UseEbPc10);
@@ -291,9 +291,9 @@ public class AddressAndResolverTests
     [Fact]
     public void DeviceCatalog_GetSupportedRanges_ReturnsDisjointSegments()
     {
-        var genericPrefixedP = ToyopucDeviceCatalog.GetSupportedRanges("P", prefixed: true, "Generic");
-        var genericDirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, "Generic");
-        var plusStandardPrefixed = ToyopucDeviceCatalog.GetAreas(prefixed: true, "TOYOPUC-Plus:Plus Standard mode");
+        var genericPrefixedP = ToyopucDeviceCatalog.GetSupportedRanges("P", prefixed: true, "toyopuc:generic");
+        var genericDirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, "toyopuc:generic");
+        var plusStandardPrefixed = ToyopucDeviceCatalog.GetAreas(prefixed: true, "toyopuc:plus:standard");
 
         Assert.DoesNotContain("P", genericDirectAreas);
         Assert.Collection(
@@ -314,7 +314,7 @@ public class AddressAndResolverTests
     [Fact]
     public void DeviceCatalog_FormatAddressRanges_UsesExplicitRangeSeparator()
     {
-        var ranges = ToyopucDeviceCatalog.GetSupportedRanges("P", prefixed: true, "Generic");
+        var ranges = ToyopucDeviceCatalog.GetSupportedRanges("P", prefixed: true, "toyopuc:generic");
 
         var text = ToyopucDeviceCatalog.FormatAddressRanges("P1-P", ranges, width: 4);
 
@@ -322,10 +322,10 @@ public class AddressAndResolverTests
     }
 
     [Fact]
-    public void DeviceProfiles_ToyopucPlusModes_ExposeExpectedRanges()
+    public void PlcProfiles_ToyopucPlusModes_ExposeExpectedRanges()
     {
-        var standard = ToyopucDeviceProfiles.FromName("TOYOPUC-Plus:Plus Standard mode");
-        var extended = ToyopucDeviceProfiles.FromName("TOYOPUC-Plus:Plus Extended mode");
+        var standard = ToyopucPlcProfiles.FromName("toyopuc:plus:standard");
+        var extended = ToyopucPlcProfiles.FromName("toyopuc:plus:extended");
 
         var standardDirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, standard.Name);
         var standardPrefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true, standard.Name);
@@ -359,10 +359,10 @@ public class AddressAndResolverTests
     }
 
     [Fact]
-    public void DeviceProfiles_Nano10GxModes_ExposeExpectedRanges()
+    public void PlcProfiles_Nano10GxModes_ExposeExpectedRanges()
     {
-        var mode = ToyopucDeviceProfiles.FromName("Nano 10GX:Nano 10GX mode");
-        var compatible = ToyopucDeviceProfiles.FromName("Nano 10GX:Compatible mode");
+        var mode = ToyopucPlcProfiles.FromName("toyopuc:nano-10gx:native");
+        var compatible = ToyopucPlcProfiles.FromName("toyopuc:nano-10gx:compatible");
 
         var modeDirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, mode.Name);
         var modePrefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true, mode.Name);
@@ -388,10 +388,10 @@ public class AddressAndResolverTests
     }
 
     [Fact]
-    public void DeviceProfiles_Pc10StandardAndPc10Mode_ExposeExpectedRanges()
+    public void PlcProfiles_Pc10StandardAndPc10Mode_ExposeExpectedRanges()
     {
-        var standardProfile = ToyopucDeviceProfiles.FromName("PC10G:PC10 standard/PC3JG mode");
-        var pc10ModeProfile = ToyopucDeviceProfiles.FromName("PC10G:PC10 mode");
+        var standardProfile = ToyopucPlcProfiles.FromName("toyopuc:pc10g:standard-pc3jg");
+        var pc10ModeProfile = ToyopucPlcProfiles.FromName("toyopuc:pc10g:pc10");
 
         var standardDirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, standardProfile.Name);
         var standardPrefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true, standardProfile.Name);
@@ -416,9 +416,9 @@ public class AddressAndResolverTests
     }
 
     [Fact]
-    public void DeviceProfiles_Pc10Mode_GmDerivedAccess_FollowsManual()
+    public void PlcProfiles_Pc10Mode_GmDerivedAccess_FollowsManual()
     {
-        const string profile = "PC10G:PC10 mode";
+        const string profile = "toyopuc:pc10g:pc10";
         var options = ToyopucAddressingOptions.FromProfile(profile);
 
         var gmBitRange = ToyopucDeviceCatalog.GetSupportedRange("GM", prefixed: false, profile);
@@ -474,10 +474,10 @@ public class AddressAndResolverTests
     }
 
     [Fact]
-    public void DeviceProfiles_Pc3JxPresets_ExposeModeSpecificRanges()
+    public void PlcProfiles_Pc3JxPresets_ExposeModeSpecificRanges()
     {
-        var pc3Mode = ToyopucDeviceProfiles.FromName("PC3JX:PC3 separate mode");
-        var plusMode = ToyopucDeviceProfiles.FromName("PC3JX:Plus expansion mode");
+        var pc3Mode = ToyopucPlcProfiles.FromName("toyopuc:pc3jx:pc3-separate");
+        var plusMode = ToyopucPlcProfiles.FromName("toyopuc:pc3jx:plus-expansion");
 
         var pc3DirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, pc3Mode.Name);
         var pc3PrefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true, pc3Mode.Name);
@@ -512,10 +512,10 @@ public class AddressAndResolverTests
     }
 
     [Fact]
-    public void DeviceProfiles_Pc3JgPresets_ExposeModeSpecificRanges()
+    public void PlcProfiles_Pc3JgPresets_ExposeModeSpecificRanges()
     {
-        var pc3jgMode = ToyopucDeviceProfiles.FromName("PC3JG:PC3JG mode");
-        var pc3SeparateMode = ToyopucDeviceProfiles.FromName("PC3JG:PC3 separate mode");
+        var pc3jgMode = ToyopucPlcProfiles.FromName("toyopuc:pc3jg:pc3jg");
+        var pc3SeparateMode = ToyopucPlcProfiles.FromName("toyopuc:pc3jg:pc3-separate");
 
         var pc3jgDirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, pc3jgMode.Name);
         var pc3jgPrefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true, pc3jgMode.Name);
@@ -546,37 +546,37 @@ public class AddressAndResolverTests
     }
 
     [Fact]
-    public void DeviceProfiles_GetNames_IncludesRequestedProfiles()
+    public void PlcProfiles_GetNames_IncludesRequestedProfiles()
     {
-        var names = ToyopucDeviceProfiles.GetNames();
+        var names = ToyopucPlcProfiles.GetNames();
 
-        Assert.Contains("Generic", names);
-        Assert.Contains("TOYOPUC-Plus:Plus Standard mode", names);
-        Assert.Contains("TOYOPUC-Plus:Plus Extended mode", names);
-        Assert.Contains("Nano 10GX:Nano 10GX mode", names);
-        Assert.Contains("Nano 10GX:Compatible mode", names);
-        Assert.Contains("PC10G:PC10 standard/PC3JG mode", names);
-        Assert.Contains("PC10G:PC10 mode", names);
-        Assert.Contains("PC3JX:PC3 separate mode", names);
-        Assert.Contains("PC3JX:Plus expansion mode", names);
-        Assert.Contains("PC3JG:PC3JG mode", names);
-        Assert.Contains("PC3JG:PC3 separate mode", names);
+        Assert.Contains("toyopuc:generic", names);
+        Assert.Contains("toyopuc:plus:standard", names);
+        Assert.Contains("toyopuc:plus:extended", names);
+        Assert.Contains("toyopuc:nano-10gx:native", names);
+        Assert.Contains("toyopuc:nano-10gx:compatible", names);
+        Assert.Contains("toyopuc:pc10g:standard-pc3jg", names);
+        Assert.Contains("toyopuc:pc10g:pc10", names);
+        Assert.Contains("toyopuc:pc3jx:pc3-separate", names);
+        Assert.Contains("toyopuc:pc3jx:plus-expansion", names);
+        Assert.Contains("toyopuc:pc3jg:pc3jg", names);
+        Assert.Contains("toyopuc:pc3jg:pc3-separate", names);
     }
 
     [Fact]
-    public void DeviceProfiles_NormalizeName_ReturnsCanonicalName()
+    public void PlcProfiles_NormalizeName_ReturnsCanonicalName()
     {
-        var normalized = ToyopucDeviceProfiles.NormalizeName("PC10G:PC10 standard/PC3JG mode");
+        var normalized = ToyopucPlcProfiles.NormalizeName("toyopuc:pc10g:standard-pc3jg");
 
-        Assert.Equal("PC10G:PC10 standard/PC3JG mode", normalized);
+        Assert.Equal("toyopuc:pc10g:standard-pc3jg", normalized);
     }
 
     [Fact]
-    public void DeviceProfiles_NormalizeName_ReturnsGenericName()
+    public void PlcProfiles_NormalizeName_ReturnsGenericName()
     {
-        var normalized = ToyopucDeviceProfiles.NormalizeName("Generic");
+        var normalized = ToyopucPlcProfiles.NormalizeName("toyopuc:generic");
 
-        Assert.Equal("Generic", normalized);
+        Assert.Equal("toyopuc:generic", normalized);
     }
 
     [Fact]
@@ -584,8 +584,8 @@ public class AddressAndResolverTests
     {
         var frStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("FR", options: ToyopucAddressingOptions.Nano10GxCompatible);
         var prefixedMStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", ToyopucAddressingOptions.Default);
-        var prefixedMWordStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", unit: "word", packed: true, profile: "Generic");
-        var plusPrefixedDStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("D", "P1", "TOYOPUC-Plus:Plus Extended mode");
+        var prefixedMWordStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", unit: "word", packed: true, profile: "toyopuc:generic");
+        var plusPrefixedDStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("D", "P1", "toyopuc:plus:extended");
 
         Assert.Contains("000000", frStarts);
         Assert.Contains("1FF000", frStarts);
