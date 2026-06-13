@@ -1,72 +1,103 @@
-# Getting Started
+# Getting started
 
-## Start Here
+## Start here
 
-Use this package when you want the shortest .NET path to TOYOPUC Computer Link communication through the public high-level API.
+Use this page to install `PlcComm.Toyopuc`, open one queued Computer Link client, read `P1-D0000`, and write one safe test word. You need a reachable TOYOPUC PLC and a profile string that matches your PLC.
 
-Recommended first path:
+## Prerequisites
 
-1. Install `PlcComm.Toyopuc`.
-2. Choose the correct `PlcProfile`.
-3. Open one queued client through `ToyopucDeviceClientFactory.OpenAndConnectAsync`.
-4. Read one safe word such as `P1-D0000`.
-5. Write only to a known-safe test word or bit after the first read is stable.
+| Requirement | Value |
+| --- | --- |
+| .NET SDK | .NET 9 SDK or newer |
+| PLC network access | TCP access to `192.168.250.100:1025` |
+| Package | `PlcComm.Toyopuc` |
+| First profile used here | `toyopuc:plus:extended` |
 
-## First PLC Registers To Try
+## Install
 
-Start with these first:
+```powershell
+dotnet add package PlcComm.Toyopuc
+```
 
-- `P1-D0000`
-- `P1-D0001`
-- `P1-M0000`
-- `P1-D0200:F`
-
-Do not start with these:
-
-- relay hops
-- `FR` writes
-- large chunked reads
-
-## Minimal Connection Pattern
+## Choose your PLC profile
 
 ```csharp
+using System;
+using PlcComm.Toyopuc;
+
 var options = new ToyopucConnectionOptions("192.168.250.100")
 {
     Port = 1025,
     PlcProfile = "toyopuc:plus:extended",
 };
-
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
+Console.WriteLine(client.PlcProfile);
 ```
 
-Basic area families `P/K/V/T/C/L/X/Y/M/S/N/R/D` must use the correct `P1-`, `P2-`, or `P3-` prefix.
+`PlcProfile` on `ToyopucConnectionOptions` is the only required connection-time selector. The value must match one canonical profile string from [PROFILES.md](PROFILES.md).
 
-## First Successful Run
+## First read (step by step)
 
-Recommended order:
+```csharp
+using System;
+using PlcComm.Toyopuc;
 
-1. `ReadAsync("P1-D0000")`
-2. `WriteAsync("P1-D0001", 1234)` only on a safe test word
-3. `WriteAsync("P1-M0000", 1)` only on a safe test bit
-4. `ReadNamedAsync(["P1-D0000", "P1-D0200:F", "P1-D0000.0"])`
+var options = new ToyopucConnectionOptions("192.168.250.100")
+{
+    Port = 1025,
+    PlcProfile = "toyopuc:plus:extended",
+};
+await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
+var value = await client.ReadTypedAsync("P1-D0000", "U");
+Console.WriteLine($"P1-D0000 = {value}");
+```
 
-Expected result:
+Expected output:
 
-- connection opens successfully
-- one prefixed word read succeeds
-- typed and mixed snapshot reads succeed after the first plain read
+```text
+P1-D0000 = 0
+```
 
-## Common Beginner Checks
+The number depends on your PLC state. A different numeric value is still a successful read.
 
-If the first read fails, check these in order:
+## First write
 
-- correct host and port
-- correct `PlcProfile`
-- correct `P1-`, `P2-`, or `P3-` prefix
-- start with `P1-D0000` instead of `FR` or relay addresses
+```csharp
+using System;
+using PlcComm.Toyopuc;
 
-## Next Pages
+var options = new ToyopucConnectionOptions("192.168.250.100")
+{
+    Port = 1025,
+    PlcProfile = "toyopuc:plus:extended",
+};
+await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
+await client.WriteTypedAsync("P1-D0001", "U", 1234);
+var value = await client.ReadTypedAsync("P1-D0001", "U");
+Console.WriteLine($"P1-D0001 = {value}");
+```
 
-- [Supported PLC Registers](./SUPPORTED_REGISTERS.md)
-- [Latest Communication Verification](./LATEST_COMMUNICATION_VERIFICATION.md)
-- [User Guide](./USER_GUIDE.md)
+Only write to a test address you control. `P1-D0001` is a word register, not a bit or timer.
+
+## Confirm success
+
+1. The connection opens without a timeout.
+2. `ReadTypedAsync("P1-D0000", "U")` returns a numeric value.
+3. Your test write returns without a PLC error.
+4. Reading the same word after the write returns the value you wrote.
+
+## If it does not work
+
+| Check | What to verify |
+| --- | --- |
+| Wrong host or port | The default TCP port used here is `1025`. |
+| Wrong profile string | The profile must match exactly; see [PROFILES.md](PROFILES.md). |
+| Read shape | Start with plain word reads before typed values or bit-in-word syntax. |
+| Address prefix | Basic area families such as D, M, X, Y, T, C, L, N, R, and S require `P1-`, `P2-`, or `P3-`. |
+
+## Next pages
+
+| Page | Link |
+| --- | --- |
+| Usage guide | [USAGE_GUIDE.md](USAGE_GUIDE.md) |
+| Supported registers | [SUPPORTED_REGISTERS.md](SUPPORTED_REGISTERS.md) |
