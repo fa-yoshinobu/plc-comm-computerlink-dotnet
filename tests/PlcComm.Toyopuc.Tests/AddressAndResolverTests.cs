@@ -2,10 +2,23 @@ namespace PlcComm.Toyopuc.Tests;
 
 public class AddressAndResolverTests
 {
+    private const string GenericProfile = "toyopuc:generic";
+    private const string PlusExtendedProfile = "toyopuc:plus:extended";
+    private const string NanoCompatibleProfile = "toyopuc:nano-10gx:compatible";
+    private const string Pc10Profile = "toyopuc:pc10g:pc10";
+
+    [Fact]
+    public void ResolveDevice_RequiresExplicitPlcProfile()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("B0100"));
+
+        Assert.Contains("PLC profile is required", ex.Message);
+    }
+
     [Fact]
     public void ResolveDevice_UnprefixedBasicWordAddress_RequiresProgramPrefix()
     {
-        var ex = Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("D0100"));
+        var ex = Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("D0100", profile: GenericProfile));
 
         Assert.Contains("requires P1-/P2-/P3- prefix", ex.Message);
     }
@@ -13,8 +26,8 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_ProgramAndFrAddresses_SelectExpectedSchemes()
     {
-        var program = ToyopucDeviceResolver.ResolveDevice("P1-D0100");
-        var fr = ToyopucDeviceResolver.ResolveDevice("FR000000");
+        var program = ToyopucDeviceResolver.ResolveDevice("P1-D0100", profile: GenericProfile);
+        var fr = ToyopucDeviceResolver.ResolveDevice("FR000000", profile: GenericProfile);
 
         Assert.Equal("program-word", program.Scheme);
         Assert.Equal(0x01, program.No);
@@ -55,9 +68,9 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_UpperBitAddresses_SelectExpectedSchemes()
     {
-        var prefixed = ToyopucDeviceResolver.ResolveDevice("P1-P1000", ToyopucAddressingOptions.Default);
+        var prefixed = ToyopucDeviceResolver.ResolveDevice("P1-P1000", ToyopucAddressingOptions.Default, GenericProfile);
 
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("P1000", ToyopucAddressingOptions.Default));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("P1000", ToyopucAddressingOptions.Default, GenericProfile));
 
         Assert.Equal("program-bit", prefixed.Scheme);
         Assert.Equal(0x01, prefixed.No);
@@ -69,9 +82,9 @@ public class AddressAndResolverTests
     public void ResolveDevice_ToyopucPlusProfile_FallsBackFromPc10Families()
     {
         var options = ToyopucAddressingOptions.ToyopucPlusExtended;
-        var upperU = ToyopucDeviceResolver.ResolveDevice("U08000", options);
-        var eb = ToyopucDeviceResolver.ResolveDevice("EB00000", options);
-        var fr = ToyopucDeviceResolver.ResolveDevice("FR000000", options);
+        var upperU = ToyopucDeviceResolver.ResolveDevice("U08000", options, GenericProfile);
+        var eb = ToyopucDeviceResolver.ResolveDevice("EB00000", options, GenericProfile);
+        var fr = ToyopucDeviceResolver.ResolveDevice("FR000000", options, GenericProfile);
 
         Assert.Equal("ext-word", upperU.Scheme);
         Assert.Equal(0x08, upperU.No);
@@ -89,10 +102,10 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_EbExtendedNoStopsAtManualRangeWhenPc10Disabled()
     {
-        Assert.Equal("pc10-word", ToyopucDeviceResolver.ResolveDevice("EB20000").Scheme);
+        Assert.Equal("pc10-word", ToyopucDeviceResolver.ResolveDevice("EB20000", profile: GenericProfile).Scheme);
 
         var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            ToyopucDeviceResolver.ResolveDevice("EB20000", ToyopucAddressingOptions.ToyopucPlusExtended));
+            ToyopucDeviceResolver.ResolveDevice("EB20000", ToyopucAddressingOptions.ToyopucPlusExtended, GenericProfile));
 
         Assert.Contains("EB extended-No index out of range", ex.Message);
     }
@@ -158,10 +171,10 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_WithProfile_AllowsUpperMOnPc10GMode()
     {
-        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10");
-        var prefixed = ToyopucDeviceResolver.ResolveDevice("P1-M1000", options, "toyopuc:pc10g:pc10");
+        var options = ToyopucAddressingOptions.FromProfile(Pc10Profile);
+        var prefixed = ToyopucDeviceResolver.ResolveDevice("P1-M1000", options, Pc10Profile);
 
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M1000", options, "toyopuc:pc10g:pc10"));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M1000", options, Pc10Profile));
         Assert.Equal("program-bit", prefixed.Scheme);
         Assert.Equal(0x01, prefixed.No);
     }
@@ -169,20 +182,20 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_WithOptions_RejectsUnprefixedDerivedBasicBitAddresses()
     {
-        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10");
+        var options = ToyopucAddressingOptions.FromProfile(Pc10Profile);
 
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100W", options));
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100L", options));
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("P17FW", options));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100W", options, Pc10Profile));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100L", options, Pc10Profile));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("P17FW", options, Pc10Profile));
     }
 
     [Fact]
     public void ResolveDevice_WithProfile_RejectsUnprefixedBasicAddresses()
     {
-        var options = ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10");
+        var options = ToyopucAddressingOptions.FromProfile(Pc10Profile);
 
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("D0000", options, "toyopuc:pc10g:pc10"));
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100W", options, "toyopuc:pc10g:pc10"));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("D0000", options, Pc10Profile));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M100W", options, Pc10Profile));
     }
 
     [Fact]
@@ -277,9 +290,9 @@ public class AddressAndResolverTests
     [Fact]
     public void DeviceCatalog_ReturnsExpectedAreaMetadata()
     {
-        var directAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false);
-        var prefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true);
-        var fr = ToyopucDeviceCatalog.GetAreaDescriptor("FR");
+        var directAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, GenericProfile);
+        var prefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true, GenericProfile);
+        var fr = ToyopucDeviceCatalog.GetAreaDescriptor("FR", GenericProfile);
 
         Assert.Contains("FR", directAreas);
         Assert.DoesNotContain("FR", prefixedAreas);
@@ -325,7 +338,7 @@ public class AddressAndResolverTests
     public void PlcProfiles_ToyopucPlusModes_ExposeExpectedRanges()
     {
         var standard = ToyopucPlcProfiles.FromName("toyopuc:plus:standard");
-        var extended = ToyopucPlcProfiles.FromName("toyopuc:plus:extended");
+        var extended = ToyopucPlcProfiles.FromName(PlusExtendedProfile);
 
         var standardDirectAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, standard.Name);
         var standardPrefixedAreas = ToyopucDeviceCatalog.GetAreas(prefixed: true, standard.Name);
@@ -418,7 +431,7 @@ public class AddressAndResolverTests
     [Fact]
     public void PlcProfiles_Pc10Mode_GmDerivedAccess_FollowsManual()
     {
-        const string profile = "toyopuc:pc10g:pc10";
+        const string profile = Pc10Profile;
         var options = ToyopucAddressingOptions.FromProfile(profile);
 
         var gmBitRange = ToyopucDeviceCatalog.GetSupportedRange("GM", prefixed: false, profile);
@@ -464,13 +477,13 @@ public class AddressAndResolverTests
         Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("GM1000W", options, profile));
         Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("GM1000L", options, profile));
 
-        var genericLowByte = ToyopucDeviceResolver.ResolveDevice("P1-M17FL");
+        var genericLowByte = ToyopucDeviceResolver.ResolveDevice("P1-M17FL", profile: GenericProfile);
         Assert.Equal("M", genericLowByte.Area);
         Assert.Equal(0x17F, genericLowByte.Index);
         Assert.Equal("byte", genericLowByte.Unit);
         Assert.False(genericLowByte.High);
 
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M0000L"));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("M0000L", profile: GenericProfile));
     }
 
     [Fact]
@@ -582,8 +595,8 @@ public class AddressAndResolverTests
     [Fact]
     public void DeviceCatalog_StartAddresses_ContainOnlyResolvableCandidates()
     {
-        var frStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("FR", options: ToyopucAddressingOptions.Nano10GxCompatible);
-        var prefixedMStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", ToyopucAddressingOptions.Default);
+        var frStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("FR", profile: NanoCompatibleProfile);
+        var prefixedMStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", GenericProfile);
         var prefixedMWordStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", unit: "word", packed: true, profile: "toyopuc:generic");
         var plusPrefixedDStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("D", "P1", "toyopuc:plus:extended");
 

@@ -37,7 +37,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     };
 
     public ToyopucAddressingOptions AddressingOptions { get; }
-    public string? PlcProfile { get; }
+    public string PlcProfile { get; }
     private readonly ConcurrentDictionary<string, ResolvedDevice> _resolvedDeviceCache = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, int[]> _runPlanCache = new(StringComparer.Ordinal);
 
@@ -54,13 +54,15 @@ public partial class ToyopucDeviceClient : ToyopucClient
         string? plcProfile = null)
         : base(host, port, localPort, transport, timeout, retries, retryDelay, recvBufsize)
     {
-        PlcProfile = string.IsNullOrWhiteSpace(plcProfile)
-            ? null
-            : ToyopucPlcProfiles.NormalizeName(plcProfile);
-        AddressingOptions = addressingOptions
-            ?? (PlcProfile is null
-                ? ToyopucAddressingOptions.Default
-                : ToyopucAddressingOptions.FromProfile(PlcProfile));
+        if (string.IsNullOrWhiteSpace(plcProfile))
+        {
+            throw new ArgumentException(
+                "PLC profile is required. Use an explicit canonical profile name.",
+                nameof(plcProfile));
+        }
+
+        PlcProfile = ToyopucPlcProfiles.NormalizeName(plcProfile);
+        AddressingOptions = addressingOptions ?? ToyopucAddressingOptions.FromProfile(PlcProfile);
     }
 
     public ResolvedDevice ResolveDevice(string device)
@@ -2360,8 +2362,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return ToyopucAddress.EncodeExNoByteU32(exNo, byteOffset);
     }
 
-    private static string BuildResolvedText(ResolvedDevice resolved, int index)
+    private string BuildResolvedText(ResolvedDevice resolved, int index)
     {
-        return ToyopucAddress.Format(resolved, index);
+        return ToyopucAddress.Format(resolved, index, PlcProfile);
     }
 }

@@ -1,12 +1,8 @@
-using System.Reflection;
-
 namespace PlcComm.Toyopuc.Tests;
 
 public sealed class LibraryResolverContractTests
 {
-    private static readonly MethodInfo BuildResolvedTextMethod = typeof(ToyopucDeviceClient)
-        .GetMethod("BuildResolvedText", BindingFlags.NonPublic | BindingFlags.Static)
-        ?? throw new InvalidOperationException("Failed to locate ToyopucDeviceClient.BuildResolvedText");
+    private const string GenericProfile = "toyopuc:generic";
 
     public static TheoryData<string> ReviewedProfiles => new()
     {
@@ -146,7 +142,7 @@ public sealed class LibraryResolverContractTests
         string? profile)
     {
         var first = Resolve(input, profile);
-        var canonical = BuildCanonicalText(first);
+        var canonical = BuildCanonicalText(first, profile);
         var second = Resolve(canonical, profile);
 
         Assert.Equal(expectedCanonical, canonical);
@@ -162,7 +158,7 @@ public sealed class LibraryResolverContractTests
     [Fact]
     public void Resolver_RejectsSyntheticGxyArea()
     {
-        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("GXY000W"));
+        Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("GXY000W", profile: GenericProfile));
     }
 
     [Theory]
@@ -183,15 +179,16 @@ public sealed class LibraryResolverContractTests
     {
         if (string.IsNullOrWhiteSpace(profile))
         {
-            return ToyopucDeviceResolver.ResolveDevice(device);
+            profile = GenericProfile;
         }
 
         var options = ToyopucAddressingOptions.FromProfile(profile);
         return ToyopucDeviceResolver.ResolveDevice(device, options, profile);
     }
 
-    private static string BuildCanonicalText(ResolvedDevice resolved)
+    private static string BuildCanonicalText(ResolvedDevice resolved, string? profile)
     {
-        return (string)BuildResolvedTextMethod.Invoke(null, [resolved, resolved.Index])!;
+        profile = string.IsNullOrWhiteSpace(profile) ? GenericProfile : profile;
+        return ToyopucAddress.Format(resolved, resolved.Index, profile);
     }
 }

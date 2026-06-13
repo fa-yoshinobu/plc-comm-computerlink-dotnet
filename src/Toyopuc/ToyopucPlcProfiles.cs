@@ -86,7 +86,9 @@ public static class ToyopucPlcProfiles
     {
         if (string.IsNullOrWhiteSpace(profile))
         {
-            return Generic;
+            throw new ArgumentException(
+                $"PLC profile is required. Use an explicit canonical name such as '{Generic.Name}'.",
+                nameof(profile));
         }
 
         var normalized = profile.Trim();

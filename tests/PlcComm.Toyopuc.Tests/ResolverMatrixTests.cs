@@ -36,8 +36,8 @@ public sealed class ResolverMatrixTests
             }
 
             var options = ToyopucAddressingOptions.FromProfile(profile);
-            Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("FR000000L", options));
-            Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("FR000000H", options));
+            Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("FR000000L", options, profile));
+            Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("FR000000H", options, profile));
         }
     }
 
@@ -52,7 +52,7 @@ public sealed class ResolverMatrixTests
             foreach (var index in ranges.SelectMany(GetBoundaryIndexes).Distinct().Order())
             {
                 var defaultDevice = FormatDevice(prefix, descriptor, index, unit: descriptor.SupportsPackedWord ? "bit" : "word", packed: false, suffix: null);
-                var resolvedDefault = ToyopucDeviceResolver.ResolveDevice(defaultDevice, options);
+                var resolvedDefault = ToyopucDeviceResolver.ResolveDevice(defaultDevice, options, profile);
                 Assert.Equal(area, resolvedDefault.Area);
                 Assert.Equal(index, resolvedDefault.Index);
                 Assert.Equal(prefix, resolvedDefault.Prefix);

@@ -57,12 +57,15 @@ public static class ToyopucDeviceResolver
 
     public static ResolvedDevice ResolveDevice(string device, ToyopucAddressingOptions? options = null, string? profile = null)
     {
-        var normalizedProfile = string.IsNullOrWhiteSpace(profile)
-            ? null
-            : ToyopucPlcProfiles.NormalizeName(profile);
-        options ??= normalizedProfile is null
-            ? ToyopucAddressingOptions.Default
-            : ToyopucAddressingOptions.FromProfile(normalizedProfile);
+        if (string.IsNullOrWhiteSpace(profile))
+        {
+            throw new ArgumentException(
+                "PLC profile is required. Use an explicit canonical profile name.",
+                nameof(profile));
+        }
+
+        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(profile);
+        options ??= ToyopucAddressingOptions.FromProfile(normalizedProfile);
         var (prefix, area, unit) = InferUnitAndArea(device);
         var text = device.Trim().ToUpperInvariant();
 
@@ -479,11 +482,6 @@ public static class ToyopucDeviceResolver
             throw new ArgumentException(
                 $"Address width out of range for profile '{profileName}': {device} (max {expectedWidth} hex digits)",
                 nameof(device));
-        }
-
-        if (string.IsNullOrWhiteSpace(profile))
-        {
-            return;
         }
 
         var prefixed = prefix is not null;
