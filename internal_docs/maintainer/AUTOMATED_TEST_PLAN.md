@@ -17,8 +17,8 @@ The target is not "write to every address on every PLC". The target is "exhausti
 
 Run on every local build and CI run.
 
-- Treat [`plc_profile_matrix_r2.csv`](./plc_profile_matrix_r2.csv) as the reviewed source of truth.
-- Verify all canonical profile names match the matrix header.
+- Treat `ToyopucPlcProfiles` and `ToyopucDeviceCatalog` as the implemented source of truth.
+- Verify all canonical profile names are exposed by the library API.
 - Verify every `area x access` row matches the runtime catalog:
   - supported / unsupported
   - disjoint ranges
@@ -85,8 +85,6 @@ Run manually or by explicit workflow dispatch.
 
 ## Required Artifacts
 
-- `tests/Toyopuc.Tests/ProfileMatrixCsvTests.cs`
-  - CSV-to-catalog conformance
 - `tests/Toyopuc.Tests/ResolverMatrixTests.cs`
   - generated resolver boundary coverage
 - `examples/validation_targets.json` or similar
@@ -100,8 +98,8 @@ Run manually or by explicit workflow dispatch.
 
 ### Phase 1
 
-- Add CSV-to-catalog conformance tests.
-- Make the reviewed matrix part of the test inputs.
+- Add catalog invariant tests.
+- Make the implemented profile catalog part of the test inputs.
 
 ### Phase 2
 

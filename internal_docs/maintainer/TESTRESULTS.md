@@ -411,7 +411,7 @@ powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target pc1
   - command: `dotnet run --project examples\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile "toyopuc:pc10g:pc10" --devices P1-D0000,P1-P01F0,P1-P1000,P1-S03F0,P1-S1000,EB00000 --interval 1s --duration 2m --retries 3 --success-log-interval 30 --log logs\pc10g_pc10_mode_soak_2m_20260430.log --poll-csv logs\pc10g_pc10_mode_soak_2m_20260430.csv --summary-json logs\pc10g_pc10_mode_soak_2m_20260430.json`
   - result: `stop=duration-complete polls=120 ok=120 ng=0 reconnects=0 sessions=1 elapsed=02:00`
   - sampled devices included split-range boundary points `P1-P01F0`, `P1-P1000`, `P1-S03F0`, and `P1-S1000`
-- `plc_profile_matrix_r2.csv` correction for `M` was confirmed in code and on hardware
+- The profile matrix correction for `M` was confirmed in code and on hardware
   - `P1-M1000`, `P1-M17FF`, `P1-M100W`
   - `P2-M1000`, `P3-M1000`
 - Direct sequential read count limit was measured on hardware

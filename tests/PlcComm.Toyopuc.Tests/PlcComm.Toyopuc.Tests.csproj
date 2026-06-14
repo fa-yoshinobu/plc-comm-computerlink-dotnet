@@ -23,9 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\internal_docs\maintainer\plc_profile_matrix_r2.csv"
-          Link="plc_profile_matrix_r2.csv"
-          CopyToOutputDirectory="PreserveNewest" />
     <None Include="vectors\**" CopyToOutputDirectory="Always" />
   </ItemGroup>
 

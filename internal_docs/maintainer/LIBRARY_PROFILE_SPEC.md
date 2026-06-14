@@ -20,7 +20,7 @@ The source of truth is code, not UI logic.
 | profile data types | [`../../src/Toyopuc/ToyopucPlcProfile.cs`](../../src/Toyopuc/ToyopucPlcProfile.cs) |
 | lookup API | [`../../src/Toyopuc/ToyopucDeviceCatalog.cs`](../../src/Toyopuc/ToyopucDeviceCatalog.cs) |
 | addressing option switches | [`../../src/Toyopuc/ToyopucAddressingOptions.cs`](../../src/Toyopuc/ToyopucAddressingOptions.cs) |
-| reviewed range matrix | [`plc_profile_matrix_r2.csv`](./plc_profile_matrix_r2.csv) |
+| range definitions | [`../../src/Toyopuc/ToyopucPlcProfiles.cs`](../../src/Toyopuc/ToyopucPlcProfiles.cs) |
 
 Applications built on `PlcComm.Toyopuc` must not maintain their own area
 tables or model-specific upper bounds.
@@ -41,8 +41,8 @@ The library currently exposes these canonical profile names:
 - `toyopuc:pc3jg:pc3jg`
 - `toyopuc:pc3jg:pc3-separate`
 
-The exact per-area matrix is maintained in
-[`plc_profile_matrix_r2.csv`](./plc_profile_matrix_r2.csv).
+The exact per-area matrix is implemented in
+[`../../src/Toyopuc/ToyopucPlcProfiles.cs`](../../src/Toyopuc/ToyopucPlcProfiles.cs).
 
 ## Data Model
 
@@ -117,7 +117,7 @@ used by the resolver and high-level client.
 
 ## Notes On Current Profile Intent
 
-These are short reminders only. For exact ranges, use the CSV or code.
+These are short reminders only. For exact ranges, use the code.
 
 - `Generic` is the library superset. Basic families `P/K/V/T/C/L/X/Y/M/S/N/R/D` are prefixed-only, while `B` and extended families stay direct.
 - `toyopuc:plus:standard` keeps prefixed basic families and lower extended families, but does not expose `B`, `U`, `GM/GX/GY`, `EB`, or `FR`.
@@ -153,10 +153,9 @@ When changing supported ranges:
 
 | Step | Action |
 | --- | --- |
-| 1 | update `plc_profile_matrix_r2.csv` if the reviewed matrix changed |
-| 2 | update `ToyopucPlcProfiles` |
-| 3 | verify `ToyopucAddressingOptions` still matches the profile intent |
-| 4 | update [`../../tests/Toyopuc.Tests/AddressAndResolverTests.cs`](../../tests/Toyopuc.Tests/AddressAndResolverTests.cs) |
-| 5 | update this document |
-| 6 | if behavior is externally visible, update [`../../README.md`](../../README.md) |
+| 1 | update `ToyopucPlcProfiles` |
+| 2 | verify `ToyopucAddressingOptions` still matches the profile intent |
+| 3 | update [`../../tests/Toyopuc.Tests/AddressAndResolverTests.cs`](../../tests/Toyopuc.Tests/AddressAndResolverTests.cs) |
+| 4 | update this document |
+| 5 | if behavior is externally visible, update [`../../README.md`](../../README.md) |
 
