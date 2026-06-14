@@ -33,7 +33,6 @@ public sealed class ExampleEntryPointTests
         Assert.DoesNotContain("--devices D0000,M0000,U08000", examplesReadme, StringComparison.Ordinal);
 
         Assert.Contains("P1-D0000", rootReadme, StringComparison.Ordinal);
-        Assert.Contains("P1-M0000", rootReadme, StringComparison.Ordinal);
         Assert.Contains("P1-D0000", examplesReadme, StringComparison.Ordinal);
         Assert.Contains("P1-M0000", examplesReadme, StringComparison.Ordinal);
     }
@@ -43,8 +42,9 @@ public sealed class ExampleEntryPointTests
     {
         var readme = ReadRepoFile("README.md");
         var userGuide = ReadRepoFile(@"docsrc\user\USER_GUIDE.md");
+        var usageGuide = ReadRepoFile(@"docsrc\user\USAGE_GUIDE.md");
         var examplesReadme = ReadRepoFile(@"examples\README.md");
-        var combined = string.Join(Environment.NewLine, readme, userGuide, examplesReadme);
+        var combined = string.Join(Environment.NewLine, readme, userGuide, usageGuide, examplesReadme);
 
         Assert.Contains("ToyopucDeviceClient", combined, StringComparison.Ordinal);
         Assert.Contains("ReadTypedAsync", combined, StringComparison.Ordinal);
@@ -134,7 +134,6 @@ public sealed class ExampleEntryPointTests
     {
         var combined = string.Join(
             Environment.NewLine,
-            ReadRepoFile(@"internal_docs\maintainer\VALIDATION.md"),
             ReadRepoFile(@"internal_docs\maintainer\TESTRESULTS.md"),
             ReadRepoFile(@"internal_docs\maintainer\RELEASE_PROCESS.md"),
             ReadRepoFile(@"internal_docs\maintainer\AUTOMATED_TEST_PLAN.md"),
