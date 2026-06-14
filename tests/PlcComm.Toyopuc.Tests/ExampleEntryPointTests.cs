@@ -41,10 +41,9 @@ public sealed class ExampleEntryPointTests
     public void UserFacingDocs_FocusOnHighLevelDeviceClient()
     {
         var readme = ReadRepoFile("README.md");
-        var userGuide = ReadRepoFile(@"docsrc\user\USER_GUIDE.md");
         var usageGuide = ReadRepoFile(@"docsrc\user\USAGE_GUIDE.md");
         var examplesReadme = ReadRepoFile(@"examples\README.md");
-        var combined = string.Join(Environment.NewLine, readme, userGuide, usageGuide, examplesReadme);
+        var combined = string.Join(Environment.NewLine, readme, usageGuide, examplesReadme);
 
         Assert.Contains("ToyopucDeviceClient", combined, StringComparison.Ordinal);
         Assert.Contains("ReadTypedAsync", combined, StringComparison.Ordinal);
