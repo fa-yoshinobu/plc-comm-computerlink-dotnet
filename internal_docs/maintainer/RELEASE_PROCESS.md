@@ -13,7 +13,7 @@ Confirm that the release contains only public .NET assets:
 - `README.md`
 - `CHANGELOG.md`
 - `LICENSE`
-- `internal_docs/maintainer/VALIDATION.md`
+- maintainer archive
 - `internal_docs/maintainer/TESTRESULTS.md`
 
 Confirm that local output is excluded:
