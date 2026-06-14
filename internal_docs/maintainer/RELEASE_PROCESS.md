@@ -79,6 +79,17 @@ Expected release outputs:
 - `src\Toyopuc\bin\Release\*.snupkg`
 - `publish\HighLevelSample\PlcComm.Toyopuc.HighLevelSample.exe`
 
+GitHub Release assets should be built from the same commit as the release tag.
+Do not upload assets built from `main` when the release points at an older tag.
+
+Required GitHub Release assets:
+
+- `PlcComm.Toyopuc.<version>.nupkg`
+- `PlcComm.Toyopuc.<version>.snupkg`
+- `PlcComm.Toyopuc.<version>.dll.zip`
+
+The DLL zip should contain the Release build output for the package version.
+
 ## Pre-Tag Review Checklist
 
 Before creating a release tag, confirm these review items:
@@ -144,4 +155,22 @@ Recommended order:
 3. Create and push the version tag.
 4. Let the release workflow build the package artifacts and attach them to the GitHub Release.
 5. Publish the `.nupkg` and `.snupkg` to NuGet manually after the GitHub Release artifacts are verified.
+
+## Release Notes
+
+Each GitHub Release should include:
+
+- `Added APIs`: list new public API names and the version they first appear in.
+- `Compatibility`: target framework, behavior changes, and migration notes.
+- `Assets`: list the attached `.nupkg`, `.snupkg`, and DLL zip filenames.
+
+Use `No new public API additions are called out for this release.` when there
+are no public API additions.
+
+After publishing, verify the release:
+
+```powershell
+gh release view vX.Y.Z --repo fa-yoshinobu/plc-comm-computerlink-dotnet --json tagName,name,assets,url
+gh release list --repo fa-yoshinobu/plc-comm-computerlink-dotnet --limit 3
+```
 
