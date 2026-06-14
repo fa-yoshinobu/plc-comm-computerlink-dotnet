@@ -34,5 +34,6 @@ The latest direct `toyopuc:pc10g:pc10` refresh was run on `2026-05-02` against
 
 ## Where Older Evidence Went
 
-Public historical validation clutter was removed. Maintainer-only retained evidence now belongs under `internal_docs/`,
-including the reproducible command log for the `2026-05-02` direct PC10G smoke/soak refresh.
+This public page keeps only the current summary. Detailed historical evidence,
+including the reproducible command log for the `2026-05-02` direct PC10G
+smoke/soak refresh, is retained as maintainer notes.
