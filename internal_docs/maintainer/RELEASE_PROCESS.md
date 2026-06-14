@@ -57,8 +57,9 @@ release_check.bat
 
 This runs:
 
-1. `run_ci.bat`
-2. `build_docs.bat`
+1. NuGet registry duplicate check
+2. `run_ci.bat`
+3. `dotnet pack`
 
 For package output, run:
 

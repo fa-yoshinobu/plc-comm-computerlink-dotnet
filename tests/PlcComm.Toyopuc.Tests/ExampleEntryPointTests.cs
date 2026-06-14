@@ -183,12 +183,12 @@ public sealed class ExampleEntryPointTests
     }
 
     [Fact]
-    public void ReleaseCheckScript_RunsCiThenBuildsDocs()
+    public void ReleaseCheckScript_RunsCiWithoutLocalDocsBuild()
     {
         var text = ReadRepoFile("release_check.bat");
 
         Assert.Contains("call run_ci.bat", text, StringComparison.Ordinal);
-        Assert.Contains("call build_docs.bat", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("call build_docs.bat", text, StringComparison.Ordinal);
     }
 
     private static string ReadRepoFile(string relativePath)
