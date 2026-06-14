@@ -23,9 +23,16 @@ Each profile selects frame type, access rules, and device ranges.
 ## How to select
 
 ```csharp
+using System;
 using PlcComm.Toyopuc;
+
 var options = new ToyopucConnectionOptions("192.168.250.100")
-    { PlcProfile = "toyopuc:plus:extended" };
+{
+    Port = 1025,
+    PlcProfile = "toyopuc:plus:extended",
+};
+
+Console.WriteLine(options.PlcProfile);
 ```
 
 ## Profile-specific cautions
