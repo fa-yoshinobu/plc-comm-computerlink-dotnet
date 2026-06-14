@@ -9,7 +9,7 @@ In command examples, `--log` / `--csv` / `--summary-json` paths are illustrative
 
 ## Environment
 
-- Repository: `D:\PLC_COMM_PROJ\plc-comm-computerlink-dotnet`
+- Repository: `plc-comm-computerlink-dotnet`
 - .NET library: `PlcComm.Toyopuc`
 - Tools:
   - [PlcComm.Toyopuc.SmokeTest](../../examples/PlcComm.Toyopuc.SmokeTest/Program.cs)
@@ -748,9 +748,9 @@ Note:
 - `CMD=CA` commit/wait/readback and restore commit are verified for the direct Nano 10GX FR-visible path.
 - Power-cycle / CPU-reset persistence was verified by committing a marker before restart, reading it after restart from both Python and .NET, and then restoring the original values.
 - Detailed JSON logs are kept outside the repository:
-  - `D:\_github_plc\toyopuc-fr-nano10gx-dotnet-20260612.json`
-  - `D:\_github_plc\toyopuc-fr-nano10gx-dotnet-commit-20260612.json`
-  - `D:\_github_plc\toyopuc-fr-nano10gx-persistence-post-reset-dotnet-20260612.json`
+  - `toyopuc-fr-nano10gx-dotnet-20260612.json`
+  - `toyopuc-fr-nano10gx-dotnet-commit-20260612.json`
+  - `toyopuc-fr-nano10gx-persistence-post-reset-dotnet-20260612.json`
 
 ### Bit-to-packed Readback Probe (`V/X/Y/EV`)
 
