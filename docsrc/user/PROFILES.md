@@ -2,11 +2,11 @@
 
 ## Intro
 
-Each profile selects frame type, access rules, and device ranges.
+Each canonical profile selects frame type, access rules, and device ranges.
 
 ## Profiles table
 
-| Profile string | Hardware | Frame/mode | Key devices available | Notes |
+| Canonical profile | Hardware | Frame/mode | Key devices available | Notes |
 | --- | --- | --- | --- | --- |
 | `toyopuc:generic` | Any TOYOPUC Computer Link target | Generic default | P/K/V/T/C/L/X/Y/M, S/N/R/D, B, EP/EK/EV/ET/EC/EL/EX/EY/EM/GM/GX/GY, ES/EN/H/U/EB, FR | Broadest source-defined profile. |
 | `toyopuc:plus:standard` | TOYOPUC-Plus | Standard | P/K/V/T/C/L/X/Y/M, S/N/R/D, EP/EK/EV/ET/EC/EL/EX/EY/EM, ES/EN/H | Standard TOYOPUC-Plus address set. |
@@ -37,7 +37,7 @@ Console.WriteLine(options.PlcProfile);
 
 ## Profile-specific cautions
 
-| Profile string | Caution |
+| Canonical profile | Caution |
 | --- | --- |
 | `toyopuc:generic` | This profile enables broad source-defined ranges. Use a hardware-specific profile when you know the PLC model. |
 | `toyopuc:plus:standard` | U, EB, FR, GM, GX, and GY are not in the standard TOYOPUC-Plus source area set. |
