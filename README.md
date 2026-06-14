@@ -69,6 +69,7 @@ Console.WriteLine($"P1-D0000 = {value}");
 | Supported registers | [docsrc/user/SUPPORTED_REGISTERS.md](docsrc/user/SUPPORTED_REGISTERS.md) |
 | PLC profiles | [docsrc/user/PROFILES.md](docsrc/user/PROFILES.md) |
 | Examples | [examples/README.md](examples/README.md) |
+| Full documentation site | [plc-comm-docs-site](https://github.com/fa-yoshinobu/plc-comm-docs-site) |
 
 ## Hardware verified
 
