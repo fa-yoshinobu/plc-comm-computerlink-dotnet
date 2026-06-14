@@ -28,7 +28,7 @@ Confirm that local output is excluded:
 Before packaging:
 
 1. Update `<Version>` in [../../src/Toyopuc/PlcComm.Toyopuc.csproj](../../src/Toyopuc/PlcComm.Toyopuc.csproj).
-2. Update [CHANGELOG.md](CHANGELOG.md) so the released changes are recorded in
+2. Update [CHANGELOG.md](../../CHANGELOG.md) so the released changes are recorded in
    the target version section.
 3. Make sure the release tag matches the package version, for example `v1.0.0`.
 
@@ -86,7 +86,7 @@ Before creating a release tag, confirm these review items:
    - The target tag commit matches the intended `main` commit.
    - If `main` moved after a prior tag, create a new version tag instead of reusing old notes.
 2. Changelog alignment
-   - Recent fixes are recorded in [CHANGELOG.md](CHANGELOG.md) (including test-stability fixes).
+   - Recent fixes are recorded in [CHANGELOG.md](../../CHANGELOG.md) (including test-stability fixes).
 3. Example CLI regression
    - Manual validation confirms the high-level sample still runs with the current package.
    - If behavior changed, add or update automated regression coverage.

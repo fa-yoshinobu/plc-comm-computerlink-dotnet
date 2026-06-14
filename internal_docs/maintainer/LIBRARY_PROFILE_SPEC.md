@@ -155,7 +155,7 @@ When changing supported ranges:
 | --- | --- |
 | 1 | update `ToyopucPlcProfiles` |
 | 2 | verify `ToyopucAddressingOptions` still matches the profile intent |
-| 3 | update [`../../tests/Toyopuc.Tests/AddressAndResolverTests.cs`](../../tests/Toyopuc.Tests/AddressAndResolverTests.cs) |
+| 3 | update [`../../tests/PlcComm.Toyopuc.Tests/AddressAndResolverTests.cs`](../../tests/PlcComm.Toyopuc.Tests/AddressAndResolverTests.cs) |
 | 4 | update this document |
 | 5 | if behavior is externally visible, update [`../../README.md`](../../README.md) |
 
