@@ -123,7 +123,7 @@ public sealed class ExampleEntryPointTests
 
         Assert.DoesNotContain("pytoyopuc-computerlink", text, StringComparison.Ordinal);
         Assert.DoesNotContain("soak_monitor_10gx_core.bat", text, StringComparison.Ordinal);
-        Assert.Contains(@"D:\PLC_COMM_PROJ\plc-comm-computerlink-python", text, StringComparison.Ordinal);
+        Assert.Contains("<path-to-plc-comm-computerlink-python>", text, StringComparison.Ordinal);
         Assert.Contains(@"python scripts\sim_server.py", text, StringComparison.Ordinal);
         Assert.Contains(@"examples\PlcComm.Toyopuc.SmokeTest", text, StringComparison.Ordinal);
     }
