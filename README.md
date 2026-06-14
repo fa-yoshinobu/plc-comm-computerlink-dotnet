@@ -40,12 +40,12 @@ Console.WriteLine($"P1-D0000 = {value}");
 
 | Page | Use it for |
 | --- | --- |
-| Getting started | [docsrc/user/GETTING_STARTED.md](docsrc/user/GETTING_STARTED.md) |
-| Usage guide | [docsrc/user/USAGE_GUIDE.md](docsrc/user/USAGE_GUIDE.md) |
-| Supported registers | [docsrc/user/SUPPORTED_REGISTERS.md](docsrc/user/SUPPORTED_REGISTERS.md) |
-| PLC profiles | [docsrc/user/PROFILES.md](docsrc/user/PROFILES.md) |
-| Examples | [examples/README.md](examples/README.md) |
-| Full documentation site | [plc-comm-docs-site](https://fa-yoshinobu.github.io/plc-comm-docs-site/) |
+| [Full documentation site](https://fa-yoshinobu.github.io/plc-comm-docs-site/) | Unified docs for all PLC communication libraries. |
+| [Getting started](docsrc/user/GETTING_STARTED.md) | Install the package, connect to your PLC, and run your first read/write. |
+| [Usage guide](docsrc/user/USAGE_GUIDE.md) | Use the high-level API and common Computer Link workflows. |
+| [Supported registers](docsrc/user/SUPPORTED_REGISTERS.md) | Check supported device families and address forms. |
+| [PLC profiles](docsrc/user/PROFILES.md) | Choose the canonical TOYOPUC profile for the target PLC. |
+| [Examples](examples/README.md) | Run maintained .NET examples. |
 
 ## Hardware verified
 
