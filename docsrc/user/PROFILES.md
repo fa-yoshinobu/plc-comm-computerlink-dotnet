@@ -8,7 +8,7 @@ Each canonical profile selects frame type, access rules, and device ranges.
 
 | Canonical profile | Hardware | Frame/mode | Key devices available | Notes |
 | --- | --- | --- | --- | --- |
-| `toyopuc:generic` | Any TOYOPUC Computer Link target | Generic default | P/K/V/T/C/L/X/Y/M, S/N/R/D, B, EP/EK/EV/ET/EC/EL/EX/EY/EM/GM/GX/GY, ES/EN/H/U/EB, FR | Broadest source-defined profile. |
+| `toyopuc:generic` | Any TOYOPUC Computerlink target | Generic default | P/K/V/T/C/L/X/Y/M, S/N/R/D, B, EP/EK/EV/ET/EC/EL/EX/EY/EM/GM/GX/GY, ES/EN/H/U/EB, FR | Broadest source-defined profile. |
 | `toyopuc:plus:standard` | TOYOPUC-Plus | Standard | P/K/V/T/C/L/X/Y/M, S/N/R/D, EP/EK/EV/ET/EC/EL/EX/EY/EM, ES/EN/H | Standard TOYOPUC-Plus address set. |
 | `toyopuc:plus:extended` | TOYOPUC-Plus | Extended | Standard plus GM/GX/GY and U | The getting-started examples use this profile. |
 | `toyopuc:nano-10gx:native` | Nano 10GX | Native | Upper split P/V/T/C/L/M, S/N, R/D, U/EB, FR, GM/GX/GY | Supports larger U, EB, and FR ranges from source. |

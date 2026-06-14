@@ -11,7 +11,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>PlcComm.Toyopuc.HighLevelSample</AssemblyName>
     <Title>PlcComm.Toyopuc High-Level API Sample</Title>
-    <Description>Sample program demonstrating all high-level Computer Link APIs.</Description>
+    <Description>Sample program demonstrating all high-level Computerlink APIs.</Description>
   </PropertyGroup>
 
 </Project>

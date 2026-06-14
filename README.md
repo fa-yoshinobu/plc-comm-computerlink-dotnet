@@ -2,9 +2,9 @@
 [![NuGet](https://img.shields.io/nuget/v/PlcComm.Toyopuc.svg)](https://www.nuget.org/packages/PlcComm.Toyopuc/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-# TOYOPUC Computer Link for .NET
+# TOYOPUC Computerlink for .NET
 
-`PlcComm.Toyopuc` is a .NET library for TOYOPUC Computer Link PLC communication.
+`PlcComm.Toyopuc` is a .NET library for TOYOPUC Computerlink PLC communication.
 
 ## Supported PLC profiles
 
@@ -42,7 +42,7 @@ Console.WriteLine($"P1-D0000 = {value}");
 | --- | --- |
 | [Full documentation site](https://fa-yoshinobu.github.io/plc-comm-docs-site/) | Unified docs for all PLC communication libraries. |
 | [Getting started](docsrc/user/GETTING_STARTED.md) | Install the package, connect to your PLC, and run your first read/write. |
-| [Usage guide](docsrc/user/USAGE_GUIDE.md) | Use the high-level API and common Computer Link workflows. |
+| [Usage guide](docsrc/user/USAGE_GUIDE.md) | Use the high-level API and common Computerlink workflows. |
 | [Supported registers](docsrc/user/SUPPORTED_REGISTERS.md) | Check supported device families and address forms. |
 | [PLC profiles](docsrc/user/PROFILES.md) | Choose the canonical TOYOPUC profile for the target PLC. |
 | [Examples](examples/README.md) | Run maintained .NET examples. |

@@ -7,7 +7,7 @@ Use this page for first-pass checks when your PLC does not respond as expected. 
 | Symptom | Check |
 | --- | --- |
 | Connection timeout | Confirm the PLC host is `192.168.250.100` or the address you configured. |
-| TCP connection refused | Confirm Computer Link is enabled on your PLC and TCP port `1025` is open. |
+| TCP connection refused | Confirm Computerlink is enabled on your PLC and TCP port `1025` is open. |
 | UDP requests do not return | Confirm you are using the PLC UDP port configured for your target; examples use `1035` for UDP. |
 | Intermittent timeouts | Set `Timeout`, `Retries`, and `RetryDelay` on `ToyopucConnectionOptions`. |
 

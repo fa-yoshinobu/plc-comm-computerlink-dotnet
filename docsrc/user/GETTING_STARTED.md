@@ -2,7 +2,7 @@
 
 ## Start here
 
-Use this page to install `PlcComm.Toyopuc`, open one queued Computer Link client, read `P1-D0000`, and write one safe test word. You need a reachable TOYOPUC PLC and a profile string that matches your PLC.
+Use this page to install `PlcComm.Toyopuc`, open one queued Computerlink client, read `P1-D0000`, and write one safe test word. You need a reachable TOYOPUC PLC and a profile string that matches your PLC.
 
 ## Prerequisites
 

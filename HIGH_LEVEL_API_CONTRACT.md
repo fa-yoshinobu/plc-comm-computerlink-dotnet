@@ -1,6 +1,6 @@
 # High-Level API Contract
 
-This document defines the target public API shape for the Toyopuc Computer Link .NET library.
+This document defines the target public API shape for the Toyopuc Computerlink .NET library.
 Backward compatibility is not a design constraint for this contract.
 
 This contract is intentionally aligned with:

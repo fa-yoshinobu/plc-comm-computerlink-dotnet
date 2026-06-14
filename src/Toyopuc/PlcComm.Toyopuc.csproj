@@ -9,7 +9,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>PlcComm.Toyopuc</PackageId>
     <Version>0.8.0</Version>
-    <Title>PLC Communication TOYOPUC Computer Link .NET</Title>
+    <Title>PLC Communication TOYOPUC Computerlink .NET</Title>
     <Description>High-level TOYOPUC computer-link communication library for .NET with TCP and UDP support.</Description>
     <PackageTags>toyopuc plc industrial-automation computer-link tcp udp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -28,6 +28,5 @@
   </ItemGroup>
 
 </Project>
-
 
 

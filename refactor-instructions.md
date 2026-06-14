@@ -4,7 +4,7 @@ plc-comm-computerlink-dotnet のリファクタリング指示書。
 この文書は実装担当モデル向けの完結した作業指示である。実装前にこの文書全体を読むこと。
 
 > **最重要の前提**: このライブラリは NuGet に公開済み(`PlcComm.Toyopuc` 0.1.8)であり、
-> JTEKT TOYOPUC の Computer Link プロトコル実装は実機(PC10G 等)での検証記録
+> JTEKT TOYOPUC の Computerlink プロトコル実装は実機(PC10G 等)での検証記録
 > (`TODO.md`、`internal_docs/`)に紐づく。
 > **公開 API と送信フレームのバイト列を変えてはならない。**
 >
@@ -33,7 +33,7 @@ plc-comm-computerlink-dotnet のリファクタリング指示書。
 
 ### 何のライブラリか
 
-JTEKT TOYOPUC PLC と Computer Link プロトコル(イーサネット TCP/UDP)で通信する
+JTEKT TOYOPUC PLC と Computerlink プロトコル(イーサネット TCP/UDP)で通信する
 .NET 9 ライブラリ。中継局ホップ(relay)、FR 領域の読み書き + Commit、PC10 モード、
 デバイスプロファイル(機種別アドレッシング)対応。Python 版と高レベル契約
 (`open_and_connect` / `read_typed` / `write_typed` / `read_named` / `poll`)を共有。
