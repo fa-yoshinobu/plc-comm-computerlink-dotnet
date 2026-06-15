@@ -15,9 +15,6 @@ In command examples, `--log` / `--csv` / `--summary-json` paths are illustrative
   - [PlcComm.Toyopuc.SmokeTest](../../examples/PlcComm.Toyopuc.SmokeTest/Program.cs)
   - [PlcComm.Toyopuc.MinimalRead](../../examples/PlcComm.Toyopuc.MinimalRead/Program.cs)
   - [run_validation.ps1](../../examples/run_validation.ps1)
-- Procedure:
-  - [VALIDATION.md](VALIDATION.md)
-
 ## 1. Direct TOYOPUC-Plus
 
 Verified: `2026-03-10`
@@ -172,7 +169,7 @@ dotnet run --project examples\PlcComm.Toyopuc.SmokeTest -- --host 192.168.250.10
 - `2026-06-12` 30-minute relay write/readback soak: `1029` alternating writes to `P1-D0000` (`0x1111` / `0x2222`), `0` failures, final restore to `0x270F` verified.
 - Build + tests stayed green while fixing validation gaps:
   - `dotnet build PlcComm.Toyopuc.sln`: `OK`
-  - `dotnet test PlcComm.Toyopuc.sln --no-build`: `OK` (latest local run: `160 passed`)
+  - `dotnet test PlcComm.Toyopuc.sln --no-build`: `OK` (latest local run on `2026-06-15`: `198 passed`)
 
 ### `P1-L1:N2` Relay Recheck (2026-06-12)
 
@@ -844,7 +841,7 @@ dotnet pack src\Toyopuc\PlcComm.Toyopuc.csproj -c Release
 Result:
 
 - build: `OK`
-- tests: `160 passed`
+- tests: `198 passed` (rechecked locally on `2026-06-15` with `dotnet test PlcComm.Toyopuc.sln --no-build`)
 - pack: `PlcComm.Toyopuc.<version>.nupkg` and `PlcComm.Toyopuc.<version>.snupkg` generated `OK`
 
 ## 9. Release Batch Outputs
@@ -856,14 +853,12 @@ Commands:
 ```bat
 release_check.bat
 dotnet pack src\Toyopuc\PlcComm.Toyopuc.csproj -c Release
-dotnet publish examples\PlcComm.Toyopuc.DeviceMonitor\PlcComm.Toyopuc.DeviceMonitor.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:PublishTrimmed=false -o publish\DeviceMonitor
 ```
 
 Result:
 
 - release verification entry point: `release_check.bat`
 - packaged files: `PlcComm.Toyopuc.<version>.nupkg`, `PlcComm.Toyopuc.<version>.snupkg`
-- publish output: `publish\DeviceMonitor\PlcComm.Toyopuc.DeviceMonitor.exe`
 
 ## 10. Remaining Hardware Targets (Pending)
 
