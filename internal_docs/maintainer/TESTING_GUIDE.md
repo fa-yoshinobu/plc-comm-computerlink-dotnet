@@ -11,11 +11,10 @@ Related documents:
 
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [PROTOCOL_SPEC.md](PROTOCOL_SPEC.md)
-- [VALIDATION.md](VALIDATION.md)
 
 ## Unit / Integration Tests
 
-The automated test suite is under `tests/Toyopuc.Tests/`.
+The automated test suite is under `tests/PlcComm.Toyopuc.Tests/`.
 
 Run with:
 
