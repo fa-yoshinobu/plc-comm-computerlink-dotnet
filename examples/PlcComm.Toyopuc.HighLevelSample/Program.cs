@@ -48,9 +48,19 @@ Console.WriteLine("1. ReadAsync / WriteAsync");
 var d100 = await client.ReadAsync("P1-D0100");
 Console.WriteLine($"P1-D0100 = {FormatValue(d100)}");
 // Write only to test addresses you control.
-await client.WriteAsync("P1-D0101", 1234);
-await client.WriteAsync("P1-M0000", 1);
-Console.WriteLine("Wrote 1234 -> P1-D0101 and 1 -> P1-M0000");
+var originalD101 = await client.ReadAsync("P1-D0101");
+var originalM0000 = await client.ReadAsync("P1-M0000");
+try
+{
+    await client.WriteAsync("P1-D0101", 1234);
+    await client.WriteAsync("P1-M0000", 1);
+    Console.WriteLine("Wrote 1234 -> P1-D0101 and 1 -> P1-M0000");
+}
+finally
+{
+    await client.WriteAsync("P1-M0000", originalM0000);
+    await client.WriteAsync("P1-D0101", originalD101);
+}
 
 Console.WriteLine();
 Console.WriteLine("2. ReadManyAsync / WriteManyAsync");
@@ -58,25 +68,46 @@ Console.WriteLine("2. ReadManyAsync / WriteManyAsync");
 var snapshot = await client.ReadManyAsync(["P1-D0100", "P1-D0101", "P1-M0000"]);
 Console.WriteLine($"snapshot = [{string.Join(", ", snapshot.Select(FormatValue))}]");
 // Write several unrelated device strings as one high-level batch.
-await client.WriteManyAsync(
-[
-    new KeyValuePair<object, object>("P1-D0100", 10),
-    new KeyValuePair<object, object>("P1-D0101", 20),
-    new KeyValuePair<object, object>("P1-M0000", 0),
-]);
-Console.WriteLine("Wrote {P1-D0100=10, P1-D0101=20, P1-M0000=0}");
+try
+{
+    await client.WriteManyAsync(
+    [
+        new KeyValuePair<object, object>("P1-D0100", 10),
+        new KeyValuePair<object, object>("P1-D0101", 20),
+        new KeyValuePair<object, object>("P1-M0000", 0),
+    ]);
+    Console.WriteLine("Wrote {P1-D0100=10, P1-D0101=20, P1-M0000=0}");
+}
+finally
+{
+    await client.WriteManyAsync(
+    [
+        new KeyValuePair<object, object>("P1-D0100", snapshot[0]),
+        new KeyValuePair<object, object>("P1-D0101", snapshot[1]),
+        new KeyValuePair<object, object>("P1-M0000", snapshot[2]),
+    ]);
+}
 
 Console.WriteLine();
 Console.WriteLine("3. ReadTypedAsync / WriteTypedAsync");
 // Read typed word views; use ":" notation in named reads and dtype strings here.
 var typedU = await client.ReadTypedAsync("P1-D0100", "U");
 var typedF = await client.ReadTypedAsync("P1-D0300", "F");
+var typedL = await client.ReadTypedAsync("P1-D0200", "L");
 Console.WriteLine($"P1-D0100:U = {typedU}");
 Console.WriteLine($"P1-D0300:F = {typedF}");
 // Write typed values to word registers. DWord, long, and float values occupy two words.
-await client.WriteTypedAsync("P1-D0200", "L", -500);
-await client.WriteTypedAsync("P1-D0300", "F", 3.14f);
-Console.WriteLine("Wrote -500 -> P1-D0200:L and 3.14 -> P1-D0300:F");
+try
+{
+    await client.WriteTypedAsync("P1-D0200", "L", -500);
+    await client.WriteTypedAsync("P1-D0300", "F", 3.14f);
+    Console.WriteLine("Wrote -500 -> P1-D0200:L and 3.14 -> P1-D0300:F");
+}
+finally
+{
+    await client.WriteTypedAsync("P1-D0300", "F", typedF);
+    await client.WriteTypedAsync("P1-D0200", "L", typedL);
+}
 
 Console.WriteLine();
 Console.WriteLine("4. ReadWordsSingleRequestAsync / ReadDWordsSingleRequestAsync / chunked helpers");
@@ -94,18 +125,27 @@ Console.WriteLine($"chunkedDword = [{string.Join(", ", chunkedDwords)}]");
 Console.WriteLine();
 Console.WriteLine("5. WriteBitInWordAsync / ReadNamedAsync");
 // See GOTCHAS.md: dot notation means a bit inside a word, not a typed dword suffix.
-await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: true);
-// ReadNamedAsync keeps each requested address string as the result key.
-var named = await client.ReadNamedAsync(
-[
-    "P1-D0100",
-    "P1-D0200:L",
-    "P1-D0300:F",
-    "P1-D0100.3",
-]);
-foreach (var pair in named)
+var originalBitSnapshot = await client.ReadNamedAsync(["P1-D0100.3"]);
+var originalBit = Convert.ToBoolean(originalBitSnapshot["P1-D0100.3"]);
+try
 {
-    Console.WriteLine($"{pair.Key,-12} = {FormatValue(pair.Value)}");
+    await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: true);
+    // ReadNamedAsync keeps each requested address string as the result key.
+    var named = await client.ReadNamedAsync(
+    [
+        "P1-D0100",
+        "P1-D0200:L",
+        "P1-D0300:F",
+        "P1-D0100.3",
+    ]);
+    foreach (var pair in named)
+    {
+        Console.WriteLine($"{pair.Key,-12} = {FormatValue(pair.Value)}");
+    }
+}
+finally
+{
+    await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: originalBit);
 }
 
 Console.WriteLine();
@@ -128,9 +168,19 @@ Console.WriteLine("7. ReadFrAsync / WriteFrAsync / CommitFrAsync");
 var frValue = await client.ReadFrAsync("FR000000");
 Console.WriteLine($"FR000000 = {FormatValue(frValue)}");
 // See GOTCHAS.md: FR writes are staged until CommitFrAsync flushes them to flash.
-await client.WriteFrAsync("FR000000", 0x1234, commit: false);
-await client.CommitFrAsync("FR000000", wait: false);
-Console.WriteLine("Wrote 0x1234 -> FR000000 and requested commit");
+// This sample restores the RAM-staged value and intentionally does not commit.
+try
+{
+    await client.WriteFrAsync("FR000000", 0x1234, commit: false);
+    Console.WriteLine("Wrote 0x1234 -> FR000000 (RAM only, not committed)");
+}
+finally
+{
+    await client.WriteFrAsync("FR000000", frValue, commit: false);
+    Console.WriteLine("Restored original FR000000 value (RAM only)");
+}
+// Uncomment only when the staged FR value is intentionally persistent.
+// await client.CommitFrAsync("FR000000", wait: false);
 
 Console.WriteLine();
 Console.WriteLine("Done.");

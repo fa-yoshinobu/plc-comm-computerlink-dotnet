@@ -72,9 +72,17 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
     PlcProfile = "toyopuc:plus:extended",
 };
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
-await client.WriteTypedAsync("P1-D0001", "U", 1234);
-var value = await client.ReadTypedAsync("P1-D0001", "U");
-Console.WriteLine($"P1-D0001 = {value}");
+var original = await client.ReadTypedAsync("P1-D0001", "U");
+try
+{
+    await client.WriteTypedAsync("P1-D0001", "U", 1234);
+    var value = await client.ReadTypedAsync("P1-D0001", "U");
+    Console.WriteLine($"P1-D0001 = {value}");
+}
+finally
+{
+    await client.WriteTypedAsync("P1-D0001", "U", original);
+}
 ```
 
 Only write to a test address you control. `P1-D0001` is a word register, not a bit or timer.

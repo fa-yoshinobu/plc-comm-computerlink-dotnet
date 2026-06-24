@@ -79,9 +79,17 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
     PlcProfile = "toyopuc:plus:extended",
 };
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
-await client.WriteTypedAsync("P1-D0001", "U", 1234);
-var value = await client.ReadTypedAsync("P1-D0001", "U");
-Console.WriteLine($"P1-D0001:U = {value}");
+var original = await client.ReadTypedAsync("P1-D0001", "U");
+try
+{
+    await client.WriteTypedAsync("P1-D0001", "U", 1234);
+    var value = await client.ReadTypedAsync("P1-D0001", "U");
+    Console.WriteLine($"P1-D0001:U = {value}");
+}
+finally
+{
+    await client.WriteTypedAsync("P1-D0001", "U", original);
+}
 ```
 
 Use a matched read/write pair while commissioning so you can prove that your test word is the address you intended.
@@ -165,9 +173,18 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
     PlcProfile = "toyopuc:plus:extended",
 };
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
-await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: true);
-var snapshot = await client.ReadNamedAsync(["P1-D0100.3"]);
-Console.WriteLine($"P1-D0100.3 = {snapshot["P1-D0100.3"]}");
+var before = await client.ReadNamedAsync(["P1-D0100.3"]);
+var originalBit = Convert.ToBoolean(before["P1-D0100.3"]);
+try
+{
+    await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: true);
+    var snapshot = await client.ReadNamedAsync(["P1-D0100.3"]);
+    Console.WriteLine($"P1-D0100.3 = {snapshot["P1-D0100.3"]}");
+}
+finally
+{
+    await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: originalBit);
+}
 ```
 
 Dot notation such as `P1-D0100.3` means one bit inside a word. Use colon notation such as `P1-D0100:D` for a 32-bit dword view.
@@ -230,8 +247,16 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
     PlcProfile = "toyopuc:pc10g:pc10",
 };
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
-await client.ExecuteAsync(inner => inner.WriteFrAsync("FR000000", 0x1234, commit: false));
-Console.WriteLine("FR write staged");
+var original = await client.ExecuteAsync(inner => inner.ReadFrAsync("FR000000"));
+try
+{
+    await client.ExecuteAsync(inner => inner.WriteFrAsync("FR000000", 0x1234, commit: false));
+    Console.WriteLine("FR write staged");
+}
+finally
+{
+    await client.ExecuteAsync(inner => inner.WriteFrAsync("FR000000", original, commit: false));
+}
 ```
 
 `commit: false` stages the value without flushing it to flash.
@@ -248,11 +273,13 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
     PlcProfile = "toyopuc:pc10g:pc10",
 };
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
-await client.ExecuteAsync(inner => inner.CommitFrAsync("FR000000", wait: true));
-Console.WriteLine("FR commit completed");
+// Commit only after staging an intended value to a test FR address.
+// Committed FR writes survive PLC power cycles.
+// await client.ExecuteAsync(inner => inner.CommitFrAsync("FR000000", wait: true));
+Console.WriteLine("FR commit intentionally not executed by this sample");
 ```
 
-> **Caution:** FR writes are two-phase. Staging without committing leaves the value in RAM. A power cycle will revert it to the last committed value.
+> **Caution:** FR writes are two-phase. Staging without committing leaves the value in RAM. Calling `CommitFrAsync` flushes the staged value to flash, so use it only when persistence is intended.
 
 ## Relay helpers (multi-hop)
 

@@ -61,6 +61,8 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
+// Use only a test FR address. CommitFrAsync persists the staged value
+// to flash and does not restore the previous value automatically.
 await client.ExecuteAsync(inner => inner.WriteFrAsync("FR000000", 0x1234, commit: false));
 await client.ExecuteAsync(inner => inner.CommitFrAsync("FR000000", wait: true));
 Console.WriteLine("FR write committed");
@@ -147,6 +149,8 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
+// Use only a test FR address. CommitFrAsync persists the staged value
+// to flash and does not restore the previous value automatically.
 await client.ExecuteAsync(inner => inner.WriteFrAsync("FR000000", 0x1234, commit: false));
 await client.ExecuteAsync(inner => inner.CommitFrAsync("FR000000", wait: true));
 Console.WriteLine("FR helper write completed");
