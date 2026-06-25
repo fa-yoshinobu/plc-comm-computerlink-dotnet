@@ -4,6 +4,15 @@
 
 Each canonical profile selects frame type, access rules, and device ranges.
 
+## Explicit selection is required
+
+Always pass one exact canonical profile name through `PlcProfile` / `plcProfile`.
+
+- No profile is inferred from the PLC model, CPU status, address string, host, port, or transport.
+- `toyopuc:generic` is not applied automatically when the profile is omitted.
+- Old names, short names, aliases, and case variants are rejected.
+- Address and dtype inputs may be normalized for convenience, but profile names are not.
+
 ## Profiles table
 
 | Canonical profile | Hardware | Frame/mode | Key devices available | Notes |
