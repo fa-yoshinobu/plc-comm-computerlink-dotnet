@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2026-06-25
 
 ### Changed
-- Documented that `PlcProfile` / `plcProfile` must be an explicit canonical profile name: missing values, aliases, abbreviations, case variants, and implicit `toyopuc:generic` fallback are rejected.
+- [Docs] Documented that `PlcProfile` / `plcProfile` must be an explicit canonical profile name: missing values, aliases, abbreviations, case variants, and implicit `toyopuc:generic` fallback are rejected.
+- [Samples] Updated Computerlink sample guidance and high-level sample code to use safer write/restore patterns.
+
+### Fixed
+- [Samples] Made the high-level sample analyzer-clean without changing the library API.
 
 ## [1.0.0] - 2026-06-24
 
