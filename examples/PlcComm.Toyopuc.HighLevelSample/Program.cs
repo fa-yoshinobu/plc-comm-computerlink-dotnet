@@ -126,7 +126,7 @@ Console.WriteLine();
 Console.WriteLine("5. WriteBitInWordAsync / ReadNamedAsync");
 // See GOTCHAS.md: dot notation means a bit inside a word, not a typed dword suffix.
 var originalBitSnapshot = await client.ReadNamedAsync(["P1-D0100.3"]);
-var originalBit = Convert.ToBoolean(originalBitSnapshot["P1-D0100.3"]);
+var originalBit = Convert.ToBoolean(originalBitSnapshot["P1-D0100.3"], System.Globalization.CultureInfo.InvariantCulture);
 try
 {
     await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: true);
