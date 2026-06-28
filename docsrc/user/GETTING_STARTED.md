@@ -8,7 +8,7 @@ Use this page to install `PlcComm.Toyopuc`, open one queued Computerlink client,
 
 | Requirement | Value |
 | --- | --- |
-| .NET SDK | .NET 9 SDK or newer |
+| .NET SDK | .NET 8, 9, or 10 SDK for consuming the package; .NET 10 SDK recommended when building this repository |
 | PLC network access | TCP access to `192.168.250.100:1025` |
 | Package | `PlcComm.Toyopuc` |
 | First profile used here | `toyopuc:plus:extended` |

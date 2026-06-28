@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Tooling`: Developer/operator command-line tools and helper utilities.
 - `CI`: Release checks, workflow scripts, or automation-only changes.
 
+## [Unreleased] - 2026-06-28
+
+### Changed
+- Library: Multi-targeted the package for `net8.0`, `net9.0`, and `net10.0`.
+- Tests: Multi-targeted the library test project for `net8.0`, `net9.0`, and `net10.0`, while keeping sample CLI contract coverage on the `net9.0` sample applications.
+- Docs: Updated the SDK prerequisite guidance for the multi-target package.
+- CI: Installed .NET 8, .NET 9, and .NET 10 SDKs in CI and release workflows.
+- CI: Included the `net8.0`, `net9.0`, and `net10.0` build outputs in the release DLL archive.
+
+### Fixed
+- Library: Replaced .NET 9-only `Convert.ToHexStringLower` usage with a cross-target helper so the library builds for `net8.0`.
+
 ## [1.0.1] - 2026-06-25
 
 ### Changed
