@@ -3,6 +3,7 @@ using System.Text;
 
 namespace PlcComm.Toyopuc.Tests;
 
+#if NET9_0
 public sealed class ExampleCliContractTests
 {
     private static readonly string RepoRoot = Path.GetFullPath(
@@ -261,3 +262,4 @@ public sealed class ExampleCliContractTests
         return Path.Combine(segments);
     }
 }
+#endif

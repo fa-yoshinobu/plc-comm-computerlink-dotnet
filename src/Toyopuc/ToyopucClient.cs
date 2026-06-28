@@ -445,7 +445,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse relay clock response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse relay clock response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -500,7 +500,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse relay CPU status response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse relay CPU status response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -514,7 +514,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse relay A0 CPU status response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse relay A0 CPU status response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -528,7 +528,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse relay A0 CPU status response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse relay A0 CPU status response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -662,7 +662,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse clock response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse clock response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -676,7 +676,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse CPU status response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse CPU status response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -690,7 +690,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse A0 CPU status response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse A0 CPU status response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -704,7 +704,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new ToyopucProtocolError($"Failed to parse A0 CPU status response data={Convert.ToHexStringLower(response.Data)}", exception);
+            throw new ToyopucProtocolError($"Failed to parse A0 CPU status response data={ToHexStringLower(response.Data)}", exception);
         }
     }
 
@@ -817,6 +817,15 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
     }
 
+    private static string ToHexStringLower(byte[] bytes)
+    {
+#if NET9_0_OR_GREATER
+        return Convert.ToHexStringLower(bytes);
+#else
+        return Convert.ToHexString(bytes).ToLowerInvariant();
+#endif
+    }
+
     protected static string FormatResponseError(ResponseFrame response)
     {
         var message = $"Response error rc=0x{response.Rc:X2}";
@@ -824,10 +833,10 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         {
             var error = response.Data.Length > 0 ? response.Data[^1] : response.Cmd;
             var detail = ErrorCodeDescriptions.TryGetValue(error, out var description) ? description : "Unknown error code";
-            return $"{message}, error_code=0x{error:X2} ({detail}), data={Convert.ToHexStringLower(response.Data)}";
+            return $"{message}, error_code=0x{error:X2} ({detail}), data={ToHexStringLower(response.Data)}";
         }
 
-        return $"{message}, data={Convert.ToHexStringLower(response.Data)}";
+        return $"{message}, data={ToHexStringLower(response.Data)}";
     }
 
     protected ResponseFrame SendAndReceive(byte[] payload)
