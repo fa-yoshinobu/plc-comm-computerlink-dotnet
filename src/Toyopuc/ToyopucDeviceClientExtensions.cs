@@ -245,8 +245,15 @@ public static class ToyopucDeviceClientExtensions
 
     private static async Task<IReadOnlyDictionary<string, object>> ReadNamedCoreAsync(ToyopucDeviceClient client, object? relayHops, IEnumerable<string> addresses, CancellationToken ct)
     {
+        var addrList = addresses as IList<string> ?? addresses.ToList();
+        if (addrList.Count != 1)
+        {
+            throw new ToyopucProtocolError(
+                "ReadNamedAsync requires exactly one named address per call. Split the operation into explicit calls when multiple requests are intentional.");
+        }
+
         var result = new Dictionary<string, object>();
-        foreach (var address in addresses)
+        foreach (var address in addrList)
         {
             var (baseAddr, dtype, bitIdx) = ParseLogicalAddress(address);
             if (dtype == "BIT_IN_WORD")

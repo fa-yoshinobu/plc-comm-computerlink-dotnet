@@ -626,11 +626,6 @@ public static class ToyopucAddress
 
     private static string? NormalizeSuffix(string text, string unit, string? suffix)
     {
-        if (unit == "byte" && suffix is null)
-        {
-            suffix = "L";
-        }
-
         if (unit == "byte")
         {
             if (suffix is not ("L" or "H"))

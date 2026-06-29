@@ -7,8 +7,8 @@
 | `ToyopucDeviceClientFactory.OpenAndConnectAsync` | Create and open the queued client from explicit options. |
 | `ReadTypedAsync` | Read one typed value from a word address. |
 | `WriteTypedAsync` | Write one typed value to a word address. |
-| `ReadNamedAsync` | Read a named snapshot of mixed word, typed, and bit-in-word addresses. |
-| `PollAsync` | Read the same named snapshot repeatedly. |
+| `ReadNamedAsync` | Read one named word, typed, or bit-in-word address. |
+| `PollAsync` | Read the same named address repeatedly. |
 | `ReadWordsSingleRequestAsync` | Read contiguous words as one protocol request or fail. |
 | `ReadDWordsSingleRequestAsync` | Read contiguous 32-bit unsigned values as one logical request or fail. |
 | `WriteWordsSingleRequestAsync` | Write contiguous words as one protocol request or fail. |
@@ -106,18 +106,19 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
     PlcProfile = "toyopuc:plus:extended",
 };
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
-var snapshot = await client.ReadNamedAsync(
-[
-    "P1-D0000",
-    "P1-D0001:S",
-    "P1-D0100:D",
-    "P1-D0102:F",
-    "P1-D0100.3",
-]);
+var snapshot = await client.ReadNamedAsync(["P1-D0100:D"]);
 Console.WriteLine(snapshot["P1-D0100:D"]);
 ```
 
-`ReadNamedAsync` preserves the original address strings as dictionary keys.
+`ReadNamedAsync` accepts one named address per call and preserves the original address string as the dictionary key.
+
+## Batching and request boundaries
+
+`ReadMany` and `WriteMany` execute only when all requested devices can be represented by one compatible protocol request. They throw `ToyopucProtocolError` before communication when the request would need multiple protocol requests, such as incompatible protocol groups, PC10 block boundary crossings, or helper paths that would fall back to individual requests.
+
+`ReadNamedAsync` accepts one named address per call. Use explicit repeated calls when multiple named reads are intentional.
+
+For contiguous word ranges, use `ReadWordsSingleRequestAsync`, `ReadDWordsSingleRequestAsync`, `WriteWordsSingleRequestAsync`, or `WriteDWordsSingleRequestAsync`. These helpers also fail if the requested range cannot be represented as one compatible protocol request. Use the `*ChunkedAsync` helpers, or separate explicit calls, only when splitting is intentional and partial completion is acceptable.
 
 ## Contiguous block reads
 
@@ -202,7 +203,7 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
 };
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
 var polls = 0;
-await foreach (var snapshot in client.PollAsync(["P1-D0000", "P1-D0100:F", "P1-D0100.3"], TimeSpan.FromSeconds(1)))
+await foreach (var snapshot in client.PollAsync(["P1-D0000"], TimeSpan.FromSeconds(1)))
 {
     Console.WriteLine(snapshot["P1-D0000"]);
     polls++;
@@ -213,7 +214,7 @@ await foreach (var snapshot in client.PollAsync(["P1-D0000", "P1-D0100:F", "P1-D
 }
 ```
 
-`PollAsync` yields the same shape as `ReadNamedAsync` on every interval.
+`PollAsync` yields the same one-address dictionary shape as `ReadNamedAsync` on every interval.
 
 ## FR file-register helpers
 

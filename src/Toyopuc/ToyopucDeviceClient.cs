@@ -150,12 +150,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     public object[] RelayReadMany(object hops, IEnumerable<object> devices)
     {
-        return RelayReadRuns(hops, ResolveDevices(devices), splitPc10BlockBoundaries: false);
+        var resolved = ResolveDevices(devices);
+        RequireSingleReadRequest(resolved, splitPc10BlockBoundaries: false, nameof(RelayReadMany));
+        return RelayReadRuns(hops, resolved, splitPc10BlockBoundaries: false);
     }
 
     public void RelayWriteMany(object hops, IEnumerable<KeyValuePair<object, object>> items)
     {
-        RelayWriteRuns(hops, ResolveWriteItems(items), splitPc10BlockBoundaries: true);
+        var resolved = ResolveWriteItems(items);
+        RequireSingleWriteRequest(resolved, splitPc10BlockBoundaries: true, nameof(RelayWriteMany));
+        RelayWriteRuns(hops, resolved, splitPc10BlockBoundaries: true);
     }
 
     public object ReadFr(object device, int count = 1)
@@ -346,12 +350,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     public object[] ReadMany(IEnumerable<object> devices)
     {
-        return ReadRuns(ResolveDevices(devices), splitPc10BlockBoundaries: false);
+        var resolved = ResolveDevices(devices);
+        RequireSingleReadRequest(resolved, splitPc10BlockBoundaries: false, nameof(ReadMany));
+        return ReadRuns(resolved, splitPc10BlockBoundaries: false);
     }
 
     public void WriteMany(IEnumerable<KeyValuePair<object, object>> items)
     {
-        WriteRuns(ResolveWriteItems(items), splitPc10BlockBoundaries: true);
+        var resolved = ResolveWriteItems(items);
+        RequireSingleWriteRequest(resolved, splitPc10BlockBoundaries: true, nameof(WriteMany));
+        WriteRuns(resolved, splitPc10BlockBoundaries: true);
     }
 
     private ResolvedDevice ResolveDeviceObject(object device)
@@ -619,6 +627,75 @@ public partial class ToyopucDeviceClient : ToyopucClient
             key,
             static (_, state) => DeviceRunPlanner.CompileRunPlan(state.Items, state.SplitPc10BlockBoundaries),
             (Items: items, SplitPc10BlockBoundaries: splitPc10BlockBoundaries));
+    }
+
+    private void RequireSingleReadRequest(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries, string operation)
+    {
+        if (devices.Count <= 1)
+        {
+            return;
+        }
+
+        var plan = GetRunPlan(devices, splitPc10BlockBoundaries);
+        if (plan.Length != 1 || !CanReadAsSingleRequest(devices))
+        {
+            RaiseImplicitSplitError(operation);
+        }
+    }
+
+    private void RequireSingleWriteRequest(
+        IReadOnlyList<(ResolvedDevice Device, object Value)> items,
+        bool splitPc10BlockBoundaries,
+        string operation)
+    {
+        if (items.Count <= 1)
+        {
+            return;
+        }
+
+        var plan = GetRunPlan(items, splitPc10BlockBoundaries);
+        if (plan.Length != 1 || !CanWriteAsSingleRequest(items))
+        {
+            RaiseImplicitSplitError(operation);
+        }
+    }
+
+    private static bool CanReadAsSingleRequest(IReadOnlyList<ResolvedDevice> devices)
+    {
+        var group = DeviceRunPlanner.GetBatchGroupKey(devices[0]);
+        if (group is null || !AllDevicesInGroup(devices, group))
+        {
+            return false;
+        }
+
+        return group switch
+        {
+            "pc10-byte" => DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 1, out _),
+            "pc10-word" when ContainsPackedWordDevice(devices) =>
+                DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 2, out _),
+            _ => true,
+        };
+    }
+
+    private static bool CanWriteAsSingleRequest(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
+    {
+        var group = DeviceRunPlanner.GetBatchGroupKey(items[0].Device);
+        if (group is null || !AllItemsInGroup(items, group) || HasDuplicateDevices(items))
+        {
+            return false;
+        }
+
+        return group switch
+        {
+            "pc10-byte" => DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 1, out _),
+            _ => true,
+        };
+    }
+
+    private static void RaiseImplicitSplitError(string operation)
+    {
+        throw new ToyopucProtocolError(
+            $"{operation} requires one compatible protocol request. Split the operation into explicit calls or use chunked helpers when multiple requests are intentional.");
     }
 
     private static string NormalizeDeviceCacheKey(string device)

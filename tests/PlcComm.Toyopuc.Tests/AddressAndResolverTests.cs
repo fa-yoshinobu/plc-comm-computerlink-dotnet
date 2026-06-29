@@ -257,6 +257,12 @@ public class AddressAndResolverTests
     }
 
     [Fact]
+    public void ParseAddress_ByteUnitRequiresExplicitLH()
+    {
+        Assert.Throws<ArgumentException>(() => ToyopucAddress.ParseAddress("D0100", "byte"));
+    }
+
+    [Fact]
     public void EncodeExtNoAddress_UsesExplicitGxAndGyAreas()
     {
         var gxWord = ToyopucAddress.EncodeExtNoAddress("GX", 0x0123, "word");

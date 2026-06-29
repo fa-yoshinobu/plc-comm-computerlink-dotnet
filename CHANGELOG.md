@@ -19,9 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Library: Multi-targeted the package for `net8.0`, `net9.0`, and `net10.0`.
+- Library: Made byte-unit parsing require explicit `L` / `H` suffixes and made `ReadMany` / `WriteMany` / `ReadNamedAsync` reject implicit multi-request splitting before communication.
 - Tests: Multi-targeted the library test project for `net8.0`, `net9.0`, and `net10.0`, while keeping sample CLI contract coverage on the `net9.0` sample applications.
 - Tests: Updated `Microsoft.NET.Test.Sdk` to `18.7.0`.
-- Docs: Updated the SDK prerequisite guidance for the multi-target package.
+- Tests: Added coverage for explicit byte suffix requirements and rejected implicit multi-request `ReadMany` / `WriteMany` / `ReadNamedAsync` calls.
+- Docs: Updated the SDK prerequisite guidance for the multi-target package and documented explicit request-boundary behavior.
+- Samples: Updated high-level samples to avoid implicit multi-request named reads.
 - CI: Installed .NET 8, .NET 9, and .NET 10 SDKs in CI and release workflows.
 - CI: Included the `net8.0`, `net9.0`, and `net10.0` build outputs in the release DLL archive.
 

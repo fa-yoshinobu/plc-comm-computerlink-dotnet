@@ -64,19 +64,18 @@ finally
 
 Console.WriteLine();
 Console.WriteLine("2. ReadManyAsync / WriteManyAsync");
-// Read several unrelated device strings with one helper call.
-var snapshot = await client.ReadManyAsync(["P1-D0100", "P1-D0101", "P1-M0000"]);
+// Read compatible device strings as one protocol request.
+var snapshot = await client.ReadManyAsync(["P1-D0100", "P1-D0101"]);
 Console.WriteLine($"snapshot = [{string.Join(", ", snapshot.Select(FormatValue))}]");
-// Write several unrelated device strings as one high-level batch.
+// Write compatible device strings as one protocol request.
 try
 {
     await client.WriteManyAsync(
     [
         new KeyValuePair<object, object>("P1-D0100", 10),
         new KeyValuePair<object, object>("P1-D0101", 20),
-        new KeyValuePair<object, object>("P1-M0000", 0),
     ]);
-    Console.WriteLine("Wrote {P1-D0100=10, P1-D0101=20, P1-M0000=0}");
+    Console.WriteLine("Wrote {P1-D0100=10, P1-D0101=20}");
 }
 finally
 {
@@ -84,7 +83,6 @@ finally
     [
         new KeyValuePair<object, object>("P1-D0100", snapshot[0]),
         new KeyValuePair<object, object>("P1-D0101", snapshot[1]),
-        new KeyValuePair<object, object>("P1-M0000", snapshot[2]),
     ]);
 }
 
@@ -130,16 +128,18 @@ var originalBit = Convert.ToBoolean(originalBitSnapshot["P1-D0100.3"], System.Gl
 try
 {
     await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: true);
-    // ReadNamedAsync keeps each requested address string as the result key.
-    var named = await client.ReadNamedAsync(
-    [
+    // ReadNamedAsync keeps the requested address string as the result key.
+    var namedAddresses = new[]
+    {
         "P1-D0100",
         "P1-D0200:L",
         "P1-D0300:F",
         "P1-D0100.3",
-    ]);
-    foreach (var pair in named)
+    };
+    foreach (var address in namedAddresses)
     {
+        var named = await client.ReadNamedAsync([address]);
+        var pair = named.Single();
         Console.WriteLine($"{pair.Key,-12} = {FormatValue(pair.Value)}");
     }
 }
@@ -152,7 +152,7 @@ Console.WriteLine();
 Console.WriteLine("6. PollAsync");
 var pollCount = 0;
 // PollAsync repeatedly yields named snapshots until the loop is stopped or cancelled.
-await foreach (var pollSnapshot in client.PollAsync(["P1-D0100", "P1-D0300:F", "P1-D0100.3"], TimeSpan.FromMilliseconds(500)))
+await foreach (var pollSnapshot in client.PollAsync(["P1-D0100"], TimeSpan.FromMilliseconds(500)))
 {
     pollCount++;
     Console.WriteLine($"poll[{pollCount}] = {string.Join(", ", pollSnapshot.Select(kv => $"{kv.Key}={FormatValue(kv.Value)}"))}");

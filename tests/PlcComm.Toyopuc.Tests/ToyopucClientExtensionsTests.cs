@@ -134,6 +134,19 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
+    public async Task ReadNamedAsync_MultipleAddressesRejectsImplicitSplit()
+    {
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            timeout: TimeSpan.FromMilliseconds(1),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(["P1-D0000", "P1-D0001"]));
+    }
+
+    [Fact]
     public async Task WriteWordsSingleRequestAsync_UsesOneExtWordWriteForProgramDevices()
     {
         var expected = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, new[] { 0x1234, 0x5678 });

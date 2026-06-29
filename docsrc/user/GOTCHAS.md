@@ -40,8 +40,9 @@ var options = new ToyopucConnectionOptions("192.168.250.100")
 };
 
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
-var snapshot = await client.ReadNamedAsync(["P1-D0100:D", "P1-D0100.D"]);
-Console.WriteLine($"dword={snapshot["P1-D0100:D"]}, bit13={snapshot["P1-D0100.D"]}");
+var dword = await client.ReadNamedAsync(["P1-D0100:D"]);
+var bit13 = await client.ReadNamedAsync(["P1-D0100.D"]);
+Console.WriteLine($"dword={dword["P1-D0100:D"]}, bit13={bit13["P1-D0100.D"]}");
 ```
 
 ## FR values revert after power cycle
@@ -155,6 +156,12 @@ await client.ExecuteAsync(inner => inner.WriteFrAsync("FR000000", 0x1234, commit
 await client.ExecuteAsync(inner => inner.CommitFrAsync("FR000000", wait: true));
 Console.WriteLine("FR helper write completed");
 ```
+
+## Multi-address helpers must not hide splitting
+
+| Symptom | Root cause | Fix |
+| --- | --- | --- |
+| `ReadMany` or `WriteMany` throws before communication. | The request would require multiple protocol requests, incompatible protocol groups, a PC10 block boundary crossing, or an internal fallback to individual requests. | Keep each `ReadMany` / `WriteMany` call to one compatible protocol request. Use single-request helpers for contiguous word ranges, or use chunked helpers / separate explicit calls only when splitting is intentional. |
 
 ## Single-request block reads fail across a boundary
 

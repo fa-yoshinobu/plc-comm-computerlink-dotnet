@@ -818,54 +818,22 @@ public class ProtocolAndClientTests
     }
 
     [Fact]
-    public async Task HighLevelClient_WriteManyPc10WordsAcrossBlocks_SplitsIntoPc10BlockWrites()
+    public void HighLevelClient_WriteManyPc10WordsAcrossBlocks_RejectsImplicitSplit()
     {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-
-        byte[]? firstRequest = null;
-        byte[]? secondRequest = null;
-        var serverTask = Task.Run(async () =>
-        {
-            using var serverClient = await listener.AcceptTcpClientAsync();
-            await using var stream = serverClient.GetStream();
-            firstRequest = await ReadFrameAsync(stream);
-            await stream.WriteAsync(BuildResponse(0xC3, Array.Empty<byte>()));
-            secondRequest = await ReadFrameAsync(stream);
-            await stream.WriteAsync(BuildResponse(0xC3, Array.Empty<byte>()));
-        });
-
         using var client = new ToyopucDeviceClient(
             "127.0.0.1",
-            port,
+            1,
             transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
             addressingOptions: ToyopucAddressingOptions.Nano10GxCompatible,
-            plcProfile: ToyopucPlcProfiles.Nano10GxCompatible.Name)
-        {
-            CaptureTraceFrames = true,
-        };
-        client.WriteMany(
+            plcProfile: ToyopucPlcProfiles.Nano10GxCompatible.Name);
+
+        Assert.Throws<ToyopucProtocolError>(() => client.WriteMany(
             new[]
             {
                 new KeyValuePair<object, object>("U08000", 0x1234),
                 new KeyValuePair<object, object>("EB00000", 0x5678),
-            });
-
-        await serverTask;
-
-        Assert.Equal(
-            ToyopucProtocol.BuildPc10BlockWrite(
-                ToyopucAddress.EncodeExNoByteU32(0x04, 0x0000),
-                new byte[] { 0x34, 0x12 }),
-            firstRequest);
-        Assert.Equal(
-            ToyopucProtocol.BuildPc10BlockWrite(
-                ToyopucAddress.EncodeExNoByteU32(0x10, 0x0000),
-                new byte[] { 0x78, 0x56 }),
-            secondRequest);
-        Assert.Equal(2, client.TraceFrames.Count);
+            }));
     }
 
     [Fact]
