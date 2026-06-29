@@ -258,8 +258,10 @@ public static class ToyopucDeviceClientExtensions
             var (baseAddr, dtype, bitIdx) = ParseLogicalAddress(address);
             if (dtype == "BIT_IN_WORD")
             {
+                if (!bitIdx.HasValue)
+                    throw new ToyopucProtocolError($"Bit index is required for bit-in-word address '{address}'.");
                 var raw = (await ReadWordsSingleRequestCoreAsync(client, relayHops, baseAddr, 1, ct).ConfigureAwait(false))[0];
-                result[address] = ((raw >> (bitIdx ?? 0)) & 1) != 0;
+                result[address] = ((raw >> bitIdx.Value) & 1) != 0;
             }
             else
             {

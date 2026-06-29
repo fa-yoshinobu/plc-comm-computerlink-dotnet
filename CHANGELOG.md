@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Library: Replaced .NET 9-only `Convert.ToHexStringLower` usage with a cross-target helper so the library builds for `net8.0`.
+- Library: Removed the remaining defensive bit-in-word `0` fallback in `ReadNamedAsync`; a missing bit index now raises `ToyopucProtocolError`.
 
 ## [1.0.1] - 2026-06-25
 
