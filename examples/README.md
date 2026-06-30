@@ -32,10 +32,12 @@ dotnet run --project examples\PlcComm.Toyopuc.BitPatternProbe -- --host 192.168.
 
 ## Simulator
 
-Use the sibling Python repository as the simulator source:
+Use the sibling Python repository as the simulator source. If it is checked out
+elsewhere, set `$pythonRepo` to that path, replacing `<path-to-plc-comm-computerlink-python>`.
 
 ```powershell
-cd <path-to-plc-comm-computerlink-python>
+$pythonRepo = "..\plc-comm-computerlink-python"
+Set-Location $pythonRepo
 python scripts\sim_server.py --host 127.0.0.1 --port 15000
 ```
 
