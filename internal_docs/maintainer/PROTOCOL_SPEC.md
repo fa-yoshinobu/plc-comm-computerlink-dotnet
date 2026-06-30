@@ -8,7 +8,7 @@ Related documents:
 
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [TESTING_GUIDE.md](TESTING_GUIDE.md)
-- [VALIDATION.md](VALIDATION.md)
+- [TESTRESULTS.md](TESTRESULTS.md)
 
 Status labels:
 
