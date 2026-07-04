@@ -1,0 +1,37 @@
+{
+  "defaults": {
+    "transport": "tcp",
+    "port": 1025,
+    "timeout": 3.0,
+    "interval": 1.0,
+    "plc_profile": "toyopuc:plus:extended"
+  },
+  "cycles": 3,
+  "initial_backoff": 1.0,
+  "max_backoff": 30.0,
+  "output": {
+    "csv": "config_polling_output.csv"
+  },
+  "plcs": [
+    {
+      "name": "line-a",
+      "host": "192.168.250.100",
+      "tags": [
+        {
+          "name": "d0100",
+          "address": "P1-D0100:U"
+        }
+      ]
+    },
+    {
+      "name": "line-b",
+      "host": "192.168.250.101",
+      "tags": [
+        {
+          "name": "d0100",
+          "address": "P1-D0100:U"
+        }
+      ]
+    }
+  ]
+}
