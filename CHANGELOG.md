@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Docs: Added a Gotchas entry clarifying that `ReadNamedAsync` accepts one address per call and should not be used as a multi-address snapshot helper.
+- Docs: Removed the per-library latest communication verification page and links so user docs stay focused on usage, not verification logs.
+
 ## [1.1.0] - 2026-06-29
 
 ### Changed

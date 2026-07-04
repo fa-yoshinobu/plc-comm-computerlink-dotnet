@@ -47,11 +47,6 @@ Console.WriteLine($"P1-D0000 = {value}");
 | [PLC profiles](docsrc/user/PROFILES.md) | Choose the canonical TOYOPUC profile for the target PLC. |
 | [Examples](examples/README.md) | Run maintained .NET examples. |
 
-## Hardware verified
-
-Live-device verification is maintained in [Latest communication verification](docsrc/user/LATEST_COMMUNICATION_VERIFICATION.md).
-See that page for verified PLC models, transports, dates, limitations, and retained validation notes.
-
 ## License and registry
 
 | Item | Value |

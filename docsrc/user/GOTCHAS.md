@@ -163,6 +163,29 @@ Console.WriteLine("FR helper write completed");
 | --- | --- | --- |
 | `ReadMany` or `WriteMany` throws before communication. | The request would require multiple protocol requests, incompatible protocol groups, a PC10 block boundary crossing, or an internal fallback to individual requests. | Keep each `ReadMany` / `WriteMany` call to one compatible protocol request. Use single-request helpers for contiguous word ranges, or use chunked helpers / separate explicit calls only when splitting is intentional. |
 
+## ReadNamedAsync accepts one address per call
+
+| Symptom | Root cause | Fix |
+| --- | --- | --- |
+| `ReadNamedAsync(["P1-D0000", "P1-D0001"])` throws before communication. | Computerlink named reads intentionally accept one named address per call. Unlike SLMP or Host Link snapshots, they do not split a multi-address list into several PLC requests. | Call `ReadNamedAsync` once per named address, or use `ReadWordsSingleRequestAsync` / chunked helpers for contiguous ranges. |
+
+```csharp
+using System;
+using PlcComm.Toyopuc;
+
+var options = new ToyopucConnectionOptions("192.168.250.100")
+{
+    Port = 1025,
+    PlcProfile = "toyopuc:plus:extended",
+};
+
+await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
+var d0000 = await client.ReadNamedAsync(["P1-D0000"]);
+var d0001 = await client.ReadNamedAsync(["P1-D0001"]);
+
+Console.WriteLine($"{d0000["P1-D0000"]}, {d0001["P1-D0001"]}");
+```
+
 ## Single-request block reads fail across a boundary
 
 | Symptom | Root cause | Fix |
