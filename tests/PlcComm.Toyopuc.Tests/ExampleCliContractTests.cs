@@ -24,19 +24,19 @@ public sealed class ExampleCliContractTests
         "Toyopuc minimal read example",
         "P1-D0000")]
     [InlineData(
-        @"examples\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj",
+        @"tools\validation\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj",
         "Toyopuc smoke test",
         "default: P1-D0000")]
     [InlineData(
-        @"examples\PlcComm.Toyopuc.SoakMonitor\PlcComm.Toyopuc.SoakMonitor.csproj",
+        @"tools\validation\PlcComm.Toyopuc.SoakMonitor\PlcComm.Toyopuc.SoakMonitor.csproj",
         "Toyopuc soak monitor",
         "P1-D0000,P1-M0000,U08000")]
     [InlineData(
-        @"examples\PlcComm.Toyopuc.WriteLimitProbe\PlcComm.Toyopuc.WriteLimitProbe.csproj",
+        @"tools\validation\PlcComm.Toyopuc.WriteLimitProbe\PlcComm.Toyopuc.WriteLimitProbe.csproj",
         "Toyopuc safe write-limit confirmation",
         "required; no PLC profile is inferred")]
     [InlineData(
-        @"examples\PlcComm.Toyopuc.BitPatternProbe\PlcComm.Toyopuc.BitPatternProbe.csproj",
+        @"tools\validation\PlcComm.Toyopuc.BitPatternProbe\PlcComm.Toyopuc.BitPatternProbe.csproj",
         "Toyopuc bit-to-packed readback probe",
         "required; no PLC profile is inferred")]
     public async Task ExampleCli_HelpOutput_ContainsStableUsage(
@@ -54,8 +54,8 @@ public sealed class ExampleCliContractTests
     [Theory]
     [InlineData(@"examples\PlcComm.Toyopuc.HighLevelSample\PlcComm.Toyopuc.HighLevelSample.csproj")]
     [InlineData(@"examples\PlcComm.Toyopuc.MinimalRead\PlcComm.Toyopuc.MinimalRead.csproj")]
-    [InlineData(@"examples\PlcComm.Toyopuc.WriteLimitProbe\PlcComm.Toyopuc.WriteLimitProbe.csproj")]
-    [InlineData(@"examples\PlcComm.Toyopuc.BitPatternProbe\PlcComm.Toyopuc.BitPatternProbe.csproj")]
+    [InlineData(@"tools\validation\PlcComm.Toyopuc.WriteLimitProbe\PlcComm.Toyopuc.WriteLimitProbe.csproj")]
+    [InlineData(@"tools\validation\PlcComm.Toyopuc.BitPatternProbe\PlcComm.Toyopuc.BitPatternProbe.csproj")]
     public async Task ProfileSpecificExamples_RejectOmittedProfile(string projectPath)
     {
         var result = await RunProjectAsync(projectPath);
@@ -68,7 +68,7 @@ public sealed class ExampleCliContractTests
     public async Task SmokeTest_RejectsConflictingDeviceModes()
     {
         var result = await RunProjectAsync(
-            @"examples\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj",
+            @"tools\validation\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj",
             "--devices",
             "P1-D0000",
             "--device",
@@ -85,7 +85,7 @@ public sealed class ExampleCliContractTests
     public async Task SmokeTest_RejectsReadOnlyProbeWithWriteArguments()
     {
         var result = await RunProjectAsync(
-            @"examples\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj",
+            @"tools\validation\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj",
             "--probe-counts",
             "1,2",
             "--write-value",
@@ -102,7 +102,7 @@ public sealed class ExampleCliContractTests
     public async Task SoakMonitor_RequiresDeviceList()
     {
         var result = await RunProjectAsync(
-            @"examples\PlcComm.Toyopuc.SoakMonitor\PlcComm.Toyopuc.SoakMonitor.csproj",
+            @"tools\validation\PlcComm.Toyopuc.SoakMonitor\PlcComm.Toyopuc.SoakMonitor.csproj",
             "--profile",
             "toyopuc:pc10g:pc10");
 

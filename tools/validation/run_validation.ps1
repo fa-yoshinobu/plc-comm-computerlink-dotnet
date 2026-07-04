@@ -14,8 +14,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = Split-Path -Parent $PSScriptRoot
-$SmokeTestProject = Join-Path $RepoRoot "examples\PlcComm.Toyopuc.SmokeTest"
+$RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$SmokeTestProject = Join-Path $RepoRoot "tools\validation\PlcComm.Toyopuc.SmokeTest"
 $ResolvedLogDir = Join-Path $RepoRoot $LogDir
 
 function Invoke-SmokeStep {

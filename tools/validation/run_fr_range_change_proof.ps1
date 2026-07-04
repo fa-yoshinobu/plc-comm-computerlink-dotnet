@@ -15,7 +15,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Split-Path $PSScriptRoot -Parent
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 
 function Ensure-ParentDirectory {
     param([string]$Path)
@@ -34,7 +34,7 @@ function Invoke-SmokeTest {
 
     $arguments = @(
         'run',
-        '--project', 'examples/PlcComm.Toyopuc.SmokeTest',
+        '--project', 'tools/validation/PlcComm.Toyopuc.SmokeTest',
         '--no-build',
         '--',
         '--host', $TargetHost,

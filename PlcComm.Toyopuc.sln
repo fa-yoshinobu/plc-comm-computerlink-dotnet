@@ -5,23 +5,31 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toyopuc", "src\Toyopuc\PlcComm.Toyopuc.csproj", "{57BFDF2D-D1A9-44B5-B852-5C2F74FF3DBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc", "src\Toyopuc\PlcComm.Toyopuc.csproj", "{57BFDF2D-D1A9-44B5-B852-5C2F74FF3DBC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.Tests", "tests\PlcComm.Toyopuc.Tests\PlcComm.Toyopuc.Tests.csproj", "{7B7DCFAD-6A58-4897-8ABE-7A260EAAF99F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.SmokeTest", "examples\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj", "{C5E8B583-1218-44BE-93CE-6F8736037DB0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "validation", "validation", "{8B3A797D-5E4E-4B0B-A110-7F743A50E6D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.SmokeTest", "tools\validation\PlcComm.Toyopuc.SmokeTest\PlcComm.Toyopuc.SmokeTest.csproj", "{C5E8B583-1218-44BE-93CE-6F8736037DB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.MinimalRead", "examples\PlcComm.Toyopuc.MinimalRead\PlcComm.Toyopuc.MinimalRead.csproj", "{FF62C6CB-619F-4491-8741-CE7A8D140A97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.SoakMonitor", "examples\PlcComm.Toyopuc.SoakMonitor\PlcComm.Toyopuc.SoakMonitor.csproj", "{4FADEEE0-8EB3-49DB-948E-D6C79CF2D1B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.SoakMonitor", "tools\validation\PlcComm.Toyopuc.SoakMonitor\PlcComm.Toyopuc.SoakMonitor.csproj", "{4FADEEE0-8EB3-49DB-948E-D6C79CF2D1B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.WriteLimitProbe", "examples\PlcComm.Toyopuc.WriteLimitProbe\PlcComm.Toyopuc.WriteLimitProbe.csproj", "{E50B5B61-DDC4-4C96-B87F-BAB4FDE53266}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.WriteLimitProbe", "tools\validation\PlcComm.Toyopuc.WriteLimitProbe\PlcComm.Toyopuc.WriteLimitProbe.csproj", "{E50B5B61-DDC4-4C96-B87F-BAB4FDE53266}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.BitPatternProbe", "examples\PlcComm.Toyopuc.BitPatternProbe\PlcComm.Toyopuc.BitPatternProbe.csproj", "{E67066E7-E3C0-4AE3-99A5-EC4E9F611E11}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.BitPatternProbe", "tools\validation\PlcComm.Toyopuc.BitPatternProbe\PlcComm.Toyopuc.BitPatternProbe.csproj", "{E67066E7-E3C0-4AE3-99A5-EC4E9F611E11}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.HighLevelSample", "examples\PlcComm.Toyopuc.HighLevelSample\PlcComm.Toyopuc.HighLevelSample.csproj", "{4D5E6F7A-8B9C-4D0E-1F2A-3B4C5D6E7F8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcComm.Toyopuc.PollingReconnectSample", "examples\PlcComm.Toyopuc.PollingReconnectSample\PlcComm.Toyopuc.PollingReconnectSample.csproj", "{F5057282-F414-47CE-BEA7-6FC66379CC9A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Toyopuc", "Toyopuc", "{D4022E72-702E-A960-6543-0DAE436E6867}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -129,17 +137,31 @@ Global
 		{4D5E6F7A-8B9C-4D0E-1F2A-3B4C5D6E7F8A}.Release|x64.Build.0 = Release|Any CPU
 		{4D5E6F7A-8B9C-4D0E-1F2A-3B4C5D6E7F8A}.Release|x86.ActiveCfg = Release|Any CPU
 		{4D5E6F7A-8B9C-4D0E-1F2A-3B4C5D6E7F8A}.Release|x86.Build.0 = Release|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Debug|x64.Build.0 = Debug|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Debug|x86.Build.0 = Debug|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Release|x64.ActiveCfg = Release|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Release|x64.Build.0 = Release|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Release|x86.ActiveCfg = Release|Any CPU
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7B7DCFAD-6A58-4897-8ABE-7A260EAAF99F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{C5E8B583-1218-44BE-93CE-6F8736037DB0} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
+		{C5E8B583-1218-44BE-93CE-6F8736037DB0} = {8B3A797D-5E4E-4B0B-A110-7F743A50E6D2}
 		{FF62C6CB-619F-4491-8741-CE7A8D140A97} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
-		{4FADEEE0-8EB3-49DB-948E-D6C79CF2D1B5} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
-		{E50B5B61-DDC4-4C96-B87F-BAB4FDE53266} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
-		{E67066E7-E3C0-4AE3-99A5-EC4E9F611E11} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
+		{4FADEEE0-8EB3-49DB-948E-D6C79CF2D1B5} = {8B3A797D-5E4E-4B0B-A110-7F743A50E6D2}
+		{E50B5B61-DDC4-4C96-B87F-BAB4FDE53266} = {8B3A797D-5E4E-4B0B-A110-7F743A50E6D2}
+		{E67066E7-E3C0-4AE3-99A5-EC4E9F611E11} = {8B3A797D-5E4E-4B0B-A110-7F743A50E6D2}
 		{4D5E6F7A-8B9C-4D0E-1F2A-3B4C5D6E7F8A} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
+		{F5057282-F414-47CE-BEA7-6FC66379CC9A} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
+		{D4022E72-702E-A960-6543-0DAE436E6867} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

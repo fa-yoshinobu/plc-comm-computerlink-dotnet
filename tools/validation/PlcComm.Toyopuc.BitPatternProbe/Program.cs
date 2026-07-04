@@ -649,7 +649,7 @@ internal static class Program
         Console.WriteLine("Toyopuc bit-to-packed readback probe");
         Console.WriteLine();
         Console.WriteLine("Usage:");
-        Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.BitPatternProbe -- [options]");
+        Console.WriteLine("  dotnet run --project tools\\validation\\PlcComm.Toyopuc.BitPatternProbe -- [options]");
         Console.WriteLine();
         Console.WriteLine("Options:");
         Console.WriteLine("  --host <name>           default: 192.168.250.100");

@@ -7,9 +7,9 @@ This document is the release checklist for `PlcComm.Toyopuc`.
 Confirm that the release contains only public .NET assets:
 
 - `src/Toyopuc`
-- `examples/PlcComm.Toyopuc.SmokeTest`
+- `tools/validation/PlcComm.Toyopuc.SmokeTest`
 - `examples/PlcComm.Toyopuc.MinimalRead`
-- `examples/PlcComm.Toyopuc.SoakMonitor`
+- `tools/validation/PlcComm.Toyopuc.SoakMonitor`
 - `README.md`
 - `CHANGELOG.md`
 - `LICENSE`
@@ -43,8 +43,8 @@ cmd /c run_ci.bat
 If hardware verification is part of the release, also run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target plus
-powershell -ExecutionPolicy Bypass -File examples\run_validation.ps1 -Target relay-10gx
+powershell -ExecutionPolicy Bypass -File tools\validation\run_validation.ps1 -Target plus
+powershell -ExecutionPolicy Bypass -File tools\validation\run_validation.ps1 -Target relay-10gx
 ```
 
 ## Packaging
