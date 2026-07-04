@@ -43,6 +43,7 @@ Console.WriteLine($"P1-D0000 = {value}");
 | [Full documentation site](https://fa-yoshinobu.github.io/plc-comm-docs-site/) | Unified docs for all PLC communication libraries. |
 | [Getting started](docsrc/user/GETTING_STARTED.md) | Install the package, connect to your PLC, and run your first read/write. |
 | [Usage guide](docsrc/user/USAGE_GUIDE.md) | Use the high-level API and common Computerlink workflows. |
+| [API reference](docsrc/user/API_REFERENCE.md) | Browse generated public .NET signatures and XML documentation comments. |
 | [PLC profiles](docsrc/user/PROFILES.md) | Choose the canonical TOYOPUC profile for the target PLC. |
 | [Computerlink Device Ranges](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/device-ranges/) | Check shared device families, address notation, and model range notes. |
 | [Computerlink Troubleshooting & Codes](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/troubleshooting-codes/) | Troubleshoot common connection, address, write, relay, and PLC error-code symptoms. |
