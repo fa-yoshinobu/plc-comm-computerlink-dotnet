@@ -45,7 +45,7 @@ Console.WriteLine($"P1-D0000 = {value}");
 | [Usage guide](docsrc/user/USAGE_GUIDE.md) | Use the high-level API and common Computerlink workflows. |
 | [PLC profiles](docsrc/user/PROFILES.md) | Choose the canonical TOYOPUC profile for the target PLC. |
 | [Computerlink Device Ranges](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/device-ranges/) | Check shared device families, address notation, and model range notes. |
-| [Computerlink Error Codes](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/error-codes/) | Troubleshoot common connection, address, write, relay, and PLC error-code symptoms. |
+| [Computerlink Troubleshooting & Codes](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/troubleshooting-codes/) | Troubleshoot common connection, address, write, relay, and PLC error-code symptoms. |
 | [Gotchas](docsrc/user/GOTCHAS.md) | Check Computerlink helper-specific caveats. |
 | [Examples](examples/README.md) | Run maintained .NET examples. |
 

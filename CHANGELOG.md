@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Docs: Added a Gotchas entry clarifying that `ReadNamedAsync` accepts one address per call and should not be used as a multi-address snapshot helper.
-- Docs: Removed the per-library Error Codes page; shared Computerlink error-code guidance now lives in the PLC Setup Guide.
+- Docs: Removed the per-library troubleshooting/code page; shared Computerlink troubleshooting and code guidance now lives in the PLC Setup Guide.
 - Docs: Removed the per-library latest communication verification page and links so user docs stay focused on usage, not verification logs.
 - Docs: Removed the manual page-navigation block from Getting Started and rely on site navigation instead.
 - Docs: Moved shared supported-register, device-range, and troubleshooting guidance to the common PLC Setup Guide and kept the user docs to Getting Started, Usage Guide, PLC Profiles, and Gotchas.
