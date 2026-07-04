@@ -504,7 +504,7 @@ internal sealed record SoakMonitorOptions
         Console.WriteLine("  500ms   2s   1m   2h   00:30:00");
         Console.WriteLine();
         Console.WriteLine("Example:");
-        Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile \"toyopuc:nano-10gx:compatible\" --hops \"P1-L2:N4,P1-L2:N6,P1-L2:N2\" --devices P1-D0000,P1-M0000,U08000 --interval 2s --duration 30m --retries 3 --log logs\\soak.log --poll-csv logs\\soak.csv --summary-json logs\\soak_summary.json");
+        Console.WriteLine("  dotnet run --project tools\\validation\\PlcComm.Toyopuc.SoakMonitor -- --host 192.168.250.100 --port 1025 --protocol tcp --profile \"toyopuc:nano-10gx:compatible\" --hops \"P1-L2:N4,P1-L2:N6,P1-L2:N2\" --devices P1-D0000,P1-M0000,U08000 --interval 2s --duration 30m --retries 3 --log logs\\soak.log --poll-csv logs\\soak.csv --summary-json logs\\soak_summary.json");
     }
 
     private static string ReadValue(string[] args, ref int index, string option)

@@ -13,8 +13,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = Split-Path -Parent $PSScriptRoot
-$ProjectPath = Join-Path $RepoRoot "examples\\PlcComm.Toyopuc.WriteLimitProbe"
+$RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$ProjectPath = Join-Path $RepoRoot "tools\\validation\\PlcComm.Toyopuc.WriteLimitProbe"
 $SummaryPath = Join-Path $RepoRoot $SummaryJson
 
 $command = @(

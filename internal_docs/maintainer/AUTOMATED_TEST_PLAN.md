@@ -58,11 +58,11 @@ Run on every local build and CI run.
 - Cover:
   - `README.md`
   - `examples/README.md`
-  - `examples/run_validation.ps1`
+  - `tools/validation/run_validation.ps1`
   - `examples/PlcComm.Toyopuc.MinimalRead`
-  - `examples/PlcComm.Toyopuc.SmokeTest`
-  - `examples/PlcComm.Toyopuc.SoakMonitor`
-  - `examples/PlcComm.Toyopuc.WriteLimitProbe`
+  - `tools/validation/PlcComm.Toyopuc.SmokeTest`
+  - `tools/validation/PlcComm.Toyopuc.SoakMonitor`
+  - `tools/validation/PlcComm.Toyopuc.WriteLimitProbe`
 - Add file-level regression tests first.
 - Add process-level CLI contract tests second:
   - `--help`
@@ -89,7 +89,7 @@ Run manually or by explicit workflow dispatch.
   - generated resolver boundary coverage
 - `examples/validation_targets.json` or similar
   - machine target manifest
-- generated smoke suites in `examples/PlcComm.Toyopuc.SmokeTest`
+- generated smoke suites in `tools/validation/PlcComm.Toyopuc.SmokeTest`
   - no more hand-written two-profile-only suites
 - machine-readable run reports
   - CSV or JSON per validation run
@@ -125,7 +125,7 @@ Run manually or by explicit workflow dispatch.
 - Add a dedicated long-duration monitoring program for real hardware soak tests.
 - Keep it separate from `PlcComm.Toyopuc.SmokeTest` so short validation and long-running observation do not share the same execution model.
 - Current implementation:
-  - `examples/PlcComm.Toyopuc.SoakMonitor`
+  - `tools/validation/PlcComm.Toyopuc.SoakMonitor`
 - Cover at least:
   - repeated connect / disconnect
   - periodic read of a fixed device set
@@ -135,7 +135,7 @@ Run manually or by explicit workflow dispatch.
 
 ## Deferred / Remaining Work
 
-- Run the long-duration monitoring with `examples/PlcComm.Toyopuc.SoakMonitor`.
+- Run the long-duration monitoring with `tools/validation/PlcComm.Toyopuc.SoakMonitor`.
 - Real hardware validation is deferred for the following profiles:
   - `toyopuc:plus:standard`
   - `toyopuc:nano-10gx:native`
@@ -154,8 +154,8 @@ Run manually or by explicit workflow dispatch.
     - `U00000` read
     - `U08000` read
   - Current helper artifacts:
-    - `examples/probe_relay_length_limits.ps1`
-    - `examples/PlcComm.Toyopuc.SmokeTest --probe-counts`
+    - `tools/validation/probe_relay_length_limits.ps1`
+    - `tools/validation/PlcComm.Toyopuc.SmokeTest --probe-counts`
     - `logs/relay_length_limit/relay_length_limit_summary.csv`
 - Initial target:
   - Nano 10GX relay path

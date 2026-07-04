@@ -8,11 +8,11 @@ public sealed class ExampleEntryPointTests
     [Theory]
     [InlineData("README.md")]
     [InlineData(@"examples\README.md")]
-    [InlineData(@"examples\run_validation.ps1")]
+    [InlineData(@"tools\validation\run_validation.ps1")]
     [InlineData(@"examples\PlcComm.Toyopuc.MinimalRead\Program.cs")]
-    [InlineData(@"examples\PlcComm.Toyopuc.SmokeTest\Program.cs")]
-    [InlineData(@"examples\PlcComm.Toyopuc.SoakMonitor\Program.cs")]
-    [InlineData(@"examples\PlcComm.Toyopuc.WriteLimitProbe\Program.cs")]
+    [InlineData(@"tools\validation\PlcComm.Toyopuc.SmokeTest\Program.cs")]
+    [InlineData(@"tools\validation\PlcComm.Toyopuc.SoakMonitor\Program.cs")]
+    [InlineData(@"tools\validation\PlcComm.Toyopuc.WriteLimitProbe\Program.cs")]
     public void EntryPointFiles_DoNotContainSyntheticGxyAlias(string relativePath)
     {
         var text = ReadRepoFile(relativePath);
@@ -24,17 +24,21 @@ public sealed class ExampleEntryPointTests
     {
         var rootReadme = ReadRepoFile("README.md");
         var examplesReadme = ReadRepoFile(@"examples\README.md");
+        var validationReadme = ReadRepoFile(@"tools\validation\README.md");
 
         Assert.DoesNotContain("--device D0000", rootReadme, StringComparison.Ordinal);
         Assert.DoesNotContain("--device D0000", examplesReadme, StringComparison.Ordinal);
+        Assert.DoesNotContain("--device D0000", validationReadme, StringComparison.Ordinal);
         Assert.DoesNotContain("--device M0000", rootReadme, StringComparison.Ordinal);
         Assert.DoesNotContain("--device M0000", examplesReadme, StringComparison.Ordinal);
+        Assert.DoesNotContain("--device M0000", validationReadme, StringComparison.Ordinal);
         Assert.DoesNotContain("--devices D0000,M0000,U08000", rootReadme, StringComparison.Ordinal);
         Assert.DoesNotContain("--devices D0000,M0000,U08000", examplesReadme, StringComparison.Ordinal);
+        Assert.DoesNotContain("--devices D0000,M0000,U08000", validationReadme, StringComparison.Ordinal);
 
         Assert.Contains("P1-D0000", rootReadme, StringComparison.Ordinal);
         Assert.Contains("P1-D0000", examplesReadme, StringComparison.Ordinal);
-        Assert.Contains("P1-M0000", examplesReadme, StringComparison.Ordinal);
+        Assert.Contains("P1-M0000", validationReadme, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -57,10 +61,10 @@ public sealed class ExampleEntryPointTests
     {
         var combined = string.Join(
             Environment.NewLine,
-            ReadRepoFile(@"examples\run_validation.ps1"),
+            ReadRepoFile(@"tools\validation\run_validation.ps1"),
             ReadRepoFile(@"examples\README.md"),
             ReadRepoFile("README.md"),
-            ReadRepoFile(@"examples\PlcComm.Toyopuc.SmokeTest\Program.cs"));
+            ReadRepoFile(@"tools\validation\PlcComm.Toyopuc.SmokeTest\Program.cs"));
 
         Assert.DoesNotContain("M0000W", combined, StringComparison.Ordinal);
         Assert.DoesNotContain("EP0000W", combined, StringComparison.Ordinal);
@@ -86,10 +90,10 @@ public sealed class ExampleEntryPointTests
     [Fact]
     public void SmokeTestAndHelpers_DefaultToProfileSafeDevices()
     {
-        var smokeTest = ReadRepoFile(@"examples\PlcComm.Toyopuc.SmokeTest\Program.cs");
+        var smokeTest = ReadRepoFile(@"tools\validation\PlcComm.Toyopuc.SmokeTest\Program.cs");
         var minimalRead = ReadRepoFile(@"examples\PlcComm.Toyopuc.MinimalRead\Program.cs");
-        var soakMonitor = ReadRepoFile(@"examples\PlcComm.Toyopuc.SoakMonitor\Program.cs");
-        var writeLimitProbe = ReadRepoFile(@"examples\PlcComm.Toyopuc.WriteLimitProbe\Program.cs");
+        var soakMonitor = ReadRepoFile(@"tools\validation\PlcComm.Toyopuc.SoakMonitor\Program.cs");
+        var writeLimitProbe = ReadRepoFile(@"tools\validation\PlcComm.Toyopuc.WriteLimitProbe\Program.cs");
 
         Assert.Contains("public string Device { get; private init; } = \"P1-D0000\";", smokeTest, StringComparison.Ordinal);
         Assert.Contains("default: P1-D0000", smokeTest, StringComparison.Ordinal);
@@ -101,7 +105,7 @@ public sealed class ExampleEntryPointTests
     [Fact]
     public void RunValidation_UsesPrefixedBasicFamiliesForProfileBoundCases()
     {
-        var text = ReadRepoFile(@"examples\run_validation.ps1");
+        var text = ReadRepoFile(@"tools\validation\run_validation.ps1");
 
         Assert.DoesNotContain("-Profile $profile -Device \"D0000\"", text, StringComparison.Ordinal);
         Assert.DoesNotContain("-Profile $profile -Device \"M0000\"", text, StringComparison.Ordinal);
@@ -125,7 +129,8 @@ public sealed class ExampleEntryPointTests
         Assert.DoesNotContain("soak_monitor_10gx_core.bat", text, StringComparison.Ordinal);
         Assert.Contains("<path-to-plc-comm-computerlink-python>", text, StringComparison.Ordinal);
         Assert.Contains(@"python scripts\sim_server.py", text, StringComparison.Ordinal);
-        Assert.Contains(@"examples\PlcComm.Toyopuc.SmokeTest", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(@"tools\validation\PlcComm.Toyopuc.SmokeTest", text, StringComparison.Ordinal);
+        Assert.Contains(@"tools\validation\PlcComm.Toyopuc.SmokeTest", ReadRepoFile(@"tools\validation\README.md"), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -141,8 +146,8 @@ public sealed class ExampleEntryPointTests
 
         Assert.DoesNotContain("examples/Toyopuc.", combined, StringComparison.Ordinal);
         Assert.DoesNotContain(@"examples\Toyopuc.", combined, StringComparison.Ordinal);
-        Assert.Contains("examples/PlcComm.Toyopuc.SmokeTest", combined, StringComparison.Ordinal);
-        Assert.Contains("examples/PlcComm.Toyopuc.SoakMonitor", combined, StringComparison.Ordinal);
+        Assert.Contains("tools/validation/PlcComm.Toyopuc.SmokeTest", combined, StringComparison.Ordinal);
+        Assert.Contains("tools/validation/PlcComm.Toyopuc.SoakMonitor", combined, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -150,11 +155,11 @@ public sealed class ExampleEntryPointTests
     {
         var combined = string.Join(
             Environment.NewLine,
-            ReadRepoFile(@"examples\run_validation.ps1"),
-            ReadRepoFile(@"examples\probe_relay_length_limits.ps1"),
+            ReadRepoFile(@"tools\validation\run_validation.ps1"),
+            ReadRepoFile(@"tools\validation\probe_relay_length_limits.ps1"),
             ReadRepoFile(@"examples\PlcComm.Toyopuc.MinimalRead\Program.cs"),
-            ReadRepoFile(@"examples\PlcComm.Toyopuc.SoakMonitor\Program.cs"),
-            ReadRepoFile(@"examples\PlcComm.Toyopuc.BitPatternProbe\Program.cs"));
+            ReadRepoFile(@"tools\validation\PlcComm.Toyopuc.SoakMonitor\Program.cs"),
+            ReadRepoFile(@"tools\validation\PlcComm.Toyopuc.BitPatternProbe\Program.cs"));
 
         Assert.DoesNotContain(@"examples\Toyopuc.", combined, StringComparison.Ordinal);
         Assert.Contains("PlcComm.Toyopuc.SmokeTest", combined, StringComparison.Ordinal);
