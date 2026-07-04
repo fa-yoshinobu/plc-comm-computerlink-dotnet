@@ -96,16 +96,11 @@ Only write to a test address you control. `P1-D0001` is a word register, not a b
 
 ## If it does not work
 
+Use the shared [Computerlink Error Codes](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/error-codes/) page for connection, addressing, write, relay, and PLC error-code checks.
+
 | Check | What to verify |
 | --- | --- |
 | Wrong host or port | The default TCP port used here is `1025`. |
 | Wrong profile string | The profile must match exactly; see [PROFILES.md](PROFILES.md). |
 | Read shape | Start with plain word reads before typed values or bit-in-word syntax. |
 | Address prefix | Basic area families such as D, M, X, Y, T, C, L, N, R, and S require `P1-`, `P2-`, or `P3-`. |
-
-## Next pages
-
-| Page | Link |
-| --- | --- |
-| Usage guide | [USAGE_GUIDE.md](USAGE_GUIDE.md) |
-| Supported registers | [SUPPORTED_REGISTERS.md](SUPPORTED_REGISTERS.md) |

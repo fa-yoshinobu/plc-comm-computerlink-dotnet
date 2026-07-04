@@ -6,7 +6,7 @@ This document describes the machine presets and range rules implemented by the
 This is an internal implementation document.
 For protocol background and upstream model research, see:
 
-- [`plc-comm-computerlink-python/docsrc/user/MODEL_RANGES.md`](https://github.com/fa-yoshinobu/plc-comm-computerlink-python/blob/main/docsrc/user/MODEL_RANGES.md)
+- [Computerlink Device Ranges](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/device-ranges/)
 - [`plc-comm-computerlink-python/internal_docs/maintainer/TESTING_GUIDE.md`](https://github.com/fa-yoshinobu/plc-comm-computerlink-python/blob/main/internal_docs/maintainer/TESTING_GUIDE.md)
 - [`PYTHON_PORTING_NOTES.md`](PYTHON_PORTING_NOTES.md)
 
