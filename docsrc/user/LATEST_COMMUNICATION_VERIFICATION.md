@@ -31,9 +31,3 @@ The latest direct `toyopuc:pc10g:pc10` refresh was run on `2026-05-02` against
 - exact writable ranges depend on profile and hardware
 - `FR` support is profile-dependent and should not be the first smoke test
 - keep range-sweep and protocol-detail evidence out of the public user path
-
-## Where Older Evidence Went
-
-This public page keeps only the current summary. Detailed historical evidence,
-including the reproducible command log for the `2026-05-02` direct PC10G
-smoke/soak refresh, is retained as maintainer notes.
