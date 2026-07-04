@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Toyopuc\PlcComm.Toyopuc.csproj" />
+    <Compile Include="..\OperationalCommon\OperationalCommon.cs" Link="OperationalCommon.cs" />
+    <None Include="config_polling.example.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PlcComm.Toyopuc.ConfigPollingSample</AssemblyName>
+    <Title>PlcComm.Toyopuc Config Polling Sample</Title>
+    <Description>Read-only JSON-configured polling sample with long-form CSV output.</Description>
+  </PropertyGroup>
+
+</Project>

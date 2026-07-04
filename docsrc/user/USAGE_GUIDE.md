@@ -227,6 +227,28 @@ await foreach (var snapshot in client.PollAsync(["P1-D0000"], TimeSpan.FromSecon
 
 `PollAsync` yields the same one-address dictionary shape as `ReadNamedAsync` on every interval.
 
+## Operational recipes
+
+The examples include two read-only operational recipes for repeatable
+collection:
+
+- `PlcComm.Toyopuc.MultiPlcMonitorSample` monitors multiple PLC endpoints at
+  the same time. Each PLC has its own task, connection, and reconnect loop, so
+  one offline PLC does not block healthy PLC reads.
+- `PlcComm.Toyopuc.ConfigPollingSample` runs periodic collection from a JSON
+  config file and can append long-form CSV rows as
+  `timestamp,plc,tag,value`.
+
+Both examples use the same reconnect states as the polling reconnect sample:
+`connected`, `lost`, `reconnecting`, and `recovered`, with 1 second initial
+backoff, exponential delay, and a 30 second default maximum. YAML config is
+available only in the Python sample; the .NET sample uses JSON.
+
+```powershell
+dotnet run --project examples/PlcComm.Toyopuc.MultiPlcMonitorSample -- --plc line-a=192.168.250.100,toyopuc:plus:extended,1025,tcp --plc line-b=192.168.250.101,toyopuc:plus:extended,1025,tcp --tag d0100=P1-D0100:U
+dotnet run --project examples/PlcComm.Toyopuc.ConfigPollingSample -- --config examples/PlcComm.Toyopuc.ConfigPollingSample/config_polling.example.json --dry-run
+```
+
 ## FR file-register helpers
 
 ### Read current FR values
