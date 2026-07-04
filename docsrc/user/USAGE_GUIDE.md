@@ -41,6 +41,17 @@ Console.WriteLine($"{client.Host}:{client.Port} {client.PlcProfile}");
 
 Use `ToyopucConnectionOptions` when you want host, port, transport, timeout, retry, profile, and relay settings in one place.
 
+## Connection reuse and concurrent requests
+
+Keep one `QueuedToyopucDeviceClient` open for repeated reads, writes, and polling.
+The factory returns a queued client, so multiple async callers can share that
+client without interleaving protocol requests on the same PLC connection.
+
+Do not call the low-level `InnerClient` concurrently. When custom access is
+needed, use `ExecuteAsync` so the operation stays inside the same queue. After a
+persistent socket or protocol connection failure, dispose the current client and
+create a new one with the same `ToyopucConnectionOptions`.
+
 ## Read a single value
 
 ```csharp
