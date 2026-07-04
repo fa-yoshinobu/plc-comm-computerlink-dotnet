@@ -2,6 +2,8 @@
   href: GETTING_STARTED.md
 - name: Usage Guide
   href: USAGE_GUIDE.md
+- name: API Reference
+  href: API_REFERENCE.md
 - name: PLC Profiles
   href: PROFILES.md
 - name: Gotchas
