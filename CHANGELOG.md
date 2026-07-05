@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Library: Synced the embedded TOYOPUC profile fixture to `plc-comm-computerlink-profiles` `v1.0.1`, including canonical `display_name` labels.
+- Library: Added `ToyopucPlcProfiles.GetDisplayName(profile)` as the public UI-label helper while keeping stored PLC profile values canonical.
+- Docs: Documented the profile display-name helper and canonical-ID storage guidance.
+- Tests: Added canonical fixture parity coverage for profile `display_name` values.
 - Samples: Added read-only multi-PLC monitoring and JSON config polling recipes with independent reconnect loops, dry-run validation, and long-form CSV output.
 - Docs: Added generated .NET API reference from the public assembly surface and XML documentation comments, with CI freshness validation.
 - Docs: Added a Gotchas entry clarifying that `ReadNamedAsync` accepts one address per call and should not be used as a multi-address snapshot helper.
