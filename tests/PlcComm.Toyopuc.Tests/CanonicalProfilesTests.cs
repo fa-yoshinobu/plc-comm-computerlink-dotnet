@@ -16,7 +16,9 @@ public sealed class CanonicalProfilesTests
         foreach (var profileProperty in profiles.EnumerateObject())
         {
             var expectedProfile = profileProperty.Value;
-            Assert.False(string.IsNullOrWhiteSpace(expectedProfile.GetProperty("display_name").GetString()));
+            Assert.Equal(
+                expectedProfile.GetProperty("display_name").GetString(),
+                ToyopucPlcProfiles.GetDisplayName(profileProperty.Name));
 
             var actual = ToyopucPlcProfiles.FromName(profileProperty.Name);
             AssertOptions(expectedProfile.GetProperty("addressing_options"), actual.AddressingOptions);
@@ -85,4 +87,3 @@ public sealed class CanonicalProfilesTests
         }
     }
 }
-

@@ -82,6 +82,26 @@ public static class ToyopucPlcProfiles
         return FromName(profile).Name;
     }
 
+    public static string GetDisplayName(string? profile)
+    {
+        var normalized = FromName(profile).Name;
+        return normalized switch
+        {
+            "toyopuc:generic" => "TOYOPUC Generic",
+            "toyopuc:plus:standard" => "TOYOPUC Plus (standard)",
+            "toyopuc:plus:extended" => "TOYOPUC Plus (extended)",
+            "toyopuc:nano-10gx:native" => "TOYOPUC Nano 10GX (native)",
+            "toyopuc:nano-10gx:compatible" => "TOYOPUC Nano 10GX (compatible)",
+            "toyopuc:pc10g:standard-pc3jg" => "TOYOPUC PC10G (standard PC3JG)",
+            "toyopuc:pc10g:pc10" => "TOYOPUC PC10G (PC10)",
+            "toyopuc:pc3jx:pc3-separate" => "TOYOPUC PC3JX (PC3 separate)",
+            "toyopuc:pc3jx:plus-expansion" => "TOYOPUC PC3JX (Plus expansion)",
+            "toyopuc:pc3jg:pc3jg" => "TOYOPUC PC3JG (PC3JG)",
+            "toyopuc:pc3jg:pc3-separate" => "TOYOPUC PC3JG (PC3 separate)",
+            _ => throw new ArgumentException($"Unknown PLC profile: {profile}", nameof(profile)),
+        };
+    }
+
     public static ToyopucPlcProfile FromName(string? profile)
     {
         if (string.IsNullOrWhiteSpace(profile))
