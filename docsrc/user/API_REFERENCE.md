@@ -3275,6 +3275,12 @@ public static IReadOnlyList<string> GetNames()
 public static string NormalizeName(string profile)
 ```
 
+##### GetDisplayName
+
+```csharp
+public static string GetDisplayName(string profile)
+```
+
 ##### FromName
 
 ```csharp
