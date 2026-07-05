@@ -1197,7 +1197,7 @@
       ]
     },
     "toyopuc:nano-10gx:native": {
-      "display_name": "TOYOPUC Nano 10GX (native mode)",
+      "display_name": "TOYOPUC Nano 10GX (native)",
       "addressing_options": {
         "use_upper_u_pc10": true,
         "use_eb_pc10": true,
@@ -1644,7 +1644,7 @@
       ]
     },
     "toyopuc:nano-10gx:compatible": {
-      "display_name": "TOYOPUC Nano 10GX (compatible mode)",
+      "display_name": "TOYOPUC Nano 10GX (compatible)",
       "addressing_options": {
         "use_upper_u_pc10": true,
         "use_eb_pc10": true,
@@ -2091,7 +2091,7 @@
       ]
     },
     "toyopuc:pc10g:standard-pc3jg": {
-      "display_name": "TOYOPUC PC10G (standard PC3JG mode)",
+      "display_name": "TOYOPUC PC10G (standard PC3JG)",
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": true,
@@ -2506,7 +2506,7 @@
       ]
     },
     "toyopuc:pc10g:pc10": {
-      "display_name": "TOYOPUC PC10G (PC10 mode)",
+      "display_name": "TOYOPUC PC10G (PC10)",
       "addressing_options": {
         "use_upper_u_pc10": true,
         "use_eb_pc10": true,
@@ -2972,7 +2972,7 @@
       ]
     },
     "toyopuc:pc3jx:pc3-separate": {
-      "display_name": "TOYOPUC PC3JX (PC3 separate mode)",
+      "display_name": "TOYOPUC PC3JX (PC3 separate)",
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,
@@ -3335,7 +3335,7 @@
       ]
     },
     "toyopuc:pc3jx:plus-expansion": {
-      "display_name": "TOYOPUC PC3JX (Plus expansion mode)",
+      "display_name": "TOYOPUC PC3JX (Plus expansion)",
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,
@@ -3724,7 +3724,7 @@
       ]
     },
     "toyopuc:pc3jg:pc3jg": {
-      "display_name": "TOYOPUC PC3JG (PC3JG mode)",
+      "display_name": "TOYOPUC PC3JG (PC3JG)",
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": true,
@@ -4139,7 +4139,7 @@
       ]
     },
     "toyopuc:pc3jg:pc3-separate": {
-      "display_name": "TOYOPUC PC3JG (PC3 separate mode)",
+      "display_name": "TOYOPUC PC3JG (PC3 separate)",
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,

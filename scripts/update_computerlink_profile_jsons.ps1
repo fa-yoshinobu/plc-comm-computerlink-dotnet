@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($Ref)) {
-    $Ref = "v1.0.0"
+    $Ref = "v1.0.1"
 }
 
 $RawBase = "https://raw.githubusercontent.com/fa-yoshinobu/plc-comm-computerlink-profiles/$Ref"
@@ -66,4 +66,3 @@ if ($Changed.Count -gt 0) {
         Write-Error "Canonical ComputerLink profile JSON changed. Commit the updated files before release."
     }
 }
-
