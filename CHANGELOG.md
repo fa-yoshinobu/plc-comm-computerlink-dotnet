@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-06
+
+### BREAKING
+- Release: No .NET package ID changed; this package is versioned at `2.0.0` to align with the plc-comm family breaking release wave.
+
+### Changed
+- Release: Bumped package metadata to `2.0.0`.
+- Docs: Added the plc-comm family package matrix link to the README.
+- Tooling: Added common `plc-comm` package tags.
+
 ## [1.2.0] - 2026-07-05
 
 ### Changed
