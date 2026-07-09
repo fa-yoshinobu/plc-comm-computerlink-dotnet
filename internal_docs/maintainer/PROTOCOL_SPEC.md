@@ -8,7 +8,6 @@ Related documents:
 
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [TESTING_GUIDE.md](TESTING_GUIDE.md)
-- [TESTRESULTS.md](TESTRESULTS.md)
 
 Status labels:
 

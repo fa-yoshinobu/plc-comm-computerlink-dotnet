@@ -14,7 +14,6 @@ Confirm that the release contains only public .NET assets:
 - `CHANGELOG.md`
 - `LICENSE`
 - maintainer archive
-- `internal_docs/maintainer/TESTRESULTS.md`
 
 Confirm that local output is excluded:
 

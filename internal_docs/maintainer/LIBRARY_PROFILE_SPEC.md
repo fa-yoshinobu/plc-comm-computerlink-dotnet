@@ -8,7 +8,6 @@ For protocol background and upstream model research, see:
 
 - [Computerlink Device Ranges](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/device-ranges/)
 - [`plc-comm-computerlink-python/internal_docs/maintainer/TESTING_GUIDE.md`](https://github.com/fa-yoshinobu/plc-comm-computerlink-python/blob/main/internal_docs/maintainer/TESTING_GUIDE.md)
-- [`PYTHON_PORTING_NOTES.md`](PYTHON_PORTING_NOTES.md)
 
 ## Source Of Truth
 
