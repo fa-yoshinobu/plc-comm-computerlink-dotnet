@@ -6,7 +6,7 @@ echo [RELEASE] Toyopuc .NET release check
 echo ===================================================
 
 echo [1/4] Checking registry version...
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check_registry_duplicate.ps1 -Registry nuget -Package PlcComm.Toyopuc -VersionSource csproj -ManifestPath src\Toyopuc\PlcComm.Toyopuc.csproj
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check_registry_duplicate.ps1 -Registry nuget -Package PlcComm.Toyopuc -VersionSource csproj -ManifestPath Directory.Build.props
 if %errorlevel% neq 0 (
     echo [ERROR] Release version check failed.
     exit /b %errorlevel%
