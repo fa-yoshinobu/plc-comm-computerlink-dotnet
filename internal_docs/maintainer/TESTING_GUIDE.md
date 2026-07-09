@@ -1,16 +1,6 @@
 # Testing Guide
 
-This document describes the test structure and verification approach for `PlcComm.Toyopuc`.
-
-Historical validation snapshots in this repository are preserved as evidence.
-If an older report mentions a retired script or an older invocation pattern,
-prefer the current maintained entry points documented here and in
-[RELEASE_PROCESS.md](RELEASE_PROCESS.md).
-
-Related documents:
-
-- [ARCHITECTURE.md](ARCHITECTURE.md)
-- [PROTOCOL_SPEC.md](PROTOCOL_SPEC.md)
+This document describes the current test structure for `PlcComm.Toyopuc`.
 
 ## Unit / Integration Tests
 
@@ -43,29 +33,6 @@ Not modeled accurately enough to treat as hardware-equivalent:
 
 - FR commit behavior
 - Hardware-specific NAK / error responses
-
-## Hardware Verification
-
-Verified hardware targets:
-
-- `TOYOPUC-Plus CPU (TCC-6740)` + `Plus EX2 (TCU-6858)` via UDP
-- Single-hop, two-hop, and three-hop relay paths verified
-
-### Relay Verification
-
-Verified relay configurations (from `plc-comm-computerlink-python` testing):
-
-- `P1-L2:N2` (single-hop)
-- `P1-L2:N2 -> P1-L2:N4` (two-hop)
-- `P1-L2:N2 -> P1-L2:N4 -> P1-L2:N6` (three-hop)
-
-Verified inner commands over relay:
-
-- `CMD=32 / 11 00` CPU status read
-- `CMD=32 / 70 00` clock read
-- `CMD=1C` word read
-- `CMD=C2` / `CMD=C3` FR read/write
-- `CMD=CA` FR commit with completion wait
 
 ## Cross-Library Parity
 
