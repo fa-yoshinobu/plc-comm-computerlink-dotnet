@@ -4,56 +4,67 @@ public static class ToyopucPlcProfiles
 {
     public static ToyopucPlcProfile Generic { get; } = new(
         "toyopuc:generic",
+        "TOYOPUC Generic",
         ToyopucAddressingOptions.Generic,
         CreateGenericAreas());
 
     public static ToyopucPlcProfile ToyopucPlusStandard { get; } = new(
         "toyopuc:plus:standard",
+        "TOYOPUC Plus (standard)",
         ToyopucAddressingOptions.ToyopucPlusStandard,
         CreateToyopucPlusStandardAreas());
 
     public static ToyopucPlcProfile ToyopucPlusExtended { get; } = new(
         "toyopuc:plus:extended",
+        "TOYOPUC Plus (extended)",
         ToyopucAddressingOptions.ToyopucPlusExtended,
         CreateToyopucPlusAreas());
 
     public static ToyopucPlcProfile Nano10GxMode { get; } = new(
         "toyopuc:nano-10gx:native",
+        "TOYOPUC Nano 10GX (native)",
         ToyopucAddressingOptions.Nano10GxMode,
         CreateNano10GxModeAreas());
 
     public static ToyopucPlcProfile Nano10GxCompatible { get; } = new(
         "toyopuc:nano-10gx:compatible",
+        "TOYOPUC Nano 10GX (compatible)",
         ToyopucAddressingOptions.Nano10GxCompatible,
         CreateNano10GxAreas());
 
     public static ToyopucPlcProfile Pc10GStandardPc3Jg { get; } = new(
         "toyopuc:pc10g:standard-pc3jg",
+        "TOYOPUC PC10G (standard PC3JG)",
         ToyopucAddressingOptions.Pc10GStandardPc3Jg,
         CreatePc10StandardPc3JgAreas());
 
     public static ToyopucPlcProfile Pc10GMode { get; } = new(
         "toyopuc:pc10g:pc10",
+        "TOYOPUC PC10G (PC10)",
         ToyopucAddressingOptions.Pc10GMode,
         CreatePc10ModeAreas());
 
     public static ToyopucPlcProfile Pc3JxPc3Separate { get; } = new(
         "toyopuc:pc3jx:pc3-separate",
+        "TOYOPUC PC3JX (PC3 separate)",
         ToyopucAddressingOptions.Pc3JxPc3Separate,
         CreatePc3JxPc3Areas());
 
     public static ToyopucPlcProfile Pc3JxPlusExpansion { get; } = new(
         "toyopuc:pc3jx:plus-expansion",
+        "TOYOPUC PC3JX (Plus expansion)",
         ToyopucAddressingOptions.Pc3JxPlusExpansion,
         CreatePc3JxPlusAreas());
 
     public static ToyopucPlcProfile Pc3JgMode { get; } = new(
         "toyopuc:pc3jg:pc3jg",
+        "TOYOPUC PC3JG (PC3JG)",
         ToyopucAddressingOptions.Pc3JgMode,
         CreatePc3JgModeAreas());
 
     public static ToyopucPlcProfile Pc3JgPc3Separate { get; } = new(
         "toyopuc:pc3jg:pc3-separate",
+        "TOYOPUC PC3JG (PC3 separate)",
         ToyopucAddressingOptions.Pc3JgPc3Separate,
         CreatePc3JgPc3Areas());
 
@@ -84,22 +95,7 @@ public static class ToyopucPlcProfiles
 
     public static string GetDisplayName(string? profile)
     {
-        var normalized = FromName(profile).Name;
-        return normalized switch
-        {
-            "toyopuc:generic" => "TOYOPUC Generic",
-            "toyopuc:plus:standard" => "TOYOPUC Plus (standard)",
-            "toyopuc:plus:extended" => "TOYOPUC Plus (extended)",
-            "toyopuc:nano-10gx:native" => "TOYOPUC Nano 10GX (native)",
-            "toyopuc:nano-10gx:compatible" => "TOYOPUC Nano 10GX (compatible)",
-            "toyopuc:pc10g:standard-pc3jg" => "TOYOPUC PC10G (standard PC3JG)",
-            "toyopuc:pc10g:pc10" => "TOYOPUC PC10G (PC10)",
-            "toyopuc:pc3jx:pc3-separate" => "TOYOPUC PC3JX (PC3 separate)",
-            "toyopuc:pc3jx:plus-expansion" => "TOYOPUC PC3JX (Plus expansion)",
-            "toyopuc:pc3jg:pc3jg" => "TOYOPUC PC3JG (PC3JG)",
-            "toyopuc:pc3jg:pc3-separate" => "TOYOPUC PC3JG (PC3 separate)",
-            _ => throw new ArgumentException($"Unknown PLC profile: {profile}", nameof(profile)),
-        };
+        return FromName(profile).DisplayName;
     }
 
     public static ToyopucPlcProfile FromName(string? profile)

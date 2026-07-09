@@ -83,5 +83,6 @@ public sealed record ToyopucAreaDescriptor(
 
 public sealed record ToyopucPlcProfile(
     string Name,
+    string DisplayName,
     ToyopucAddressingOptions AddressingOptions,
     IReadOnlyList<ToyopucAreaDescriptor> Areas);

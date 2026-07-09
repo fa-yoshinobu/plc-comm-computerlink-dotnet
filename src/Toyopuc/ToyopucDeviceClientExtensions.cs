@@ -194,8 +194,12 @@ public static class ToyopucDeviceClientExtensions
     public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(ToyopucConnectionOptions options, CancellationToken ct = default)
         => ToyopucDeviceClientFactory.OpenAndConnectAsync(options, ct);
 
-    public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(string host, int port = 1025, CancellationToken ct = default)
-        => ToyopucDeviceClientFactory.OpenAndConnectAsync(new ToyopucConnectionOptions(host) { Port = port }, ct);
+    public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(string host, string plcProfile, int port = 1025, CancellationToken ct = default)
+        => ToyopucDeviceClientFactory.OpenAndConnectAsync(new ToyopucConnectionOptions(host)
+        {
+            Port = port,
+            PlcProfile = plcProfile,
+        }, ct);
 
     private static async Task<object> ReadTypedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, string dtype, CancellationToken ct)
     {

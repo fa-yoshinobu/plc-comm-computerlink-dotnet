@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-07-10
+
+### Changed
+- Release: Bumped .NET package metadata to `2.0.1`.
+
+### BREAKING
+- Library: `ToyopucConnectionOptions.PlcProfile` is now a required canonical profile property, and the convenience `OpenAndConnectAsync` overload requires `plcProfile`.
+
+### Added
+- Library: Added `DisplayName` to `ToyopucPlcProfile` and resolved display-name helpers from the profile descriptor.
+
+### Docs
+- Docs: Updated the Computerlink API reference for required profile selection and profile display metadata.
+
 ## [2.0.0] - 2026-07-06
 
 ### BREAKING
