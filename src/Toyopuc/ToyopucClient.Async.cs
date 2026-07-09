@@ -465,20 +465,38 @@ public partial class ToyopucClient
 
     protected Task RunAsync(Action action, CancellationToken cancellationToken = default)
     {
-        return Task.Factory.StartNew(
-            action,
-            cancellationToken,
-            TaskCreationOptions.DenyChildAttach,
-            _asyncSchedulerPair.ExclusiveScheduler);
+        return RunAsyncCore(action, cancellationToken);
     }
 
     protected Task<T> RunAsync<T>(Func<T> action, CancellationToken cancellationToken = default)
     {
-        return Task.Factory.StartNew(
+        return RunAsyncCore(action, cancellationToken);
+    }
+
+    private async Task RunAsyncCore(Action action, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var cancellationRegistration = cancellationToken.Register(
+            static state => ((ToyopucClient)state!).Close(),
+            this);
+        await Task.Factory.StartNew(
             action,
             cancellationToken,
             TaskCreationOptions.DenyChildAttach,
-            _asyncSchedulerPair.ExclusiveScheduler);
+            _asyncSchedulerPair.ExclusiveScheduler).ConfigureAwait(false);
+    }
+
+    private async Task<T> RunAsyncCore<T>(Func<T> action, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var cancellationRegistration = cancellationToken.Register(
+            static state => ((ToyopucClient)state!).Close(),
+            this);
+        return await Task.Factory.StartNew(
+            action,
+            cancellationToken,
+            TaskCreationOptions.DenyChildAttach,
+            _asyncSchedulerPair.ExclusiveScheduler).ConfigureAwait(false);
     }
 
     protected static uint[] UnpackUInt32LowWordFirst(IReadOnlyList<int> words)
