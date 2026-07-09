@@ -2352,12 +2352,12 @@ Gets or sets the transport protocol.
 ##### PlcProfile
 
 ```csharp
-public string PlcProfile { get; set; }
+public required string PlcProfile { get; init; }
 ```
 
-Gets or sets the optional PLC profile name.
+Gets or sets the required canonical PLC profile name.
 
-Remarks: Supply a known profile name when you want documented profile-based address resolution instead of a fully generic session.
+Remarks: Supply a known profile name. Use the low-level client directly when a fully generic/manual session is required.
 
 ##### RelayHops
 
@@ -3152,7 +3152,7 @@ public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(ToyopucConnect
 ##### OpenAndConnectAsync
 
 ```csharp
-public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(string host, int port = 1025, CancellationToken ct = default)
+public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(string host, string plcProfile, int port = 1025, CancellationToken ct = default)
 ```
 
 ### ToyopucDeviceClientFactory
@@ -3234,13 +3234,19 @@ public sealed class ToyopucPlcProfile
 ##### ToyopucPlcProfile
 
 ```csharp
-public ToyopucPlcProfile(string Name, ToyopucAddressingOptions AddressingOptions, IReadOnlyList<ToyopucAreaDescriptor> Areas)
+public ToyopucPlcProfile(string Name, string DisplayName, ToyopucAddressingOptions AddressingOptions, IReadOnlyList<ToyopucAreaDescriptor> Areas)
 ```
 
 ##### Name
 
 ```csharp
 public string Name { get; set; }
+```
+
+##### DisplayName
+
+```csharp
+public string DisplayName { get; set; }
 ```
 
 ##### AddressingOptions

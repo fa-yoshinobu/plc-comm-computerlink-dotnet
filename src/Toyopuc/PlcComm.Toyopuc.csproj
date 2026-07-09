@@ -8,7 +8,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>PlcComm.Toyopuc</PackageId>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Title>PLC Communication TOYOPUC Computerlink .NET</Title>
     <Description>High-level TOYOPUC computer-link communication library for .NET with TCP and UDP support.</Description>
     <PackageTags>plc-comm toyopuc jtekt plc industrial-automation computer-link tcp udp</PackageTags>
