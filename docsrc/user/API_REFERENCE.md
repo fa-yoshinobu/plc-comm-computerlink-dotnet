@@ -2352,12 +2352,12 @@ Gets or sets the transport protocol.
 ##### PlcProfile
 
 ```csharp
-public required string PlcProfile { get; init; }
+public string PlcProfile { get; set; }
 ```
 
 Gets or sets the required canonical PLC profile name.
 
-Remarks: Supply a known profile name. Use the low-level client directly when a fully generic/manual session is required.
+Remarks: Use the low-level client directly when a fully generic/manual session is required.
 
 ##### RelayHops
 
