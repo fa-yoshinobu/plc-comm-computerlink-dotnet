@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Release: Bumped .NET package metadata to `3.0.0`.
 - Release: Centralized the package version in `Directory.Build.props` and marked validation probes as non-packable.
+- Packaging: Marked samples, CLI, and validation tools non-packable so only the library package is produced.
+- Docs: Replaced relative README links with absolute URLs so they resolve on package registry pages.
 
 ### BREAKING
 - Library: Breaking: `ToyopucConnectionOptions.PlcProfile` is now a required canonical profile property, and the convenience `OpenAndConnectAsync` overload requires `plcProfile`.

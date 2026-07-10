@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <IsPackable>true</IsPackable>
     <PackageId>PlcComm.Toyopuc</PackageId>
     <Title>PLC Communication TOYOPUC Computerlink .NET</Title>
     <Description>High-level TOYOPUC computer-link communication library for .NET with TCP and UDP support.</Description>

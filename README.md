@@ -1,6 +1,6 @@
 [![CI](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/PlcComm.Toyopuc.svg)](https://www.nuget.org/packages/PlcComm.Toyopuc/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/LICENSE)
 
 # TOYOPUC Computerlink for .NET
 
@@ -12,7 +12,7 @@ This library is part of the plc-comm family. See the [package matrix](https://fa
 
 ## Supported PLC profiles
 
-The maintained profile table is in [PLC profiles](docsrc/user/PROFILES.md). Choose one exact canonical PLC profile from that table.
+The maintained profile table is in [PLC profiles](https://fa-yoshinobu.github.io/plc-comm-docs-site/computerlink/dotnet/PROFILES/). Choose one exact canonical PLC profile from that table.
 
 ## Supported device types
 
@@ -45,20 +45,20 @@ Console.WriteLine($"P1-D0000 = {value}");
 | Page | Use it for |
 | --- | --- |
 | [Full documentation site](https://fa-yoshinobu.github.io/plc-comm-docs-site/) | Unified docs for all PLC communication libraries. |
-| [Getting started](docsrc/user/GETTING_STARTED.md) | Install the package, connect to your PLC, and run your first read/write. |
-| [Usage guide](docsrc/user/USAGE_GUIDE.md) | Use the high-level API and common Computerlink workflows. |
-| [API reference](docsrc/user/API_REFERENCE.md) | Browse generated public .NET signatures and XML documentation comments. |
-| [PLC profiles](docsrc/user/PROFILES.md) | Choose the canonical TOYOPUC profile for the target PLC. |
+| [Getting started](https://fa-yoshinobu.github.io/plc-comm-docs-site/computerlink/dotnet/GETTING_STARTED/) | Install the package, connect to your PLC, and run your first read/write. |
+| [Usage guide](https://fa-yoshinobu.github.io/plc-comm-docs-site/computerlink/dotnet/USAGE_GUIDE/) | Use the high-level API and common Computerlink workflows. |
+| [API reference](https://fa-yoshinobu.github.io/plc-comm-docs-site/computerlink/dotnet/API_REFERENCE/) | Browse generated public .NET signatures and XML documentation comments. |
+| [PLC profiles](https://fa-yoshinobu.github.io/plc-comm-docs-site/computerlink/dotnet/PROFILES/) | Choose the canonical TOYOPUC profile for the target PLC. |
 | [Computerlink Device Ranges](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/device-ranges/) | Check shared device families, address notation, and model range notes. |
 | [Computerlink Troubleshooting & Codes](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/troubleshooting-codes/) | Troubleshoot common connection, address, write, relay, and PLC error-code symptoms. |
-| [Gotchas](docsrc/user/GOTCHAS.md) | Check Computerlink helper-specific caveats. |
-| [Examples](examples/README.md) | Run maintained .NET examples. |
+| [Gotchas](https://fa-yoshinobu.github.io/plc-comm-docs-site/computerlink/dotnet/GOTCHAS/) | Check Computerlink helper-specific caveats. |
+| [Examples](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/examples/README.md) | Run maintained .NET examples. |
 
 ## License and registry
 
 | Item | Value |
 | --- | --- |
-| License | [MIT](LICENSE) |
+| License | [MIT](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/blob/main/LICENSE) |
 | Registry | [NuGet](https://www.nuget.org/packages/PlcComm.Toyopuc/) |
 | Package | `PlcComm.Toyopuc` |
 
