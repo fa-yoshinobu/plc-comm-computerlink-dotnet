@@ -29,7 +29,7 @@ Before packaging:
 1. Update `<Version>` in [../../Directory.Build.props](../../Directory.Build.props).
 2. Update [CHANGELOG.md](../../CHANGELOG.md) so the released changes are recorded in
    the target version section.
-3. Make sure the immutable release tag matches the package version, for example `v3.0.1`.
+3. Make sure the immutable release tag matches the package version, for example `v3.1.0`.
 
 ## Quality Gates
 

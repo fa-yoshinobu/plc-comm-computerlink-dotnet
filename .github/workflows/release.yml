@@ -119,7 +119,7 @@ jobs:
               throw "Failed to upload release assets for $tag"
             }
           } else {
-            gh release create $tag $assets --verify-tag --repo "${{ github.repository }}" --title "Release $tag" --generate-notes
+            gh release create $tag $assets --verify-tag --repo "${{ github.repository }}" --title "Release $tag" --generate-notes --draft
             if ($LASTEXITCODE -ne 0) {
               throw "Failed to create release $tag"
             }
