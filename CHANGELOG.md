@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -17,14 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.1] - 2026-07-10
+## [3.0.0] - 2026-07-10
 
 ### Changed
-- Release: Bumped .NET package metadata to `2.0.1`.
+- Release: Bumped .NET package metadata to `3.0.0`.
 - Release: Centralized the package version in `Directory.Build.props` and marked validation probes as non-packable.
 
 ### BREAKING
-- Library: `ToyopucConnectionOptions.PlcProfile` is now a required canonical profile property, and the convenience `OpenAndConnectAsync` overload requires `plcProfile`.
+- Library: Breaking: `ToyopucConnectionOptions.PlcProfile` is now a required canonical profile property, and the convenience `OpenAndConnectAsync` overload requires `plcProfile`.
+- Migration: Set `PlcProfile` on every `ToyopucConnectionOptions` instance and pass `plcProfile` to `OpenAndConnectAsync`; use the canonical profile name for configuration storage.
 
 ### Added
 - Library: Added `DisplayName` to `ToyopucPlcProfile` and resolved display-name helpers from the profile descriptor.
