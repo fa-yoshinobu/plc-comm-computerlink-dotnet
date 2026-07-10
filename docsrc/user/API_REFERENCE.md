@@ -3261,6 +3261,48 @@ public ToyopucAddressingOptions AddressingOptions { get; set; }
 public IReadOnlyList<ToyopucAreaDescriptor> Areas { get; set; }
 ```
 
+### ToyopucPlcProfileDescriptor
+
+```csharp
+public sealed class ToyopucPlcProfileDescriptor
+```
+
+Metadata used to present and select one canonical TOYOPUC PLC profile.
+
+#### Members
+
+##### ToyopucPlcProfileDescriptor
+
+```csharp
+public ToyopucPlcProfileDescriptor(string CanonicalName, string DisplayName, bool Connectable, string BaseProfile)
+```
+
+Metadata used to present and select one canonical TOYOPUC PLC profile.
+
+##### CanonicalName
+
+```csharp
+public string CanonicalName { get; set; }
+```
+
+##### DisplayName
+
+```csharp
+public string DisplayName { get; set; }
+```
+
+##### Connectable
+
+```csharp
+public bool Connectable { get; set; }
+```
+
+##### BaseProfile
+
+```csharp
+public string BaseProfile { get; set; }
+```
+
 ### ToyopucPlcProfiles
 
 ```csharp
@@ -3274,6 +3316,14 @@ public static class ToyopucPlcProfiles
 ```csharp
 public static IReadOnlyList<string> GetNames()
 ```
+
+##### GetProfileDescriptors
+
+```csharp
+public static IReadOnlyList<ToyopucPlcProfileDescriptor> GetProfileDescriptors()
+```
+
+Returns presentation and connection metadata for every canonical PLC profile.
 
 ##### NormalizeName
 
