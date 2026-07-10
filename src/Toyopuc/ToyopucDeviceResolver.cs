@@ -480,7 +480,7 @@ public static class ToyopucDeviceResolver
         if (parsedAddress.DigitCount is int actualWidth && actualWidth > expectedWidth)
         {
             throw new ArgumentException(
-                $"Address width out of range for profile '{profileName}': {device} (max {expectedWidth} hex digits)",
+                $"Address width exceeds the protocol notation for profile '{profileName}': {device} (max {expectedWidth} hex digits)",
                 nameof(device));
         }
 
@@ -495,22 +495,10 @@ public static class ToyopucDeviceResolver
                 nameof(device));
         }
 
-        var supported = false;
-        for (var i = 0; i < ranges.Count; i++)
-        {
-            if (ranges[i].Contains(parsedAddress.Index))
-            {
-                supported = true;
-                break;
-            }
-        }
-
-        if (!supported)
-        {
-            throw new ArgumentException(
-                $"Address out of range for profile '{profileName}': {device}",
-                nameof(device));
-        }
+        // Catalog index ranges are advisory application/UI metadata. The
+        // communication resolver deliberately does not reject a syntactically
+        // encodable address solely because it falls outside those ranges; the
+        // connected PLC and configuration remain the runtime authority.
     }
 
     private static string[] BuildAreaCandidates(params IEnumerable<string>[] groups)

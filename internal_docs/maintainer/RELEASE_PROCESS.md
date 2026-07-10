@@ -26,10 +26,10 @@ Confirm that local output is excluded:
 
 Before packaging:
 
-1. Update `<Version>` in [../../src/Toyopuc/PlcComm.Toyopuc.csproj](../../src/Toyopuc/PlcComm.Toyopuc.csproj).
+1. Update `<Version>` in [../../Directory.Build.props](../../Directory.Build.props).
 2. Update [CHANGELOG.md](../../CHANGELOG.md) so the released changes are recorded in
    the target version section.
-3. Make sure the release tag matches the package version, for example `v1.0.0`.
+3. Make sure the immutable release tag matches the package version, for example `v3.0.1`.
 
 ## Quality Gates
 
@@ -112,14 +112,16 @@ Repository workflows:
 - `.github/workflows/ci.yml`
   - restore, build, and test on Windows for pushes and pull requests
 - `.github/workflows/release.yml`
-  - build release artifacts on tag pushes and manual dispatch
+  - check out the exact existing tag on tag pushes and manual dispatch
+  - fail when the tag and MSBuild package version differ
+  - build, test, and validate versioned release artifacts
   - create or update a GitHub Release for `v*` tags
 
 Before cutting a tag, confirm the CI workflow is green on the release commit.
 
 ## NuGet Readiness
 
-Confirm package metadata in [../../src/Toyopuc/PlcComm.Toyopuc.csproj](../../src/Toyopuc/PlcComm.Toyopuc.csproj):
+Confirm the version in [../../Directory.Build.props](../../Directory.Build.props) and package metadata in [../../src/Toyopuc/PlcComm.Toyopuc.csproj](../../src/Toyopuc/PlcComm.Toyopuc.csproj):
 
 - package id
 - version

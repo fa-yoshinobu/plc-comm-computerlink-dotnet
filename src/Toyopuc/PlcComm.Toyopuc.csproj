@@ -9,6 +9,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <IsPackable>true</IsPackable>
     <PackageId>PlcComm.Toyopuc</PackageId>
+    <Authors>fa-yoshinobu</Authors>
     <Title>PLC Communication TOYOPUC Computerlink .NET</Title>
     <Description>High-level TOYOPUC computer-link communication library for .NET with TCP and UDP support.</Description>
     <PackageTags>plc-comm toyopuc jtekt plc industrial-automation computer-link tcp udp</PackageTags>

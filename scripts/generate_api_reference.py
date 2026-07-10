@@ -294,8 +294,24 @@ def normalize_text(text: str) -> str:
 
 def cref_label(value: str) -> str:
     value = value.split(":", 1)[-1]
-    value = value.replace("`1", "").replace("`2", "").replace("``1", "").replace("``2", "")
-    return value.split(".")[-1]
+    member = value.split("(", 1)[0]
+    parts = member.split(".")
+    label = parts[-1]
+    if label in {"#ctor", "#cctor"} and len(parts) > 1:
+        label = parts[-2]
+    return re.sub(r"`{1,2}\d+$", "", label)
+
+
+def validate_cref_label_parser() -> None:
+    cases = {
+        "M:PlcComm.Toyopuc.QueuedToyopucDeviceClient.ExecuteAsync``1(System.Func{PlcComm.Toyopuc.ToyopucDeviceClient,System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)": "ExecuteAsync",
+        "M:PlcComm.Toyopuc.ToyopucAddress.Format(PlcComm.Toyopuc.ResolvedDevice)": "Format",
+        "T:PlcComm.Toyopuc.ToyopucAddressRange`1": "ToyopucAddressRange",
+        "M:PlcComm.Toyopuc.ToyopucClient.#ctor(System.String,System.Int32)": "ToyopucClient",
+    }
+    failures = {value: cref_label(value) for value, expected in cases.items() if cref_label(value) != expected}
+    if failures:
+        raise RuntimeError(f"cref label parser regression: {failures}")
 
 
 def node_text(node: ET.Element | None) -> str:
@@ -414,6 +430,7 @@ def render_markdown(title: str, package: str, docs: dict[str, DocEntry], api: li
 
 
 def main() -> int:
+    validate_cref_label_parser()
     args = parse_args()
     if not args.assembly.is_file():
         print(f"Assembly not found: {args.assembly}", file=sys.stderr)

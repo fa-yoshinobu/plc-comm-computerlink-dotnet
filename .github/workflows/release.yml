@@ -1,58 +1,126 @@
 name: Release
+
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version without the v prefix"
+        description: "Existing release tag version without the v prefix"
         required: true
+        type: string
+
 permissions:
   contents: write
+
 jobs:
   package:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v5
+      - name: Resolve release version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ inputs.version }}"
+          } else {
+            $version = "${{ github.ref_name }}" -replace '^v', ''
+          }
+          if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$') {
+            throw "Invalid release version: $version"
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "tag=v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Check out release tag
+        uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ steps.version.outputs.tag }}
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             8.0.x
             9.0.x
             10.0.x
+
       - name: Restore
         run: dotnet restore PlcComm.Toyopuc.sln
-      - name: Build
-        run: dotnet build PlcComm.Toyopuc.sln -c Release --no-restore
-      - name: Test
-        run: dotnet test PlcComm.Toyopuc.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
-      - name: Format check
-        run: dotnet format PlcComm.Toyopuc.sln --verify-no-changes --no-restore
-      - name: Pack
-        run: dotnet pack src\Toyopuc\PlcComm.Toyopuc.csproj -c Release --no-build --output out
-      - name: Create DLL zip
+
+      - name: Verify tag and package version
         shell: pwsh
         run: |
-          [xml]$project = Get-Content src\Toyopuc\PlcComm.Toyopuc.csproj
-          $version = $project.Project.PropertyGroup.Version | Select-Object -First 1
+          $expectedTag = "${{ steps.version.outputs.tag }}"
+          $expected = "${{ steps.version.outputs.version }}"
+          $actualTag = (git describe --tags --exact-match HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $actualTag -ne $expectedTag) {
+            throw "Checked-out commit is not exact tag $expectedTag (got '$actualTag')"
+          }
+          $lines = @(dotnet msbuild src\Toyopuc\PlcComm.Toyopuc.csproj -nologo -getProperty:Version)
+          $actual = $lines | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^[0-9]+\.[0-9]+\.[0-9]+' } | Select-Object -Last 1
+          if ($actual -ne $expected) {
+            throw "Release version mismatch: tag=$expected package=$actual"
+          }
+          Write-Host "[OK] release version $expected"
+
+      - name: Build
+        run: dotnet build PlcComm.Toyopuc.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test PlcComm.Toyopuc.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Format check
+        run: dotnet format PlcComm.Toyopuc.sln --verify-no-changes --no-restore
+
+      - name: Pack
+        run: dotnet pack src\Toyopuc\PlcComm.Toyopuc.csproj -c Release --no-build --output out
+
+      - name: Create and validate DLL zip
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
           $paths = @(
             "src\Toyopuc\bin\Release\net8.0",
             "src\Toyopuc\bin\Release\net9.0",
             "src\Toyopuc\bin\Release\net10.0"
           )
-          Compress-Archive -Path $paths -DestinationPath "out\PlcComm.Toyopuc.$version.dll.zip" -Force
+          $zip = "out\PlcComm.Toyopuc.$version.dll.zip"
+          Compress-Archive -Path $paths -DestinationPath $zip -Force
+          $required = @(
+            "out\PlcComm.Toyopuc.$version.nupkg",
+            "out\PlcComm.Toyopuc.$version.snupkg",
+            $zip
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path -LiteralPath $path)) {
+              throw "Missing release asset: $path"
+            }
+          }
+
       - name: Upload package artifact
         uses: actions/upload-artifact@v7
         with:
           name: nuget-packages
           path: out/*
           retention-days: 7
-      - name: Publish to GitHub Release
+
+      - name: Create or update GitHub release
         shell: pwsh
         env:
           GH_TOKEN: "${{ github.token }}"
         run: |
-          if ("${{ github.ref_type }}" -eq "tag") { $tag = "${{ github.ref_name }}" } else { $tag = "v${{ inputs.version }}" }
+          $tag = "${{ steps.version.outputs.tag }}"
           $assets = Get-ChildItem out -File | Select-Object -ExpandProperty FullName
-          if (gh release view $tag) { gh release upload $tag $assets --clobber }
-          else { gh release create $tag $assets --target main --title "Release $tag" --generate-notes }
+          gh release view $tag --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $assets --repo "${{ github.repository }}" --clobber
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to upload release assets for $tag"
+            }
+          } else {
+            gh release create $tag $assets --verify-tag --repo "${{ github.repository }}" --title "Release $tag" --generate-notes
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to create release $tag"
+            }
+          }
