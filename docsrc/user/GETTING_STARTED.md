@@ -104,8 +104,3 @@ Use the shared [Computerlink Troubleshooting & Codes](https://fa-yoshinobu.githu
 | Wrong profile string | The profile must match exactly; see [PROFILES.md](PROFILES.md). |
 | Read shape | Start with plain word reads before typed values or bit-in-word syntax. |
 | Address prefix | Basic area families such as D, M, X, Y, T, C, L, N, R, and S require `P1-`, `P2-`, or `P3-`. |
-
-## Next steps
-
-- Open the runnable samples: [examples README](https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet/tree/main/examples).
-- Continue with the [Usage guide](USAGE_GUIDE.md) and [Gotchas](GOTCHAS.md).

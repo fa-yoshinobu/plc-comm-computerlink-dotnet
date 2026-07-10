@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-07-10
+
+### Fixed
+- Library: Keep protocol-width and unsupported-route validation while treating profile catalog index ranges as advisory application/UI metadata.
+- Docs: Fixed generated XML `cref` labels, corrected the release guide, and removed the hand-maintained Getting Started navigation block.
+- Packaging: Restored `fa-yoshinobu` as the NuGet author and derive release assets from the centrally defined package version.
+- CI: Made release dispatch check out an existing exact tag and verify tag, assembly/package version, and built asset names before upload.
+
 ## [3.0.0] - 2026-07-10
 
 ### Changed

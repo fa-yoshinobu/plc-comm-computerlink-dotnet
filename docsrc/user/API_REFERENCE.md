@@ -586,7 +586,7 @@ public ToyopucDeviceClient InnerClient { get; }
 
 Gets the wrapped low-level client.
 
-Remarks: Use `CancellationToken)` when you need direct client access while preserving serialized execution.
+Remarks: Use `ExecuteAsync` when you need direct client access while preserving serialized execution.
 
 ##### RelayHops
 
@@ -971,7 +971,7 @@ public static string Normalize(string text, ToyopucAddressingOptions options = n
 
 Normalizes a device string to canonical casing and width.
 
-Returns: The canonical representation returned by `ResolvedDevice)`.
+Returns: The canonical representation returned by `Format`.
 
 Parameters:
 - `text`: Input device text in any supported spelling.
