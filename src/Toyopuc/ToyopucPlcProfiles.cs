@@ -83,9 +83,30 @@ public static class ToyopucPlcProfiles
         Pc3JgPc3Separate.Name,
     ];
 
+    private static readonly IReadOnlyList<ToyopucPlcProfileDescriptor> ProfileDescriptors =
+    [
+        new(Generic.Name, Generic.DisplayName, Connectable: true, BaseProfile: null),
+        new(ToyopucPlusStandard.Name, ToyopucPlusStandard.DisplayName, Connectable: true, BaseProfile: null),
+        new(ToyopucPlusExtended.Name, ToyopucPlusExtended.DisplayName, Connectable: true, BaseProfile: null),
+        new(Nano10GxMode.Name, Nano10GxMode.DisplayName, Connectable: true, BaseProfile: null),
+        new(Nano10GxCompatible.Name, Nano10GxCompatible.DisplayName, Connectable: true, BaseProfile: null),
+        new(Pc10GStandardPc3Jg.Name, Pc10GStandardPc3Jg.DisplayName, Connectable: true, BaseProfile: null),
+        new(Pc10GMode.Name, Pc10GMode.DisplayName, Connectable: true, BaseProfile: null),
+        new(Pc3JxPc3Separate.Name, Pc3JxPc3Separate.DisplayName, Connectable: true, BaseProfile: null),
+        new(Pc3JxPlusExpansion.Name, Pc3JxPlusExpansion.DisplayName, Connectable: true, BaseProfile: null),
+        new(Pc3JgMode.Name, Pc3JgMode.DisplayName, Connectable: true, BaseProfile: null),
+        new(Pc3JgPc3Separate.Name, Pc3JgPc3Separate.DisplayName, Connectable: true, BaseProfile: null),
+    ];
+
     public static IReadOnlyList<string> GetNames()
     {
         return ProfileNames;
+    }
+
+    /// <summary>Returns presentation and connection metadata for every canonical PLC profile.</summary>
+    public static IReadOnlyList<ToyopucPlcProfileDescriptor> GetProfileDescriptors()
+    {
+        return ProfileDescriptors;
     }
 
     public static string NormalizeName(string? profile)

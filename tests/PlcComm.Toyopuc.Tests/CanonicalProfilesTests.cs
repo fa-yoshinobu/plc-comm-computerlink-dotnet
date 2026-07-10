@@ -26,6 +26,26 @@ public sealed class CanonicalProfilesTests
         }
     }
 
+    [Fact]
+    public void ProfileDescriptors_MatchCanonicalProfileMetadata()
+    {
+        var fixturePath = Path.Combine(AppContext.BaseDirectory, "fixtures", "toyopuc_profiles.json");
+        using var document = JsonDocument.Parse(File.ReadAllText(fixturePath));
+        var profiles = document.RootElement.GetProperty("profiles");
+        var expectedProfileIds = profiles.EnumerateObject().Select(static property => property.Name).ToArray();
+        var descriptors = ToyopucPlcProfiles.GetProfileDescriptors();
+
+        Assert.Equal(expectedProfileIds, descriptors.Select(static descriptor => descriptor.CanonicalName));
+        foreach (var descriptor in descriptors)
+        {
+            var expected = profiles.GetProperty(descriptor.CanonicalName);
+            Assert.Equal(expected.GetProperty("display_name").GetString(), descriptor.DisplayName);
+            Assert.True(descriptor.Connectable);
+            Assert.False(expected.TryGetProperty("base_profile", out _));
+            Assert.Null(descriptor.BaseProfile);
+        }
+    }
+
     private static void AssertOptions(JsonElement expected, ToyopucAddressingOptions actual)
     {
         Assert.Equal(expected.GetProperty("use_upper_u_pc10").GetBoolean(), actual.UseUpperUPc10);

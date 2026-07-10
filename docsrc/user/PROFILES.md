@@ -3,8 +3,10 @@
 ## Intro
 
 Each canonical profile selects frame type, access rules, and device ranges.
-Use `ToyopucPlcProfiles.GetDisplayName(profile)` for UI labels. Store the
-canonical profile string, not the display name.
+Use `ToyopucPlcProfiles.GetProfileDescriptors()` for a UI that needs canonical
+names, display labels, connection eligibility, and base-profile metadata. This
+descriptor list is the stable source for selectors; store the canonical profile
+string, not the display name.
 
 Device-family notation, type suffixes, practical range notes, and model-specific writable range summaries are shared across the Computerlink libraries. Use the common [Computerlink Device Ranges](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/device-ranges/) page for those details.
 

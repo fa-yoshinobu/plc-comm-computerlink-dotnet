@@ -86,3 +86,10 @@ public sealed record ToyopucPlcProfile(
     string DisplayName,
     ToyopucAddressingOptions AddressingOptions,
     IReadOnlyList<ToyopucAreaDescriptor> Areas);
+
+/// <summary>Metadata used to present and select one canonical TOYOPUC PLC profile.</summary>
+public sealed record ToyopucPlcProfileDescriptor(
+    string CanonicalName,
+    string DisplayName,
+    bool Connectable,
+    string? BaseProfile);

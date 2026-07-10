@@ -17,7 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.0.1] - 2026-07-10
+## [3.1.0] - 2026-07-10
+
+### Added
+- Library: Added `ToyopucPlcProfileDescriptor` and `ToyopucPlcProfiles.GetProfileDescriptors()` for canonical TOYOPUC Computer Link profile metadata.
 
 ### Fixed
 - Library: Keep protocol-width and unsupported-route validation while treating profile catalog index ranges as advisory application/UI metadata.
