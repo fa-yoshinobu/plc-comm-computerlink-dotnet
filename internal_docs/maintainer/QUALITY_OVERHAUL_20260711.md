@@ -8,7 +8,7 @@ Branch: `quality/2026-07-overhaul`
 
 Verification baseline after implementation: `run_ci.bat` builds all projects without warnings, validates the generated API reference, runs tests on .NET 8/9/10, verifies formatting, and publishes the self-contained HighLevelSample.
 
-Latest evidence: .NET 8 `234`, .NET 9 `247`, and .NET 10 `234` tests passed; the generated reference is current, build warnings are zero, formatting passed, the self-contained sample published, NuGet/symbol packages were created, and both GitHub `build-test` jobs for cancellation fix `5f9de5b` passed on 2026-07-13.
+Latest evidence: .NET 8 `234`, .NET 9 `247`, and .NET 10 `234` tests passed; the generated reference is current, build warnings are zero, formatting passed, the self-contained sample published, and NuGet/symbol packages were created by the post-Claude complete release gate on 2026-07-13. Both GitHub `build-test` jobs for cancellation fix `5f9de5b` passed, and `CLAUDE-CL-20260713-02` independently returned zero findings.
 
 The checklists below are evidence states, not intentions. Claude batch `CLAUDE-CL-20260712-01` completed and all findings were dispositioned. D-080, D-081, D-083, and D-084-A passed the recorded live checks; D-084-B remains explicitly unverified under its approved release disposition.
 
@@ -123,11 +123,11 @@ Acceptance criteria: omitted/zero/positive/negative values and cancellation duri
 - [x] Current automated checks passed: the strengthened focused test passed once plus 30 consecutive .NET 8 runs, followed by the complete release check on 2026-07-13.
 - [x] Codex self-review completed for delay validation, cancellation cleanup, retry send count, explicit reconnect state, exception classification, and unchanged public API.
 - [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
-- [ ] Claude delta review of the 2026-07-13 cancellation cleanup is pending user authorization.
+- [x] Claude delta review completed (`CLAUDE-CL-20260713-02`; zero findings recorded and dispositioned).
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; retry-delay validation and cancellation/no-second-send behavior are deterministic state-machine properties).
 - [x] Documentation/API reference agree.
-- [ ] Final acceptance pending Claude delta review; both pushed GitHub `build-test` jobs passed.
+- [x] Final acceptance verified after the zero-finding Claude delta review and complete release-gate rerun.
 
 ## D-071 — Receive buffer setting removed
 
@@ -396,11 +396,11 @@ Acceptance criteria: omitted token with timeout, pre-cancel, gate wait, connect/
 - [x] Current automated checks passed: the regression now verifies no second send, closed state, and rejection before explicit reconnect; focused repetition and the complete release check passed.
 - [x] Codex self-review completed for gate ownership, worker completion, retry delay, unknown outcome, close idempotence, and explicit reconnect state.
 - [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
-- [ ] Claude delta review of the 2026-07-13 cancellation cleanup is pending user authorization.
+- [x] Claude delta review completed (`CLAUDE-CL-20260713-02`; zero findings recorded and dispositioned).
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; cancellation ownership, worker completion, unknown-outcome classification, closed state, and explicit reconnect use controlled transports).
 - [x] Documentation/API reference agree.
-- [ ] Final acceptance pending Claude delta review; both pushed GitHub `build-test` jobs passed.
+- [x] Final acceptance verified after the zero-finding Claude delta review and complete release-gate rerun.
 
 ## D-086 — Ambiguous connection convenience overload removed
 
