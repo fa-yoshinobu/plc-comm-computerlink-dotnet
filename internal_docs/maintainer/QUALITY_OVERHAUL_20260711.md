@@ -8,7 +8,7 @@ Branch: `quality/2026-07-overhaul`
 
 Verification baseline after implementation: `run_ci.bat` builds all projects without warnings, validates the generated API reference, runs tests on .NET 8/9/10, verifies formatting, and publishes the self-contained HighLevelSample.
 
-Latest evidence: .NET 8 `234`, .NET 9 `247`, and .NET 10 `234` tests passed; the generated reference is current, build warnings are zero, formatting passed, the self-contained sample published, and NuGet/symbol packages were created.
+Latest evidence: .NET 8 `234`, .NET 9 `247`, and .NET 10 `234` tests passed; the generated reference is current, build warnings are zero, formatting passed, the self-contained sample published, NuGet/symbol packages were created, and both GitHub `build-test` jobs for cancellation fix `5f9de5b` passed on 2026-07-13.
 
 The checklists below are evidence states, not intentions. Claude batch `CLAUDE-CL-20260712-01` completed and all findings were dispositioned. D-080, D-081, D-083, and D-084-A passed the recorded live checks; D-084-B remains explicitly unverified under its approved release disposition.
 
@@ -127,7 +127,7 @@ Acceptance criteria: omitted/zero/positive/negative values and cancellation duri
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; retry-delay validation and cancellation/no-second-send behavior are deterministic state-machine properties).
 - [x] Documentation/API reference agree.
-- [ ] Final acceptance pending Claude delta review and the pushed GitHub CI result.
+- [ ] Final acceptance pending Claude delta review; both pushed GitHub `build-test` jobs passed.
 
 ## D-071 — Receive buffer setting removed
 
@@ -400,7 +400,7 @@ Acceptance criteria: omitted token with timeout, pre-cancel, gate wait, connect/
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; cancellation ownership, worker completion, unknown-outcome classification, closed state, and explicit reconnect use controlled transports).
 - [x] Documentation/API reference agree.
-- [ ] Final acceptance pending Claude delta review and the pushed GitHub CI result.
+- [ ] Final acceptance pending Claude delta review; both pushed GitHub `build-test` jobs passed.
 
 ## D-086 — Ambiguous connection convenience overload removed
 
