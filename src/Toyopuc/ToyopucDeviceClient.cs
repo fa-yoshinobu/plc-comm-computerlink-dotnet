@@ -400,7 +400,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
             var index = 0;
             foreach (var item in collection)
             {
-                resolved[index++] = (ResolveDeviceObject(item.Key), item.Value);
+                var device = ResolveDeviceObject(item.Key);
+                resolved[index++] = (device, NormalizeDeviceValue(device, item.Value));
             }
 
             return resolved;
@@ -409,7 +410,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var list = new List<(ResolvedDevice Device, object Value)>();
         foreach (var item in items)
         {
-            list.Add((ResolveDeviceObject(item.Key), item.Value));
+            var device = ResolveDeviceObject(item.Key);
+            list.Add((device, NormalizeDeviceValue(device, item.Value)));
         }
 
         return list.ToArray();
@@ -504,9 +506,55 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return Convert.ToInt32(value, CultureInfo.InvariantCulture);
     }
 
-    private static bool ToBooleanInvariant(object value)
+    private static int NormalizeDeviceValue(ResolvedDevice device, object value)
     {
-        return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+        return device.Unit switch
+        {
+            "bit" => RequireBitValue(value),
+            "byte" => RequireUnsignedDeviceValue(value, byte.MaxValue, "byte"),
+            "word" => RequireUnsignedDeviceValue(value, ushort.MaxValue, "word"),
+            _ => throw new ArgumentException($"Unsupported device unit: {device.Unit}", nameof(device)),
+        };
+    }
+
+    private static int RequireBitValue(object value)
+    {
+        if (value is bool flag)
+            return flag ? 1 : 0;
+        ulong candidate = value switch
+        {
+            sbyte v when v >= 0 => (ulong)v,
+            byte v => v,
+            short v when v >= 0 => (ulong)v,
+            ushort v => v,
+            int v when v >= 0 => (ulong)v,
+            uint v => v,
+            long v when v >= 0 => (ulong)v,
+            ulong v => v,
+            _ => ulong.MaxValue,
+        };
+        if (candidate <= 1)
+            return (int)candidate;
+        throw new ArgumentOutOfRangeException(nameof(value), value, "Bit value must be Boolean or integer 0 or 1.");
+    }
+
+    private static int RequireUnsignedDeviceValue(object value, int maximum, string label)
+    {
+        ulong candidate = value switch
+        {
+            sbyte v when v >= 0 => (ulong)v,
+            byte v => v,
+            short v when v >= 0 => (ulong)v,
+            ushort v => v,
+            int v when v >= 0 => (ulong)v,
+            uint v => v,
+            long v when v >= 0 => (ulong)v,
+            ulong v => v,
+            _ => throw new ArgumentException($"{label} value must be an integer; Boolean, fractional, and string values are not accepted.", nameof(value)),
+        };
+        if (candidate > (ulong)maximum)
+            throw new ArgumentOutOfRangeException(nameof(value), value, $"{label} value must be in the range 0..{maximum}.");
+        return (int)candidate;
     }
 
     private static int[] ReadPc10MultiWords(ToyopucClient client, IEnumerable<int> addresses32)
@@ -605,10 +653,11 @@ public partial class ToyopucDeviceClient : ToyopucClient
             return items;
         }
 
-        items[0] = (resolved, values[0]);
+        items[0] = (resolved, NormalizeDeviceValue(resolved, values[0]));
         for (var i = 1; i < values.Count; i++)
         {
-            items[i] = (Offset(items[i - 1].Device, 1), values[i]);
+            var device = Offset(items[i - 1].Device, 1);
+            items[i] = (device, NormalizeDeviceValue(device, values[i]));
         }
 
         return items;
@@ -1726,7 +1775,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private static int ToBitInt(object value)
     {
-        return ToBooleanInvariant(value) ? 1 : 0;
+        return RequireBitValue(value);
     }
 
     private static void RaiseGenericFrWriteError()
@@ -1913,11 +1962,12 @@ public partial class ToyopucDeviceClient : ToyopucClient
         {
             RaiseGenericFrWriteError();
         }
+        value = NormalizeDeviceValue(resolved, value);
 
         switch (resolved.Scheme)
         {
             case "basic-bit":
-                WriteBit(Require(resolved.BasicAddress, "basic_addr"), ToBooleanInvariant(value));
+                WriteBit(Require(resolved.BasicAddress, "basic_addr"), ToInt32Invariant(value) == 1);
                 return;
             case "basic-word":
                 WriteWords(Require(resolved.BasicAddress, "basic_addr"), new[] { ToInt32Invariant(value) });
@@ -1927,7 +1977,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 return;
             case "program-bit":
                 WriteExtMulti(
-                    new[] { (Require(resolved.No, "program number"), Require(resolved.BitNo, "program bit"), Require(resolved.Address, "program addr"), ToInt32Invariant(value) & 0x01) },
+                    new[] { (Require(resolved.No, "program number"), Require(resolved.BitNo, "program bit"), Require(resolved.Address, "program addr"), ToInt32Invariant(value)) },
                     Array.Empty<(int No, int Address, int Value)>(),
                     Array.Empty<(int No, int Address, int Value)>());
                 return;
@@ -1939,7 +1989,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 return;
             case "ext-bit":
                 WriteExtMulti(
-                    new[] { (Require(resolved.No, "extended number"), Require(resolved.BitNo, "extended bit"), Require(resolved.Address, "extended addr"), ToInt32Invariant(value) & 0x01) },
+                    new[] { (Require(resolved.No, "extended number"), Require(resolved.BitNo, "extended bit"), Require(resolved.Address, "extended addr"), ToInt32Invariant(value)) },
                     Array.Empty<(int No, int Address, int Value)>(),
                     Array.Empty<(int No, int Address, int Value)>());
                 return;
@@ -1950,13 +2000,13 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 WriteExtBytes(Require(resolved.No, "extended number"), Require(resolved.Address, "extended addr"), new[] { ToInt32Invariant(value) });
                 return;
             case "pc10-bit":
-                Pc10MultiWrite(Pc10Payloads.PackMultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value) & 0x01) }));
+                Pc10MultiWrite(Pc10Payloads.PackMultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value)) }));
                 return;
             case "pc10-word":
                 WritePc10BlockWord(this, Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value));
                 return;
             case "pc10-byte":
-                Pc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), new[] { (byte)(ToInt32Invariant(value) & 0xFF) });
+                Pc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), new[] { (byte)ToInt32Invariant(value) });
                 return;
             default:
                 throw new ArgumentException($"Unsupported resolved scheme: {resolved.Scheme}", nameof(resolved));
@@ -1965,11 +2015,12 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void RelayWriteOne(object hops, ResolvedDevice resolved, object value)
     {
+        value = NormalizeDeviceValue(resolved, value);
         switch (resolved.Scheme)
         {
             case "basic-bit":
                 {
-                    var response = SendViaRelay(hops, ToyopucProtocol.BuildBitWrite(Require(resolved.BasicAddress, "basic_addr"), ToInt32Invariant(value) & 0x01));
+                    var response = SendViaRelay(hops, ToyopucProtocol.BuildBitWrite(Require(resolved.BasicAddress, "basic_addr"), ToInt32Invariant(value)));
                     EnsureCommand(response, 0x21, "Unexpected CMD in relay bit-write response");
                     return;
                 }
@@ -1990,7 +2041,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                     var response = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtMultiWrite(
-                            new[] { (Require(resolved.No, "program number"), Require(resolved.BitNo, "program bit"), Require(resolved.Address, "program addr"), ToInt32Invariant(value) & 0x01) },
+                            new[] { (Require(resolved.No, "program number"), Require(resolved.BitNo, "program bit"), Require(resolved.Address, "program addr"), ToInt32Invariant(value)) },
                             Array.Empty<(int No, int Address, int Value)>(),
                             Array.Empty<(int No, int Address, int Value)>()));
                     EnsureCommand(response, 0x99, "Unexpected CMD in relay multi-write response");
@@ -2017,7 +2068,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                     var response = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtMultiWrite(
-                            new[] { (Require(resolved.No, "extended number"), Require(resolved.BitNo, "extended bit"), Require(resolved.Address, "extended addr"), ToInt32Invariant(value) & 0x01) },
+                            new[] { (Require(resolved.No, "extended number"), Require(resolved.BitNo, "extended bit"), Require(resolved.Address, "extended addr"), ToInt32Invariant(value)) },
                             Array.Empty<(int No, int Address, int Value)>(),
                             Array.Empty<(int No, int Address, int Value)>()));
                     EnsureCommand(response, 0x99, "Unexpected CMD in relay multi-write response");
@@ -2043,7 +2094,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 {
                     var response = SendViaRelay(
                         hops,
-                        ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value) & 0x01) })));
+                        ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value)) })));
                     EnsureCommand(response, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
                     return;
                 }
@@ -2051,7 +2102,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 {
                     var response = SendViaRelay(
                         hops,
-                        ToyopucProtocol.BuildPc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), ToyopucProtocol.PackU16LittleEndian(ToInt32Invariant(value) & 0xFFFF)));
+                        ToyopucProtocol.BuildPc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), ToyopucProtocol.PackU16LittleEndian(ToInt32Invariant(value))));
                     EnsureCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
                     return;
                 }
@@ -2059,7 +2110,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 {
                     var response = SendViaRelay(
                         hops,
-                        ToyopucProtocol.BuildPc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), new[] { (byte)(ToInt32Invariant(value) & 0xFF) }));
+                        ToyopucProtocol.BuildPc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), new[] { (byte)ToInt32Invariant(value) }));
                     EnsureCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
                     return;
                 }

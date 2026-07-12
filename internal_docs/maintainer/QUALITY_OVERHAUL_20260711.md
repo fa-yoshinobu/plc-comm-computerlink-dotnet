@@ -28,8 +28,8 @@ Acceptance criteria:
 - [x] Tests cover public port validation.
 - [x] Final .NET 8 test project passed 230 tests; all changed example projects built with zero warnings/errors; diff check passed.
 - [x] Codex reviewed public signatures, example parsing, and no-fallback source scan.
-- [ ] Claude source review completed — pending user authorization.
-- [ ] Claude findings dispositioned and affected checks rerun.
+- [x] Claude source review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned and affected checks rerun (`CLAUDE-CL-20260712-01`).
 - [x] No live communication is required for argument/constructor validation; no PLC communication was performed.
 - [x] Documentation, changelog, and examples agree.
 - [ ] Final cross-language acceptance verified.
@@ -50,7 +50,7 @@ Acceptance criteria:
 - [x] Tests cover every acceptance criterion, including fixed-port collision without fallback.
 - [x] Static checks, unit tests, examples, build, packaging, and generated API checks passed.
 - [x] Codex self-review completed against the approved contract and cross-language consistency requirements.
-- [ ] Claude source review completed and findings recorded — pending user authorization.
+- [x] Claude source review completed and findings recorded (`CLAUDE-CL-20260712-01`).
 - [ ] Codex dispositioned every Claude finding and reran affected checks.
 - [x] Live/release disposition recorded (no live PLC required; UDP bind-0, assigned source port, simultaneous clients, fixed-port collision, and TCP rejection are covered by local socket fixtures without claiming PLC compatibility).
 - [x] User documentation, migration guidance, and generated API reference agree with the implementation.
@@ -68,8 +68,8 @@ Acceptance criteria: constructor/factory/options reject missing or unknown trans
 - [x] Tests added for required transport and invalid enum value.
 - [x] Relevant static, unit, example, build, package, and API checks passed.
 - [x] Codex self-review completed for constructor/factory transport requirements, enum validation, and examples.
-- [ ] Claude source review completed — pending user authorization.
-- [ ] Claude findings dispositioned and affected checks rerun.
+- [x] Claude source review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned and affected checks rerun (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; required transport selection and pre-socket invalid-enum rejection are deterministic).
 - [x] Documentation and generated API reference agree.
 - [ ] Final acceptance verified.
@@ -86,8 +86,8 @@ Acceptance criteria: default and explicit positive values work; invalid values f
 - [x] Constructor/default, token-omitted timeout, final-session disposal, late-response isolation, and new-session tests pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed for validation, per-attempt timeout, session disposal, and stale-response prevention.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; timeout default, validation, per-attempt cancellation, session disposal, and late-response isolation use controlled local fixtures).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -104,8 +104,8 @@ Acceptance criteria: distinguish pre-send, post-send, and retryable PLC response
 - [x] Direct/relay/FR/clock retryable reads and raw/write/FR commit/FR write/clock write/scan/relay scan post-send no-retry tests pass at retry counts `0/1` as applicable.
 - [x] Current static/build/test/package checks passed.
 - [x] Codex self-review completed for retry state, request-sent boundaries, direct/relay routing, and state-changing operations.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; pre/post-send classification, retry eligibility, and state-changing send-count limits use fault-injected transports).
 - [x] Documentation/API reference agree with the current safe behavior.
 - [ ] Final acceptance verified.
@@ -122,8 +122,8 @@ Acceptance criteria: omitted/zero/positive/negative values and cancellation duri
 - [x] Cancellation-during-delay test verifies that cancellation stops the delay and prevents a second request.
 - [x] Current automated checks passed.
 - [x] Codex self-review completed for delay validation and cancellation behavior.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; retry-delay validation and cancellation/no-second-send behavior are deterministic state-machine properties).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -140,8 +140,8 @@ Acceptance criteria: no public setting; large UDP response succeeds; truncated o
 - [x] Large UDP response and protocol frame validation tests pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; datagram capacity, truncation, and declared-length mismatch use local UDP/frame fixtures).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -158,8 +158,8 @@ Acceptance criteria: absent/normal/throwing/slow callbacks, ordering, copies, an
 - [x] Slow and throwing callback acceptance test verifies unchanged read completion and result.
 - [x] Current automated checks passed.
 - [x] Codex self-review completed for callback isolation, copy ownership, and communication-result independence.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; diagnostic copy ownership, ordering, exception isolation, and timing isolation are transport-result-independent).
 - [x] Normal user documentation and API reference exclude the diagnostic hook.
 - [ ] Final acceptance verified.
@@ -176,8 +176,8 @@ Acceptance criteria: canonical derivation, profile-specific routes, no public ov
 - [x] Profile identity, mismatch-before-transport, canonical matrix, and exported-type tests pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed for canonical derivation, public API exposure, and profile-bound objects.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; canonical profile derivation, profile-bound identity, wire vectors, and mismatch-before-transport are deterministic).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -194,8 +194,8 @@ Acceptance criteria: direct, one/multiple relay hops, null/empty/invalid hops, a
 - [x] Required constructor shape and strict route tests added; existing relay wire tests pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required for the required-route API decision; direct/relay type construction, hop validation, queued preservation, and zero-send rejection are deterministic, while configured relay hardware remains separately unverified under D-084).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -212,8 +212,8 @@ Acceptance criteria: disabled default, bounded eviction, copy ownership, clear/c
 - [x] Capacity, eviction, copy ownership, clear/close, reconnect, and disabled-default acceptance tests pass.
 - [x] Current automated checks passed.
 - [x] Codex self-review completed for bounded storage, lifecycle clearing, and normal-result invariance.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; bounded diagnostic history, copies, eviction, clear, close, and reconnect lifecycle are local state).
 - [x] Normal user documentation/API reference exclude trace history.
 - [ ] Final acceptance verified.
@@ -230,8 +230,8 @@ Acceptance criteria: every type, bit syntax, missing/empty/unknown type, width, 
 - [x] Missing/empty/unknown and `.D` tests pass; typed helper tests cover result shapes.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; named dtype grammar, bit/Dword distinction, width validation, and decoding use parser/protocol fixtures).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -248,8 +248,8 @@ Acceptance criteria: one, many count 1/boundary/invalid/crossing, direct/relay/F
 - [x] Single-request, boundary-before-transport, return-shape, and public-surface tests pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; scalar/array shape, strict count, one-request enforcement, and no-transport rejection use mock/frame evidence).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -266,8 +266,8 @@ Acceptance criteria: dword/float read/write at limit/crossing, no partial write,
 - [x] Public-surface and one-request dword tests pass; existing float/dword vectors pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; Dword/float block limits, one-request/no-partial-write behavior, and removed switches use exact vectors and send counts).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -284,8 +284,8 @@ Acceptance criteria: command boundaries, missing/empty data, maximum length, syn
 - [x] Command `0/255`, invalid command, null/empty data, maximum/overflow length, exact async frame bytes, zero transport on invalid input, and no post-send retry tests pass.
 - [x] Current automated checks passed.
 - [x] Codex self-review completed for visibility, builder bounds, transport timing, and retry behavior.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; maintainer-only visibility, required payload, exact raw frames, length limits, and no post-send retry are deterministic).
 - [x] User docs/API reference exclude raw entry points.
 - [ ] Final acceptance verified.
@@ -302,8 +302,8 @@ Acceptance criteria: work-area-only write, one-block commit, multi-block rejecti
 - [x] Work-area frame, sync/async/queued direct/relay low/high-level strict-value zero-send, and public-surface tests pass; samples/tools now sequence operations explicitly.
 - [x] All automated checks passed after the final diff on 2026-07-12: warning-free build, generated API check, net8 `230`, net9 `243`, net10 `230`, format verification, example CLI contracts, and self-contained HighLevelSample publish.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [ ] Live FR verification or explicit release disposition recorded.
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -322,8 +322,8 @@ Acceptance criteria: exactly one commit request, fixed return shape, no status r
 - [x] Public-surface and command tests pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [ ] Live commit/status verification or explicit release disposition recorded.
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -340,8 +340,8 @@ Acceptance criteria: canonical values, profile widths, lowercase normalization, 
 - [x] Existing address matrix/vector tests pass; public-surface tests confirm profile-bound semantic entry point.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; hexadecimal parsing, normalization, formatting, and frame round trips are deterministic vectors).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -358,8 +358,8 @@ Acceptance criteria: years 00/26/99 with 1900/2000/2100, invalid bases, boundari
 - [x] Century and timezone rejection tests pass; protocol clock vectors remain green.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [ ] Live clock verification or explicit release disposition recorded.
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -376,8 +376,8 @@ Acceptance criteria: ENQ bytes, every boundary, all syntaxes, nested invalid hop
 - [x] Strict route boundary tests and existing relay vectors pass.
 - [x] All automated checks passed.
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [ ] Live relay verification or explicit release disposition recorded.
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -394,8 +394,8 @@ Acceptance criteria: omitted token with timeout, pre-cancel, gate wait, connect/
 - [x] Pre-cancel, gate isolation, pending-connect, blocked-send, receive cancellation, retry-delay/no-second-send, post-send unknown result, worker completion, closed state, implicit-reconnect rejection, explicit reconnect, and token-omitted timeout tests pass.
 - [x] Current automated checks passed.
 - [x] Codex self-review completed for gate ownership, worker completion, retry delay, unknown outcome, and reconnect state.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; cancellation ownership, worker completion, unknown-outcome classification, closed state, and explicit reconnect use controlled transports).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -412,8 +412,8 @@ Acceptance criteria: forbidden overload absent; every factory route requires por
 - [x] Constructor/public-surface tests and all examples compile with explicit values.
 - [x] All automated checks passed.
 - [x] Codex self-review completed for constructor/factory signatures, generated API, and examples.
-- [ ] Claude review completed — pending user authorization.
-- [ ] Claude findings dispositioned.
+- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; forbidden overload absence and required options are compile-time/generated-API properties).
 - [x] Documentation/API reference agree.
 - [ ] Final acceptance verified.
@@ -434,11 +434,30 @@ The concrete candidate values below come from the maintained samples and the 202
 
 If hardware is unavailable, each item needs an explicit release disposition. The proposed dispositions are recorded in workspace `quality_overhaul_goal_20260711.md`; no proposal is approved merely by being documented.
 
-## Claude review package status
+## Claude review batch `CLAUDE-CL-20260712-01`
 
-- [x] Review package prepared; Claude was not invoked.
-- [ ] Present the proposed Claude batch to the user and wait for explicit authorization.
-- [ ] Run Claude only after that authorization, preserve findings, classify each finding, correct accepted findings, and rerun affected checks.
+- [x] Review package prepared and explicit user authorization obtained for this batch.
+- [x] Claude independently reviewed the stated Python/.NET diff read-only; the result is preserved in workspace `claude_review_result_computerlink_20260712.md`.
+- [x] Codex independently reproduced and accepted all eleven findings; no finding was rejected, duplicated, or deferred.
+- [x] Accepted findings affecting .NET were corrected with deterministic regression coverage.
+- [x] Final full release checks and post-fix Codex diff review recorded (net8 234 / net9 247 / net10 234 tests and complete `release_check.bat`, 2026-07-12).
+
+Finding dispositions affecting .NET:
+
+| Finding | Disposition and acceptance evidence |
+| --- | --- |
+| 4 | Accepted. Typed U/S/D/L/F writes require compatible finite values with explicit ranges, and non-finite float32 reads are protocol errors. |
+| 5 | Accepted as a contract completion. Generic bit/byte/word writes and public protocol builders reject masking, Boolean/string/fraction conversion, and out-of-range values. |
+| 6 | Accepted with stronger correction. UDP sockets connect to the configured endpoint. A fixed-local-port UDP session becomes terminal after an uncertain post-send transport failure because same-endpoint stale responses cannot be identified without a protocol serial. |
+| 9 | Accepted. Timeout and retry-delay values exceeding `int.MaxValue` milliseconds fail during constructor/factory validation before socket creation. |
+
+Machine-verifiable acceptance criteria for the .NET Claude corrections:
+
+1. Invalid generic and typed values fail before socket creation and no request is sent.
+2. Non-finite typed float32 data is not returned as a normal application value.
+3. UDP accepts only the configured endpoint, and a fixed-port session cannot issue another request after an uncertain post-send transport failure.
+4. Oversized timeout and retry delay fail during configuration with `ArgumentOutOfRangeException`.
+5. Source, tests, examples, generated API reference, changelog, and maintainer records pass the full release check on every target framework.
 
 Prepared batch scope: all changes on `quality/2026-07-overhaul` relative to its merge base, with emphasis on `src/Toyopuc`, the generated public API, `OverhaulContractTests`, updated examples/tools, and D-066 through D-086 documentation.
 

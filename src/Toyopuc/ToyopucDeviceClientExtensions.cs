@@ -190,7 +190,12 @@ public static class ToyopucDeviceClientExtensions
         switch (NormalizeDType(dtype))
         {
             case "F":
-                return BitConverter.Int32BitsToSingle(unchecked((int)(await ReadDWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0]));
+                {
+                    float value = BitConverter.Int32BitsToSingle(unchecked((int)(await ReadDWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0]));
+                    if (!float.IsFinite(value))
+                        throw new ToyopucProtocolError("PLC returned a non-finite float32 value.");
+                    return value;
+                }
             case "D":
                 return (await ReadDWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0];
             case "L":
@@ -208,18 +213,75 @@ public static class ToyopucDeviceClientExtensions
         {
             case "F":
                 {
-                    float single = Convert.ToSingle(value, CultureInfo.InvariantCulture);
+                    float single = RequireFiniteSingle(value);
                     return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([unchecked((uint)BitConverter.SingleToInt32Bits(single))]), ct);
                 }
             case "D":
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([Convert.ToUInt32(value, CultureInfo.InvariantCulture)]), ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([(uint)RequireUnsignedIntegral(value, uint.MaxValue, "D")]), ct);
             case "L":
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([unchecked((uint)Convert.ToInt32(value, CultureInfo.InvariantCulture))]), ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([unchecked((uint)(int)RequireSignedIntegral(value, int.MinValue, int.MaxValue, "L"))]), ct);
             case "S":
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [unchecked((ushort)Convert.ToInt16(value, CultureInfo.InvariantCulture))], ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [unchecked((ushort)(short)RequireSignedIntegral(value, short.MinValue, short.MaxValue, "S"))], ct);
             default:
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [Convert.ToUInt16(value, CultureInfo.InvariantCulture)], ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [(ushort)RequireUnsignedIntegral(value, ushort.MaxValue, "U")], ct);
         }
+    }
+
+    private static long RequireSignedIntegral(object value, long minimum, long maximum, string dtype)
+    {
+        long candidate = value switch
+        {
+            sbyte v => v,
+            byte v => v,
+            short v => v,
+            ushort v => v,
+            int v => v,
+            uint v => v,
+            long v => v,
+            ulong v when v <= long.MaxValue => (long)v,
+            _ => throw new ArgumentException($"{dtype} requires an integer value; Boolean, fractional, and string values are not accepted.", nameof(value)),
+        };
+        if (candidate < minimum || candidate > maximum)
+            throw new ArgumentOutOfRangeException(nameof(value), $"{dtype} value must be in the range {minimum}..{maximum}.");
+        return candidate;
+    }
+
+    private static ulong RequireUnsignedIntegral(object value, ulong maximum, string dtype)
+    {
+        ulong candidate = value switch
+        {
+            sbyte v when v >= 0 => (ulong)v,
+            byte v => v,
+            short v when v >= 0 => (ulong)v,
+            ushort v => v,
+            int v when v >= 0 => (ulong)v,
+            uint v => v,
+            long v when v >= 0 => (ulong)v,
+            ulong v => v,
+            sbyte or short or int or long => throw new ArgumentOutOfRangeException(nameof(value), $"{dtype} value must be non-negative."),
+            _ => throw new ArgumentException($"{dtype} requires an integer value; Boolean, fractional, and string values are not accepted.", nameof(value)),
+        };
+        if (candidate > maximum)
+            throw new ArgumentOutOfRangeException(nameof(value), $"{dtype} value must be in the range 0..{maximum}.");
+        return candidate;
+    }
+
+    private static float RequireFiniteSingle(object value)
+    {
+        if (value is bool or string || value is not (sbyte or byte or short or ushort or int or uint or long or ulong or float or double or decimal))
+            throw new ArgumentException("F requires a finite numeric value; Boolean and string values are not accepted.", nameof(value));
+        float result;
+        try
+        {
+            result = Convert.ToSingle(value, CultureInfo.InvariantCulture);
+        }
+        catch (OverflowException)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), value, "F value is outside the finite float32 range.");
+        }
+        if (!float.IsFinite(result))
+            throw new ArgumentOutOfRangeException(nameof(value), "F value must be finite and representable as float32.");
+        return result;
     }
 
     private static async Task WriteBitInWordCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, int bitIndex, bool value, CancellationToken ct)

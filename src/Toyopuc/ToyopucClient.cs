@@ -16,6 +16,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     private byte[]? _lastRx;
     private bool _requestMayHaveBeenSent;
     private volatile bool _explicitReconnectRequired;
+    private bool _fixedUdpSessionTainted;
     private readonly AsyncLocal<CancellationToken> _operationCancellation = new();
     private readonly Queue<TransportTraceFrame> _traceFrames = new();
     private int _traceFrameCapacity;
@@ -43,10 +44,14 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             throw new ArgumentException("LocalPort can only be specified for UDP.", nameof(localPort));
         if (timeout is { } explicitTimeout && explicitTimeout <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be greater than zero.");
+        if (timeout is { } boundedTimeout && boundedTimeout.TotalMilliseconds > int.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(timeout), $"Timeout must not exceed {int.MaxValue} milliseconds.");
         if (retries < 0)
             throw new ArgumentOutOfRangeException(nameof(retries), "Retries must be zero or greater.");
         if (retryDelay is { } explicitRetryDelay && explicitRetryDelay < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(retryDelay), "RetryDelay must be zero or greater.");
+        if (retryDelay is { } boundedRetryDelay && boundedRetryDelay.TotalMilliseconds > int.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(retryDelay), $"RetryDelay must not exceed {int.MaxValue} milliseconds.");
 
         Host = host;
         Port = port;
@@ -103,6 +108,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     private void OpenCore(bool explicitRequest)
     {
+        if (_fixedUdpSessionTainted)
+        {
+            throw new InvalidOperationException(
+                "This fixed-port UDP session cannot be reused after an uncertain request; " +
+                "create a new client only after late responses can no longer be present.");
+        }
         if (explicitRequest)
             _explicitReconnectRequired = false;
         else if (_explicitReconnectRequired)
@@ -133,7 +144,10 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             if (Transport == ToyopucTransportMode.Tcp)
                 ConnectWithTimeout(socket, _remoteEndPoint, Timeout);
             else
+            {
                 socket.Bind(CreateAnyEndPoint(remoteAddress.AddressFamily, LocalPort));
+                socket.Connect(_remoteEndPoint);
+            }
         }
         catch
         {
@@ -768,8 +782,9 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             }
             catch (SocketException exception) when (exception.SocketErrorCode == SocketError.TimedOut)
             {
+                MarkFixedUdpSessionTaintedIfNeeded();
                 lastError = new ToyopucTimeoutError("Send/receive timeout", exception);
-                if ((allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
+                if (!_fixedUdpSessionTainted && (allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
                 {
                     RetryDelaySleep();
                     Close();
@@ -781,8 +796,9 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             }
             catch (TimeoutException exception)
             {
+                MarkFixedUdpSessionTaintedIfNeeded();
                 lastError = new ToyopucTimeoutError("Connect timeout", exception);
-                if ((allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
+                if (!_fixedUdpSessionTainted && (allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
                 {
                     RetryDelaySleep();
                     Close();
@@ -812,8 +828,9 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             }
             catch (Exception exception) when (exception is SocketException or ObjectDisposedException or InvalidOperationException)
             {
+                MarkFixedUdpSessionTaintedIfNeeded();
                 lastError = new ToyopucError("Socket error", exception);
-                if ((allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
+                if (!_fixedUdpSessionTainted && (allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
                 {
                     RetryDelaySleep();
                     Close();
@@ -933,18 +950,23 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
 
         _requestMayHaveBeenSent = true;
-        _socket.SendTo(payload, _remoteEndPoint);
+        _socket.Send(payload, SocketFlags.None);
         var buffer = ArrayPool<byte>.Shared.Rent(UdpReceiveBufferSize);
         try
         {
-            EndPoint remote = CreateAnyEndPoint(_remoteEndPoint.AddressFamily, 0);
-            var received = _socket.ReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref remote);
+            var received = _socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
             return buffer.AsSpan(0, received).ToArray();
         }
         finally
         {
             ArrayPool<byte>.Shared.Return(buffer);
         }
+    }
+
+    private void MarkFixedUdpSessionTaintedIfNeeded()
+    {
+        if (_requestMayHaveBeenSent && Transport == ToyopucTransportMode.Udp && LocalPort != 0)
+            _fixedUdpSessionTainted = true;
     }
 
     private void RetryDelaySleep()

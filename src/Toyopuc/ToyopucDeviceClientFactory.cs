@@ -40,10 +40,14 @@ public static class ToyopucDeviceClientFactory
             throw new ArgumentException("LocalPort can only be specified for UDP.", nameof(options));
         if (options.Timeout is { } timeout && timeout <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(options), "Timeout must be greater than zero.");
+        if (options.Timeout is { } boundedTimeout && boundedTimeout.TotalMilliseconds > int.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(options), $"Timeout must not exceed {int.MaxValue} milliseconds.");
         if (options.Retries < 0)
             throw new ArgumentOutOfRangeException(nameof(options), "Retries must be zero or greater.");
         if (options.RetryDelay is { } retryDelay && retryDelay < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(options), "RetryDelay must be zero or greater.");
+        if (options.RetryDelay is { } boundedRetryDelay && boundedRetryDelay.TotalMilliseconds > int.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(options), $"RetryDelay must not exceed {int.MaxValue} milliseconds.");
 
         if (string.IsNullOrWhiteSpace(options.PlcProfile))
             throw new ArgumentException("PlcProfile is required.", nameof(options));

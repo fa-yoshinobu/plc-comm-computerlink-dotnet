@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### BREAKING
 - Samples: Minimal, high-level, and multi-PLC examples require explicit host, destination port, and transport; no example substitutes `1025` or TCP for missing endpoint input.
 - Library: FR work-area word values require integral values in `0..65535`; negative, overflowing, Boolean, fractional, and string values are rejected before transport instead of being coerced or masked.
+- Library: Generic bit/byte/word writes and typed U/S/D/L/F writes reject masking, Boolean/string conversion, fractional conversion, out-of-range values, and non-finite float32 values before transport.
+- Library: UDP sockets are connected to the configured PLC endpoint. A fixed-local-port UDP client becomes terminal after an uncertain post-send failure because Computerlink cannot identify stale same-endpoint responses.
+- Library: Timeout and retry-delay values exceeding the socket/runtime millisecond range are rejected during configuration.
 
 ## [3.1.0] - 2026-07-10
 

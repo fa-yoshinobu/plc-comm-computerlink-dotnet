@@ -88,7 +88,9 @@ public static class ToyopucProtocol
 
     private static void WriteU16(byte[] buffer, int offset, int value)
     {
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset, 2), unchecked((ushort)value));
+        if (value is < ushort.MinValue or > ushort.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(value), "Unsigned 16-bit value must be in the range 0..65535.");
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset, 2), (ushort)value);
     }
 
     private static byte[] MaterializeByteValues(IEnumerable<int> values)
@@ -99,7 +101,9 @@ public static class ToyopucProtocol
             var index = 0;
             foreach (var value in values)
             {
-                bytes[index++] = (byte)(value & 0xFF);
+                if (value is < byte.MinValue or > byte.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(values), "Byte values must be in the range 0..255.");
+                bytes[index++] = (byte)value;
             }
 
             return bytes;
@@ -108,7 +112,9 @@ public static class ToyopucProtocol
         var list = new List<byte>();
         foreach (var value in values)
         {
-            list.Add((byte)(value & 0xFF));
+            if (value is < byte.MinValue or > byte.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(values), "Byte values must be in the range 0..255.");
+            list.Add((byte)value);
         }
 
         return list.ToArray();
@@ -386,9 +392,11 @@ public static class ToyopucProtocol
 
     public static byte[] BuildBitWrite(int address, int value)
     {
+        if (value is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(value), "Bit value must be 0 or 1.");
         var frame = CreateCommandFrame(0x21, 3);
         WriteU16(frame, 5, address);
-        frame[7] = (byte)(value != 0 ? 1 : 0);
+        frame[7] = (byte)value;
         return frame;
     }
 
@@ -440,7 +448,9 @@ public static class ToyopucProtocol
         for (var i = 0; i < items.Length; i++)
         {
             WriteU16(frame, 5 + (i * 3), items[i].Address);
-            frame[7 + (i * 3)] = (byte)(items[i].Value & 0xFF);
+            if (items[i].Value is < byte.MinValue or > byte.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(pairs), "Byte values must be in the range 0..255.");
+            frame[7 + (i * 3)] = (byte)items[i].Value;
         }
 
         return frame;
@@ -552,18 +562,22 @@ public static class ToyopucProtocol
 
         foreach (var (number, bit, address, value) in bits)
         {
+            if (value is < 0 or > 1)
+                throw new ArgumentOutOfRangeException(nameof(bitPoints), "Bit values must be 0 or 1.");
             frame[offset++] = (byte)PackExtBitSpec(number, bit);
             WriteU16(frame, offset, address);
             offset += 2;
-            frame[offset++] = (byte)(value & 0x01);
+            frame[offset++] = (byte)value;
         }
 
         foreach (var (number, address, value) in bytes)
         {
+            if (value is < byte.MinValue or > byte.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(bytePoints), "Byte values must be in the range 0..255.");
             frame[offset++] = (byte)(number & 0xFF);
             WriteU16(frame, offset, address);
             offset += 2;
-            frame[offset++] = (byte)(value & 0xFF);
+            frame[offset++] = (byte)value;
         }
 
         foreach (var (number, address, value) in words)

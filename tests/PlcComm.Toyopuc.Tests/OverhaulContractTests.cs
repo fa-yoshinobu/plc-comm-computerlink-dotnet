@@ -37,6 +37,12 @@ public sealed class OverhaulContractTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient("127.0.0.1", 1025, ToyopucTransportMode.Tcp, timeout: TimeSpan.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient("127.0.0.1", 1025, ToyopucTransportMode.Tcp, retries: -1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient("127.0.0.1", 1025, ToyopucTransportMode.Tcp, retryDelay: TimeSpan.FromMilliseconds(-1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient(
+            "127.0.0.1", 1025, ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromMilliseconds((double)int.MaxValue + 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient(
+            "127.0.0.1", 1025, ToyopucTransportMode.Tcp,
+            retryDelay: TimeSpan.FromMilliseconds((double)int.MaxValue + 1)));
     }
 
     [Fact]
@@ -686,6 +692,95 @@ public sealed class OverhaulContractTests
         Assert.Throws<ArgumentException>(() => client.Write("B0100", Array.Empty<int>()));
         Assert.Throws<ToyopucProtocolError>(() => client.Write("U07FFF", new[] { 0x1234, 0x5678 }));
         Assert.Throws<ToyopucProtocolError>(() => client.RelayWrite("P1-L2:N2", "U07FFF", new[] { 0x1234, 0x5678 }));
+        Assert.False(client.IsOpen);
+    }
+
+    [Fact]
+    public void GenericAndProtocolWrites_RejectMaskingAndCoercionBeforeTransport()
+    {
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name);
+
+        Assert.Equal("bit", client.ResolveDevice("P1-M0000").Unit);
+        Assert.Equal("word", client.ResolveDevice("P1-D0000").Unit);
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-M0000", 2));
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-M0000", "1"));
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-D0000", -1));
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-D0000", 65536));
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-D0000", true));
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-D0000", 1.5));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildBitWrite(0, 2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildWordWrite(0, [-1]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildByteWrite(0, [256]));
+        Assert.False(client.IsOpen);
+    }
+
+    [Fact]
+    public async Task TypedWrites_RejectBooleanFractionStringRangeAndNonFiniteBeforeTransport()
+    {
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name);
+
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "U", true));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "U", 1.5));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "U", "12"));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "U", 65536));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "S", 32768));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "D", -1));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "L", (long)int.MaxValue + 1));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "F", double.PositiveInfinity));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => client.WriteTypedAsync("P1-D0000", "F", 1e40));
+        Assert.False(client.IsOpen);
+    }
+
+    [Fact]
+    public async Task TypedFloatRead_RejectsNonFinitePlcValue()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var endpoint = (IPEndPoint)listener.LocalEndpoint;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            var stream = server.GetStream();
+            var request = await ReadFrameAsync(stream);
+            Assert.Equal(0x94, request[4]);
+            await stream.WriteAsync(BuildResponse(0x94, [0x00, 0x00, 0xC0, 0x7F]));
+        });
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name);
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadTypedAsync("P1-D0000", "F"));
+        await serverTask;
+        listener.Stop();
+    }
+
+    [Fact]
+    public void FixedPortUdpSession_CannotBeReusedAfterUncertainTimeout()
+    {
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var endpoint = (IPEndPoint)server.Client.LocalEndPoint!;
+        using var reservation = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var localPort = ((IPEndPoint)reservation.Client.LocalEndPoint!).Port;
+        reservation.Dispose();
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Udp,
+            localPort: localPort,
+            timeout: TimeSpan.FromMilliseconds(50));
+
+        Assert.Throws<ToyopucTimeoutError>(() => client.ReadWords(0, 1));
+        Assert.Throws<InvalidOperationException>(() => client.Open());
         Assert.False(client.IsOpen);
     }
 

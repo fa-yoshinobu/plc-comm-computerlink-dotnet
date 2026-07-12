@@ -14,6 +14,8 @@ This is intentional. A range crossing a command group, request limit, or PC10/FR
 
 FR work-area words accept only integral values in `0..65535`. Boolean, fractional, string, negative, and overflowing values are rejected before communication rather than coerced or masked.
 
+The same no-coercion rule applies to generic writes: bits accept only Boolean or integer `0`/`1`, bytes accept `0..255`, words accept `0..65535`, and typed dword/float writes reject incompatible or non-finite values before communication.
+
 ## Relay is never inferred
 
 Both direct and relay sessions require an explicit route. Relay routes require valid hops with link `0..255` and station `1..65535`; invalid values are rejected rather than masked.
@@ -28,6 +30,8 @@ Pass an explicit century to `AsDateTime(yearBase)` and clock writes. Use a timez
 
 ## A timeout discards the transport session
 
-This prevents a late response from an expired request from being consumed as the response to a later request. A subsequent ordinary command may reconnect. Cancellation is stricter: after canceling an active operation, call `OpenAsync()` explicitly before reuse, and treat a canceled state-changing request as outcome-unknown when the library reports `ToyopucOperationOutcomeUnknownException`.
+This prevents a late response from an expired request from being consumed as the response to a later request. A subsequent ordinary command may reconnect for TCP or ephemeral-port UDP. A fixed-local-port UDP client is terminal after an uncertain post-send failure: Computerlink has no request serial that can distinguish a late response from a later request to the same endpoint. Create a new client only after late responses can no longer be present, and prefer `LocalPort = 0` unless a fixed source port is required.
+
+Cancellation is also strict: after canceling an active operation, call `OpenAsync()` explicitly before reuse, and treat a canceled state-changing request as outcome-unknown when the library reports `ToyopucOperationOutcomeUnknownException`.
 
 For shared wiring, setup, device ranges, and PLC response troubleshooting, use the Computerlink pages on the PLC Comm documentation site.
