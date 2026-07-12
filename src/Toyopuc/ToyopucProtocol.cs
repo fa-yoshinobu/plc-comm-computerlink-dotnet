@@ -72,13 +72,17 @@ public static class ToyopucProtocol
 
     private static byte[] CreateCommandFrame(int cmd, int dataLength)
     {
+        if (cmd is < byte.MinValue or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(cmd), "Command code must be in the range 0-255.");
+        if (dataLength is < 0 or > 65534)
+            throw new ArgumentOutOfRangeException(nameof(dataLength), "Command data must fit the 16-bit frame length field.");
         var frame = new byte[5 + dataLength];
         var length = 1 + dataLength;
         frame[0] = FtCommand;
         frame[1] = 0x00;
         frame[2] = (byte)(length & 0xFF);
         frame[3] = (byte)((length >> 8) & 0xFF);
-        frame[4] = (byte)(cmd & 0xFF);
+        frame[4] = (byte)cmd;
         return frame;
     }
 
@@ -110,13 +114,13 @@ public static class ToyopucProtocol
         return list.ToArray();
     }
 
-    public static byte[] BuildCommand(int cmd, byte[]? data = null)
+    internal static byte[] BuildCommand(int cmd, byte[] data)
     {
-        var payload = data ?? Array.Empty<byte>();
-        var frame = CreateCommandFrame(cmd, payload.Length);
-        if (payload.Length > 0)
+        ArgumentNullException.ThrowIfNull(data);
+        var frame = CreateCommandFrame(cmd, data.Length);
+        if (data.Length > 0)
         {
-            Buffer.BlockCopy(payload, 0, frame, 5, payload.Length);
+            Buffer.BlockCopy(data, 0, frame, 5, data.Length);
         }
 
         return frame;
@@ -619,14 +623,15 @@ public static class ToyopucProtocol
         return frame;
     }
 
-    public static byte[] BuildRelayCommand(int linkNo, int stationNo, byte[] innerPayload, int enq = 0x05)
+    public static byte[] BuildRelayCommand(int linkNo, int stationNo, byte[] innerPayload)
     {
+        var hop = ToyopucRelay.NormalizeRelayHops([(linkNo, stationNo)])[0];
         var inner = NormalizeInnerPayload(innerPayload);
         var frame = CreateCommandFrame(0x60, 5 + inner.Length);
-        frame[5] = (byte)(linkNo & 0xFF);
-        frame[6] = (byte)(stationNo & 0xFF);
-        frame[7] = (byte)((stationNo >> 8) & 0xFF);
-        frame[8] = (byte)(enq & 0xFF);
+        frame[5] = (byte)hop.LinkNo;
+        frame[6] = (byte)(hop.StationNo & 0xFF);
+        frame[7] = (byte)((hop.StationNo >> 8) & 0xFF);
+        frame[8] = 0x05;
         Buffer.BlockCopy(inner, 0, frame, 9, inner.Length);
         frame[^1] = 0x00;
         return frame;
@@ -634,15 +639,12 @@ public static class ToyopucProtocol
 
     public static byte[] BuildRelayNested(IEnumerable<(int LinkNo, int StationNo)> hops, byte[] innerPayload)
     {
-        var hopList = hops.ToArray();
-        if (hopList.Length == 0)
-        {
-            throw new ArgumentException("at least one relay hop is required", nameof(hops));
-        }
+        ArgumentNullException.ThrowIfNull(hops);
+        var hopList = ToyopucRelay.NormalizeRelayHops(hops);
 
         var inner = NormalizeInnerPayload(innerPayload);
         byte[]? frame = null;
-        for (var i = hopList.Length - 1; i >= 0; i--)
+        for (var i = hopList.Count - 1; i >= 0; i--)
         {
             frame = BuildRelayCommand(hopList[i].LinkNo, hopList[i].StationNo, inner);
             inner = FrameToInnerPayload(frame);

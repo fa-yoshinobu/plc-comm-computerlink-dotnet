@@ -81,11 +81,28 @@ public sealed record ToyopucAreaDescriptor(
     }
 }
 
-public sealed record ToyopucPlcProfile(
-    string Name,
-    string DisplayName,
-    ToyopucAddressingOptions AddressingOptions,
-    IReadOnlyList<ToyopucAreaDescriptor> Areas);
+public sealed record ToyopucPlcProfile
+{
+    internal ToyopucPlcProfile(
+        string name,
+        string displayName,
+        ToyopucAddressingOptions addressingOptions,
+        IReadOnlyList<ToyopucAreaDescriptor> areas)
+    {
+        Name = name;
+        DisplayName = displayName;
+        AddressingOptions = addressingOptions;
+        Areas = areas;
+    }
+
+    public string Name { get; }
+
+    public string DisplayName { get; }
+
+    internal ToyopucAddressingOptions AddressingOptions { get; }
+
+    public IReadOnlyList<ToyopucAreaDescriptor> Areas { get; }
+}
 
 /// <summary>Metadata used to present and select one canonical TOYOPUC PLC profile.</summary>
 public sealed record ToyopucPlcProfileDescriptor(

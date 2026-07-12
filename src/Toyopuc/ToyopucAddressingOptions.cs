@@ -1,6 +1,6 @@
 namespace PlcComm.Toyopuc;
 
-public sealed record ToyopucAddressingOptions(
+internal sealed record ToyopucAddressingOptions(
     bool UseUpperUPc10 = true,
     bool UseEbPc10 = true,
     bool UseFrPc10 = true,

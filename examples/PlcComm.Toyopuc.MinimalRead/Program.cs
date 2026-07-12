@@ -8,11 +8,19 @@ if (args.Contains("--help", StringComparer.OrdinalIgnoreCase)
     return;
 }
 
-var host = args.ElementAtOrDefault(0) ?? "192.168.250.100";
-var port = TryParseInt32(args.ElementAtOrDefault(1), 1025);
-var transport = Enum.Parse<ToyopucTransportMode>(args.ElementAtOrDefault(2) ?? "tcp", ignoreCase: true);
-var device = (args.ElementAtOrDefault(3) ?? "P1-D0000").ToUpperInvariant();
-var profileName = args.ElementAtOrDefault(4);
+if (args.Length < 5)
+{
+    Console.Error.WriteLine("host, port, transport, and device are required; profile is required explicitly.");
+    PrintUsage();
+    Environment.ExitCode = 1;
+    return;
+}
+
+var host = args[0];
+var port = ParseInt32(args[1]);
+var transport = Enum.Parse<ToyopucTransportMode>(args[2], ignoreCase: true);
+var device = args[3].ToUpperInvariant();
+var profileName = args[4];
 if (string.IsNullOrWhiteSpace(profileName))
 {
     Console.Error.WriteLine("profile is required. Specify it explicitly; no PLC profile is inferred from defaults.");
@@ -22,23 +30,22 @@ if (string.IsNullOrWhiteSpace(profileName))
 }
 
 // Resolve the profile first so invalid model strings fail before any PLC traffic starts.
-var profile = ToyopucAddressingOptions.FromProfile(profileName);
+_ = ToyopucPlcProfiles.FromName(profileName);
 
 // Create the direct client for this minimal sample.
 using var plc = new ToyopucDeviceClient(
     host,
     port,
-    transport: transport,
-    addressingOptions: profile,
-    plcProfile: profileName);
+    transport,
+    profileName);
 
 // The selected profile controls address validation for the read below.
 // The transport connection opens lazily on the first request.
 var status = plc.ReadCpuStatus();
 // Read the PLC clock after the status read proves the session is responding.
-var clock = plc.ReadClock().AsDateTime();
+var clock = plc.ReadClock().AsDateTime(2000);
 // Read one high-level device string; start with P1-D0000 before trying typed views.
-var value = plc.Read(device);
+var value = plc.ReadOne(device);
 
 Console.WriteLine($"connect    : {transport.ToString().ToLowerInvariant()}://{host}:{port}");
 Console.WriteLine($"profile    : {profileName}");
@@ -58,13 +65,8 @@ static string FormatValue(object value)
     };
 }
 
-static int TryParseInt32(string? value, int fallback)
+static int ParseInt32(string value)
 {
-    if (string.IsNullOrWhiteSpace(value))
-    {
-        return fallback;
-    }
-
     if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
     {
         return int.Parse(value[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
@@ -78,9 +80,9 @@ static void PrintUsage()
     Console.WriteLine("Toyopuc minimal read example");
     Console.WriteLine();
     Console.WriteLine("Usage:");
-    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- [host] [port] [tcp|udp] [device] <profile>");
+    Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- <host> <port> <tcp|udp> <device> <profile>");
     Console.WriteLine();
-    Console.WriteLine("Profile is required; the sample does not infer a PLC profile.");
+    Console.WriteLine("Endpoint, transport, device, and profile are required; the sample does not infer them.");
     Console.WriteLine();
     Console.WriteLine("Examples:");
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.MinimalRead -- 192.168.250.100 1025 tcp P1-D0000 \"toyopuc:plus:extended\"");

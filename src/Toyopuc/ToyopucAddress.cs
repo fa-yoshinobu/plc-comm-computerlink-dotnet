@@ -177,37 +177,27 @@ public static class ToyopucAddress
 
     /// <summary>Parses a canonical device string into a resolved device shape.</summary>
     /// <param name="text">Canonical or profile-aware device text such as <c>D0000</c>, <c>P1-D0000</c>, or <c>M0000</c>.</param>
-    /// <param name="options">Optional explicit addressing options.</param>
-    /// <param name="profile">Optional PLC profile name used to resolve profile-specific address rules.</param>
+    /// <param name="plcProfile">Required PLC profile name used to resolve profile-specific address rules.</param>
     /// <returns>The resolved device shape.</returns>
-    public static ResolvedDevice Parse(string text, ToyopucAddressingOptions? options = null, string? profile = null)
+    public static ResolvedDevice Parse(string text, string plcProfile)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
-        return ToyopucDeviceResolver.ResolveDevice(text.Trim(), options, profile);
+        return ToyopucDeviceResolver.ResolveDevice(text.Trim(), plcProfile);
     }
 
     /// <summary>Attempts to parse a canonical device string into a resolved device shape.</summary>
     /// <param name="text">Device text to parse.</param>
-    /// <param name="address">When this method returns <see langword="true"/>, receives the resolved device.</param>
-    /// <returns><see langword="true"/> when parsing succeeds; otherwise <see langword="false"/>.</returns>
-    public static bool TryParse(string text, [NotNullWhen(true)] out ResolvedDevice? address)
-        => TryParse(text, null, null, out address);
-
-    /// <summary>Attempts to parse a canonical device string into a resolved device shape.</summary>
-    /// <param name="text">Device text to parse.</param>
-    /// <param name="options">Optional explicit addressing options.</param>
-    /// <param name="profile">Optional profile name used by the resolver.</param>
+    /// <param name="plcProfile">Required profile name used by the resolver.</param>
     /// <param name="address">When this method returns <see langword="true"/>, receives the resolved device.</param>
     /// <returns><see langword="true"/> when parsing succeeds; otherwise <see langword="false"/>.</returns>
     public static bool TryParse(
         string text,
-        ToyopucAddressingOptions? options,
-        string? profile,
+        string plcProfile,
         [NotNullWhen(true)] out ResolvedDevice? address)
     {
         try
         {
-            address = Parse(text, options, profile);
+            address = Parse(text, plcProfile);
             return true;
         }
         catch (Exception ex) when (ex is ArgumentException or ToyopucProtocolError)
@@ -226,34 +216,14 @@ public static class ToyopucAddress
         return Format(address, address.Index);
     }
 
-    /// <summary>Formats a resolved device back to canonical text using an explicit PLC profile.</summary>
-    /// <param name="address">Resolved device to format.</param>
-    /// <param name="profile">Canonical PLC profile name.</param>
-    /// <returns>Canonical uppercase device text.</returns>
-    public static string Format(ResolvedDevice address, string profile)
-    {
-        ArgumentNullException.ThrowIfNull(address);
-        return Format(address, address.Index, profile);
-    }
-
     /// <summary>Formats a resolved device using an explicit index override.</summary>
     /// <param name="address">Resolved device metadata to reuse.</param>
     /// <param name="index">Explicit logical index to format.</param>
     /// <returns>Canonical uppercase device text for the supplied index.</returns>
     public static string Format(ResolvedDevice address, int index)
     {
-        return Format(address, index, profile: null);
-    }
-
-    /// <summary>Formats a resolved device using an explicit index override and PLC profile.</summary>
-    /// <param name="address">Resolved device metadata to reuse.</param>
-    /// <param name="index">Explicit logical index to format.</param>
-    /// <param name="profile">Canonical PLC profile name.</param>
-    /// <returns>Canonical uppercase device text for the supplied index.</returns>
-    public static string Format(ResolvedDevice address, int index, string? profile)
-    {
         ArgumentNullException.ThrowIfNull(address);
-        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(profile);
+        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(address.PlcProfile);
 
         if (address.Unit == "byte")
         {
@@ -275,16 +245,28 @@ public static class ToyopucAddress
 
     /// <summary>Normalizes a device string to canonical casing and width.</summary>
     /// <param name="text">Input device text in any supported spelling.</param>
-    /// <param name="options">Optional explicit addressing options.</param>
-    /// <param name="profile">Optional profile name used by the resolver.</param>
+    /// <param name="plcProfile">Required profile name used by the resolver.</param>
     /// <returns>The canonical representation returned by <see cref="Format(ResolvedDevice)"/>.</returns>
-    public static string Normalize(string text, ToyopucAddressingOptions? options = null, string? profile = null)
+    public static string Normalize(string text, string plcProfile)
     {
-        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(profile);
-        return Format(Parse(text, options, normalizedProfile), normalizedProfile);
+        return Format(Parse(text, plcProfile));
     }
 
-    public static ParsedAddress ParseAddress(string text, string unit, int radix = 16)
+    internal static string Normalize(string text, ToyopucAddressingOptions options, string plcProfile)
+    {
+        var resolved = ToyopucDeviceResolver.ResolveDeviceForMaintainer(text, options, plcProfile);
+        return Format(resolved);
+    }
+
+    internal static string Format(ResolvedDevice address, int index, string plcProfile)
+    {
+        var normalized = ToyopucPlcProfiles.NormalizeName(plcProfile);
+        if (!string.Equals(address.PlcProfile, normalized, StringComparison.Ordinal))
+            throw new ArgumentException("The supplied profile does not match the resolved device profile.", nameof(plcProfile));
+        return Format(address, index);
+    }
+
+    internal static ParsedAddress ParseAddress(string text, string unit)
     {
         var body = text.Trim().ToUpperInvariant();
         if (!AddressPattern.IsMatch(body))
@@ -292,10 +274,10 @@ public static class ToyopucAddress
             throw new ArgumentException($"Invalid address format: {text}", nameof(text));
         }
 
-        return ParseAddressBody(body, text, unit, radix, nameof(text));
+        return ParseAddressBody(body, text, unit, nameof(text));
     }
 
-    public static (int ExNo, ParsedAddress Address) ParsePrefixedAddress(string text, string unit, int radix = 16)
+    internal static (int ExNo, ParsedAddress Address) ParsePrefixedAddress(string text, string unit)
     {
         var normalized = text.Trim().ToUpperInvariant();
         var match = PrefixedAddressPattern.Match(normalized);
@@ -306,10 +288,10 @@ public static class ToyopucAddress
 
         var prefix = match.Groups["prefix"].Value;
         var body = normalized[(prefix.Length + 1)..];
-        return (ProgramExNo[prefix], ParseAddressBody(body, text, unit, radix, nameof(text)));
+        return (ProgramExNo[prefix], ParseAddressBody(body, text, unit, nameof(text)));
     }
 
-    private static ParsedAddress ParseAddressBody(string body, string originalText, string unit, int radix, string paramName)
+    private static ParsedAddress ParseAddressBody(string body, string originalText, string unit, string paramName)
     {
         var area = ResolveKnownArea(body, originalText, paramName);
         var numberAndSuffix = body[area.Length..];
@@ -330,7 +312,7 @@ public static class ToyopucAddress
         int number;
         try
         {
-            number = Convert.ToInt32(numberText, radix);
+            number = Convert.ToInt32(numberText, 16);
         }
         catch (Exception exception) when (exception is FormatException or OverflowException or ArgumentException)
         {

@@ -55,7 +55,7 @@ public static class ToyopucDeviceResolver
             ["GM"] = (0x07, 0x2000),
         };
 
-    public static ResolvedDevice ResolveDevice(string device, ToyopucAddressingOptions? options = null, string? profile = null)
+    public static ResolvedDevice ResolveDevice(string device, string profile)
     {
         if (string.IsNullOrWhiteSpace(profile))
         {
@@ -65,7 +65,30 @@ public static class ToyopucDeviceResolver
         }
 
         var normalizedProfile = ToyopucPlcProfiles.NormalizeName(profile);
-        options ??= ToyopucAddressingOptions.FromProfile(normalizedProfile);
+        var options = ToyopucAddressingOptions.FromProfile(normalizedProfile);
+        return ResolveDeviceCore(device, options, normalizedProfile) with { PlcProfile = normalizedProfile };
+    }
+
+    internal static ResolvedDevice ResolveDeviceForMaintainer(
+        string device,
+        ToyopucAddressingOptions options,
+        string plcProfile)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        var normalizedProfile = ToyopucPlcProfiles.NormalizeName(plcProfile);
+        return ResolveDeviceCore(device, options, normalizedProfile) with { PlcProfile = normalizedProfile };
+    }
+
+    internal static ResolvedDevice ResolveDevice(
+        string device,
+        ToyopucAddressingOptions options,
+        string plcProfile) => ResolveDeviceForMaintainer(device, options, plcProfile);
+
+    private static ResolvedDevice ResolveDeviceCore(
+        string device,
+        ToyopucAddressingOptions options,
+        string normalizedProfile)
+    {
         var (prefix, area, unit) = InferUnitAndArea(device);
         var text = device.Trim().ToUpperInvariant();
 

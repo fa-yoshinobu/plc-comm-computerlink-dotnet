@@ -30,11 +30,12 @@ dotnet add package PlcComm.Toyopuc
 using System;
 using PlcComm.Toyopuc;
 
-var options = new ToyopucConnectionOptions("192.168.250.100")
-{
-    Port = 1025,
-    PlcProfile = "toyopuc:plus:extended",
-};
+var options = new ToyopucConnectionOptions(
+    "192.168.250.100",
+    1025,
+    ToyopucTransportMode.Tcp,
+    "toyopuc:plus:extended",
+    ToyopucRoute.Direct);
 await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
 var value = await client.ReadTypedAsync("P1-D0000", "U");
 Console.WriteLine($"P1-D0000 = {value}");

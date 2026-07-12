@@ -6,22 +6,25 @@ namespace PlcComm.Toyopuc;
 public static class ToyopucRelay
 {
     private static readonly Regex PreferredPattern = new(
-        @"P([0-9A-Fa-f])[-:]L([0-9A-Fa-f])\s*:\s*N([0-9A-Fa-fx]+)",
+        @"^P([0-9A-Fa-f])[-:]L([0-9A-Fa-f])\s*:\s*N([0-9A-Fa-fx]+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private static readonly Regex CompactPattern = new(
-        @"([0-9A-Fa-f])[-:]([0-9A-Fa-f]):([0-9A-Fa-fx]+)",
+        @"^([0-9A-Fa-f])[-:]([0-9A-Fa-f]):([0-9A-Fa-fx]+)$",
         RegexOptions.Compiled);
 
     public static IReadOnlyList<(int LinkNo, int StationNo)> ParseRelayHops(string text)
     {
+        if (string.IsNullOrWhiteSpace(text))
+            throw new ArgumentException("at least one hop is required", nameof(text));
+
         var hops = new List<(int LinkNo, int StationNo)>();
         foreach (var part in text.Split(','))
         {
             var item = part.Trim();
             if (string.IsNullOrEmpty(item))
             {
-                continue;
+                throw new ArgumentException("empty relay hop is not allowed", nameof(text));
             }
 
             var preferred = PreferredPattern.Match(item);
@@ -30,12 +33,7 @@ public static class ToyopucRelay
                 var link = (Convert.ToInt32(preferred.Groups[1].Value, 16) << 4)
                     | Convert.ToInt32(preferred.Groups[2].Value, 16);
                 var station = ParseInteger(preferred.Groups[3].Value);
-                if (station < 1)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(text), "N number must be >= 1");
-                }
-
-                hops.Add((link, station));
+                hops.Add(ValidateHop(link, station, nameof(text)));
                 continue;
             }
 
@@ -45,7 +43,7 @@ public static class ToyopucRelay
                 var link = (Convert.ToInt32(compact.Groups[1].Value, 16) << 4)
                     | Convert.ToInt32(compact.Groups[2].Value, 16);
                 var station = ParseInteger(compact.Groups[3].Value);
-                hops.Add((link, station));
+                hops.Add(ValidateHop(link, station, nameof(text)));
                 continue;
             }
 
@@ -57,7 +55,7 @@ public static class ToyopucRelay
 
             var linkText = item[..separator];
             var stationText = item[(separator + 1)..];
-            hops.Add((ParseInteger(linkText), ParseInteger(stationText)));
+            hops.Add(ValidateHop(ParseInteger(linkText), ParseInteger(stationText), nameof(text)));
         }
 
         if (hops.Count == 0)
@@ -87,7 +85,7 @@ public static class ToyopucRelay
             var index = 0;
             foreach (var hop in hops)
             {
-                normalized[index++] = (hop.LinkNo & 0xFF, hop.StationNo & 0xFFFF);
+                normalized[index++] = ValidateHop(hop.LinkNo, hop.StationNo, nameof(hops));
             }
         }
         else
@@ -95,7 +93,7 @@ public static class ToyopucRelay
             var list = new List<(int LinkNo, int StationNo)>();
             foreach (var hop in hops)
             {
-                list.Add((hop.LinkNo & 0xFF, hop.StationNo & 0xFFFF));
+                list.Add(ValidateHop(hop.LinkNo, hop.StationNo, nameof(hops)));
             }
 
             normalized = list.ToArray();
@@ -111,6 +109,7 @@ public static class ToyopucRelay
 
     public static string FormatRelayHop(int linkNo, int stationNo)
     {
+        (linkNo, stationNo) = ValidateHop(linkNo, stationNo, nameof(linkNo));
         return $"P{(linkNo >> 4) & 0x0F:X}-L{linkNo & 0x0F:X}:N{stationNo} (0x{linkNo:X2}:0x{stationNo:X4})";
     }
 
@@ -178,5 +177,14 @@ public static class ToyopucRelay
         }
 
         return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
+    }
+
+    private static (int LinkNo, int StationNo) ValidateHop(int linkNo, int stationNo, string parameterName)
+    {
+        if (linkNo is < 0 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(parameterName, "relay link number must be in the range 0-255");
+        if (stationNo is < 1 or > ushort.MaxValue)
+            throw new ArgumentOutOfRangeException(parameterName, "relay station number must be in the range 1-65535");
+        return (linkNo, stationNo);
     }
 }

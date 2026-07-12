@@ -23,7 +23,7 @@ public ClockData(int Second, int Minute, int Hour, int Day, int Month, int Year2
 ##### AsDateTime
 
 ```csharp
-public DateTime AsDateTime(int yearBase = 2000)
+public DateTime AsDateTime(int yearBase)
 ```
 
 ##### Second
@@ -517,14 +517,14 @@ Remarks: Use this wrapper when one TOYOPUC transport session must serve multiple
 ##### QueuedToyopucDeviceClient
 
 ```csharp
-public QueuedToyopucDeviceClient(ToyopucDeviceClient client, object relayHops = null)
+public QueuedToyopucDeviceClient(ToyopucDeviceClient client, ToyopucRoute route)
 ```
 
 Initializes a new instance of the `QueuedToyopucDeviceClient` class.
 
 Parameters:
 - `client`: The underlying TOYOPUC client.
-- `relayHops`: Optional relay hop configuration.
+- `route`: Required direct or relay route.
 
 ##### OpenAsync
 
@@ -535,32 +535,6 @@ public Task OpenAsync(CancellationToken cancellationToken = default)
 Opens the connection asynchronously with exclusive access.
 
 Remarks: Relay and direct sessions both flow through this gate-protected open path.
-
-##### ExecuteAsync
-
-```csharp
-public Task<T> ExecuteAsync<T>(Func<ToyopucDeviceClient, Task<T>> operation, CancellationToken cancellationToken = default)
-```
-
-Executes an async operation with exclusive access to the wrapped client.
-
-Returns: The value returned by `operation`.
-
-Parameters:
-- `operation`: Delegate that receives the wrapped `ToyopucDeviceClient`.
-- `cancellationToken`: Cancellation token used while waiting for exclusive access.
-
-##### ExecuteAsync
-
-```csharp
-public Task ExecuteAsync(Func<ToyopucDeviceClient, Task> operation, CancellationToken cancellationToken = default)
-```
-
-Executes an async operation with exclusive access to the wrapped client.
-
-Parameters:
-- `operation`: Delegate that receives the wrapped `ToyopucDeviceClient`.
-- `cancellationToken`: Cancellation token used while waiting for exclusive access.
 
 ##### Dispose
 
@@ -578,16 +552,6 @@ public ValueTask DisposeAsync()
 
 Disposes the wrapper and the underlying client asynchronously.
 
-##### InnerClient
-
-```csharp
-public ToyopucDeviceClient InnerClient { get; }
-```
-
-Gets the wrapped low-level client.
-
-Remarks: Use `ExecuteAsync` when you need direct client access while preserving serialized execution.
-
 ##### RelayHops
 
 ```csharp
@@ -597,6 +561,14 @@ public IReadOnlyList<ValueTuple<int, int>> RelayHops { get; }
 Gets the configured relay hops, if any.
 
 Remarks: The returned sequence is already normalized to link/station tuples.
+
+##### Route
+
+```csharp
+public ToyopucRoute Route { get; }
+```
+
+Gets the explicit direct or relay route.
 
 ##### UsesRelay
 
@@ -633,10 +605,10 @@ Gets the selected transport protocol.
 ##### Timeout
 
 ```csharp
-public TimeSpan Timeout { get; set; }
+public TimeSpan Timeout { get; }
 ```
 
-Gets or sets the operation timeout.
+Gets the validated per-attempt operation timeout.
 
 ##### PlcProfile
 
@@ -645,30 +617,6 @@ public string PlcProfile { get; }
 ```
 
 Gets the normalized PLC profile name.
-
-##### AddressingOptions
-
-```csharp
-public ToyopucAddressingOptions AddressingOptions { get; }
-```
-
-Gets the addressing options used by the wrapped client.
-
-##### CaptureTraceFrames
-
-```csharp
-public bool CaptureTraceFrames { get; set; }
-```
-
-Gets or sets a value indicating whether transport trace frames are captured.
-
-##### TraceHook
-
-```csharp
-public Action<ToyopucTraceFrame> TraceHook { get; set; }
-```
-
-Gets or sets the raw trace callback.
 
 ##### IsOpen
 
@@ -814,6 +762,14 @@ public int? BitNo { get; set; }
 public int? Address32 { get; set; }
 ```
 
+##### PlcProfile
+
+```csharp
+public string PlcProfile { get; set; }
+```
+
+Gets the canonical PLC profile used to resolve this device.
+
 ### ResponseFrame
 
 ```csharp
@@ -867,7 +823,7 @@ Remarks: This type serves two audiences: Applications that need canonical addres
 ##### Parse
 
 ```csharp
-public static ResolvedDevice Parse(string text, ToyopucAddressingOptions options = null, string profile = null)
+public static ResolvedDevice Parse(string text, string plcProfile)
 ```
 
 Parses a canonical device string into a resolved device shape.
@@ -876,13 +832,12 @@ Returns: The resolved device shape.
 
 Parameters:
 - `text`: Canonical or profile-aware device text such as `D0000`, `P1-D0000`, or `M0000`.
-- `options`: Optional explicit addressing options.
-- `profile`: Optional PLC profile name used to resolve profile-specific address rules.
+- `plcProfile`: Required PLC profile name used to resolve profile-specific address rules.
 
 ##### TryParse
 
 ```csharp
-public static bool TryParse(string text, out ResolvedDevice address)
+public static bool TryParse(string text, string plcProfile, out ResolvedDevice address)
 ```
 
 Attempts to parse a canonical device string into a resolved device shape.
@@ -891,20 +846,7 @@ Returns: `true` when parsing succeeds; otherwise `false`.
 
 Parameters:
 - `text`: Device text to parse.
-- `address`: When this method returns `true`, receives the resolved device.
-
-##### TryParse
-
-```csharp
-public static bool TryParse(string text, ToyopucAddressingOptions options, string profile, out ResolvedDevice address)
-```
-
-Attempts to parse a canonical device string into a resolved device shape.
-
-Returns: `true` when parsing succeeds; otherwise `false`.
-
-Parameters:
-- `text`: Device text to parse.
+- `plcProfile`: Required profile name used by the resolver.
 - `address`: When this method returns `true`, receives the resolved device.
 
 ##### Format
@@ -923,20 +865,6 @@ Parameters:
 ##### Format
 
 ```csharp
-public static string Format(ResolvedDevice address, string profile)
-```
-
-Formats a resolved device back to canonical text using an explicit PLC profile.
-
-Returns: Canonical uppercase device text.
-
-Parameters:
-- `address`: Resolved device to format.
-- `profile`: Canonical PLC profile name.
-
-##### Format
-
-```csharp
 public static string Format(ResolvedDevice address, int index)
 ```
 
@@ -948,25 +876,10 @@ Parameters:
 - `address`: Resolved device metadata to reuse.
 - `index`: Explicit logical index to format.
 
-##### Format
-
-```csharp
-public static string Format(ResolvedDevice address, int index, string profile)
-```
-
-Formats a resolved device using an explicit index override and PLC profile.
-
-Returns: Canonical uppercase device text for the supplied index.
-
-Parameters:
-- `address`: Resolved device metadata to reuse.
-- `index`: Explicit logical index to format.
-- `profile`: Canonical PLC profile name.
-
 ##### Normalize
 
 ```csharp
-public static string Normalize(string text, ToyopucAddressingOptions options = null, string profile = null)
+public static string Normalize(string text, string plcProfile)
 ```
 
 Normalizes a device string to canonical casing and width.
@@ -975,20 +888,7 @@ Returns: The canonical representation returned by `Format`.
 
 Parameters:
 - `text`: Input device text in any supported spelling.
-- `options`: Optional explicit addressing options.
-- `profile`: Optional profile name used by the resolver.
-
-##### ParseAddress
-
-```csharp
-public static ParsedAddress ParseAddress(string text, string unit, int radix = 16)
-```
-
-##### ParsePrefixedAddress
-
-```csharp
-public static ValueTuple<int, ParsedAddress> ParsePrefixedAddress(string text, string unit, int radix = 16)
-```
+- `plcProfile`: Required profile name used by the resolver.
 
 ##### EncodeWordAddress
 
@@ -1066,128 +966,6 @@ public static int EncodeFrWordAddr32(int index)
 
 ```csharp
 public static ExtNoAddress EncodeExtNoAddress(string area, int index, string unit)
-```
-
-### ToyopucAddressingOptions
-
-```csharp
-public sealed class ToyopucAddressingOptions
-```
-
-#### Members
-
-##### ToyopucAddressingOptions
-
-```csharp
-public ToyopucAddressingOptions(bool UseUpperUPc10 = true, bool UseEbPc10 = true, bool UseFrPc10 = true, bool UseUpperBitPc10 = true, bool UseUpperMBitPc10 = true)
-```
-
-##### FromProfile
-
-```csharp
-public static ToyopucAddressingOptions FromProfile(string profile)
-```
-
-##### UseUpperUPc10
-
-```csharp
-public bool UseUpperUPc10 { get; set; }
-```
-
-##### UseEbPc10
-
-```csharp
-public bool UseEbPc10 { get; set; }
-```
-
-##### UseFrPc10
-
-```csharp
-public bool UseFrPc10 { get; set; }
-```
-
-##### UseUpperBitPc10
-
-```csharp
-public bool UseUpperBitPc10 { get; set; }
-```
-
-##### UseUpperMBitPc10
-
-```csharp
-public bool UseUpperMBitPc10 { get; set; }
-```
-
-##### Default
-
-```csharp
-public static ToyopucAddressingOptions Default { get; }
-```
-
-##### Generic
-
-```csharp
-public static ToyopucAddressingOptions Generic { get; }
-```
-
-##### ToyopucPlusStandard
-
-```csharp
-public static ToyopucAddressingOptions ToyopucPlusStandard { get; }
-```
-
-##### ToyopucPlusExtended
-
-```csharp
-public static ToyopucAddressingOptions ToyopucPlusExtended { get; }
-```
-
-##### Nano10GxMode
-
-```csharp
-public static ToyopucAddressingOptions Nano10GxMode { get; }
-```
-
-##### Nano10GxCompatible
-
-```csharp
-public static ToyopucAddressingOptions Nano10GxCompatible { get; }
-```
-
-##### Pc10GStandardPc3Jg
-
-```csharp
-public static ToyopucAddressingOptions Pc10GStandardPc3Jg { get; }
-```
-
-##### Pc10GMode
-
-```csharp
-public static ToyopucAddressingOptions Pc10GMode { get; }
-```
-
-##### Pc3JxPc3Separate
-
-```csharp
-public static ToyopucAddressingOptions Pc3JxPc3Separate { get; }
-```
-
-##### Pc3JxPlusExpansion
-
-```csharp
-public static ToyopucAddressingOptions Pc3JxPlusExpansion { get; }
-```
-
-##### Pc3JgMode
-
-```csharp
-public static ToyopucAddressingOptions Pc3JgMode { get; }
-```
-
-##### Pc3JgPc3Separate
-
-```csharp
-public static ToyopucAddressingOptions Pc3JgPc3Separate { get; }
 ```
 
 ### ToyopucAddressRange
@@ -1364,12 +1142,6 @@ public class ToyopucClient
 
 #### Members
 
-##### UdpReceiveBufferSize
-
-```csharp
-public const int UdpReceiveBufferSize
-```
-
 ##### ReadDWord
 
 ```csharp
@@ -1434,24 +1206,6 @@ public virtual Task CloseAsync(CancellationToken cancellationToken = default)
 
 ```csharp
 public virtual ValueTask DisposeAsync()
-```
-
-##### ClearTraceFramesAsync
-
-```csharp
-public Task ClearTraceFramesAsync(CancellationToken cancellationToken = default)
-```
-
-##### SendRawAsync
-
-```csharp
-public Task<ResponseFrame> SendRawAsync(int cmd, byte[] data = null, CancellationToken cancellationToken = default)
-```
-
-##### SendPayloadAsync
-
-```csharp
-public Task<ResponseFrame> SendPayloadAsync(byte[] payload, CancellationToken cancellationToken = default)
 ```
 
 ##### ReadWordsAsync
@@ -1628,58 +1382,16 @@ public Task Pc10MultiWriteAsync(byte[] payload, CancellationToken cancellationTo
 public Task<int[]> ReadFrWordsAsync(int index, int count, CancellationToken cancellationToken = default)
 ```
 
-##### WriteFrWordsAsync
+##### WriteFrWorkAreaAsync
 
 ```csharp
-public Task WriteFrWordsAsync(int index, IEnumerable<int> values, bool commit = false, CancellationToken cancellationToken = default)
-```
-
-##### WriteFrWordsExAsync
-
-```csharp
-public Task WriteFrWordsExAsync(int index, IEnumerable<int> values, bool commit = false, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
+public Task WriteFrWorkAreaAsync(int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
 ```
 
 ##### CommitFrBlockAsync
 
 ```csharp
-public Task<CpuStatusData> CommitFrBlockAsync(int index, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
-```
-
-##### CommitFrRangeAsync
-
-```csharp
-public Task<CpuStatusData> CommitFrRangeAsync(int index, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
-```
-
-##### WriteFrWordsCommittedAsync
-
-```csharp
-public Task WriteFrWordsCommittedAsync(int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
-```
-
-##### FrRegisterAsync
-
-```csharp
-public Task FrRegisterAsync(int exNo, CancellationToken cancellationToken = default)
-```
-
-##### RelayCommandAsync
-
-```csharp
-public Task<ResponseFrame> RelayCommandAsync(int linkNo, int stationNo, byte[] innerPayload, CancellationToken cancellationToken = default)
-```
-
-##### RelayNestedAsync
-
-```csharp
-public Task<ResponseFrame> RelayNestedAsync(IEnumerable<ValueTuple<int, int>> hops, byte[] innerPayload, CancellationToken cancellationToken = default)
-```
-
-##### SendViaRelayAsync
-
-```csharp
-public Task<ResponseFrame> SendViaRelayAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
+public Task CommitFrBlockAsync(int index, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayReadWordsAsync
@@ -1703,7 +1415,7 @@ public Task<ClockData> RelayReadClockAsync(object hops, CancellationToken cancel
 ##### RelayWriteClockAsync
 
 ```csharp
-public Task RelayWriteClockAsync(object hops, DateTime value, CancellationToken cancellationToken = default)
+public Task RelayWriteClockAsync(object hops, DateTime value, int yearBase, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayResumeScanAsync
@@ -1742,40 +1454,16 @@ public Task<byte[]> RelayReadCpuStatusA0RawAsync(object hops, CancellationToken 
 public Task<CpuStatusData> RelayReadCpuStatusA0Async(object hops, CancellationToken cancellationToken = default)
 ```
 
-##### RelayWriteFrWordsAsync
+##### RelayWriteFrWorkAreaAsync
 
 ```csharp
-public Task RelayWriteFrWordsAsync(object hops, int index, IEnumerable<int> values, bool commit = false, CancellationToken cancellationToken = default)
-```
-
-##### RelayWriteFrWordsExAsync
-
-```csharp
-public Task RelayWriteFrWordsExAsync(object hops, int index, IEnumerable<int> values, bool commit = false, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
-```
-
-##### RelayFrRegisterAsync
-
-```csharp
-public Task RelayFrRegisterAsync(object hops, int exNo, CancellationToken cancellationToken = default)
+public Task RelayWriteFrWorkAreaAsync(object hops, int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayCommitFrBlockAsync
 
 ```csharp
-public Task<CpuStatusData> RelayCommitFrBlockAsync(object hops, int index, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
-```
-
-##### RelayCommitFrRangeAsync
-
-```csharp
-public Task<CpuStatusData> RelayCommitFrRangeAsync(object hops, int index, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
-```
-
-##### RelayWaitFrWriteCompleteAsync
-
-```csharp
-public Task<CpuStatusData> RelayWaitFrWriteCompleteAsync(object hops, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
+public Task RelayCommitFrBlockAsync(object hops, int index, CancellationToken cancellationToken = default)
 ```
 
 ##### ReadClockAsync
@@ -1802,16 +1490,10 @@ public Task<byte[]> ReadCpuStatusA0RawAsync(CancellationToken cancellationToken 
 public Task<CpuStatusData> ReadCpuStatusA0Async(CancellationToken cancellationToken = default)
 ```
 
-##### WaitFrWriteCompleteAsync
-
-```csharp
-public Task<CpuStatusData> WaitFrWriteCompleteAsync(double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
-```
-
 ##### WriteClockAsync
 
 ```csharp
-public Task WriteClockAsync(DateTime value, CancellationToken cancellationToken = default)
+public Task WriteClockAsync(DateTime value, int yearBase, CancellationToken cancellationToken = default)
 ```
 
 ##### ResumeScanAsync
@@ -1835,7 +1517,7 @@ public Task ReleaseScanStopAsync(CancellationToken cancellationToken = default)
 ##### ToyopucClient
 
 ```csharp
-public ToyopucClient(string host, int port, int localPort = 0, ToyopucTransportMode transport = Tcp, TimeSpan timeout = default, int retries = 0, TimeSpan retryDelay = default, int recvBufsize = 65535)
+public ToyopucClient(string host, int port, ToyopucTransportMode transport, int localPort = 0, TimeSpan? timeout = null, int retries = 0, TimeSpan? retryDelay = null)
 ```
 
 ##### Open
@@ -1854,24 +1536,6 @@ public virtual void Close()
 
 ```csharp
 public void Dispose()
-```
-
-##### ClearTraceFrames
-
-```csharp
-public void ClearTraceFrames()
-```
-
-##### SendRaw
-
-```csharp
-public ResponseFrame SendRaw(int cmd, byte[] data = null)
-```
-
-##### SendPayload
-
-```csharp
-public ResponseFrame SendPayload(byte[] payload)
 ```
 
 ##### ReadWords
@@ -2000,58 +1664,16 @@ public void Pc10MultiWrite(byte[] payload)
 public int[] ReadFrWords(int index, int count)
 ```
 
-##### WriteFrWords
+##### WriteFrWorkArea
 
 ```csharp
-public void WriteFrWords(int index, IEnumerable<int> values, bool commit = false)
-```
-
-##### WriteFrWordsEx
-
-```csharp
-public void WriteFrWordsEx(int index, IEnumerable<int> values, bool commit = false, bool wait = false, double timeout = 30, double pollInterval = 0.2)
+public void WriteFrWorkArea(int index, IEnumerable<int> values)
 ```
 
 ##### CommitFrBlock
 
 ```csharp
-public CpuStatusData CommitFrBlock(int index, bool wait = false, double timeout = 30, double pollInterval = 0.2)
-```
-
-##### CommitFrRange
-
-```csharp
-public CpuStatusData CommitFrRange(int index, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2)
-```
-
-##### WriteFrWordsCommitted
-
-```csharp
-public void WriteFrWordsCommitted(int index, IEnumerable<int> values)
-```
-
-##### FrRegister
-
-```csharp
-public void FrRegister(int exNo)
-```
-
-##### RelayCommand
-
-```csharp
-public ResponseFrame RelayCommand(int linkNo, int stationNo, byte[] innerPayload)
-```
-
-##### RelayNested
-
-```csharp
-public ResponseFrame RelayNested(IEnumerable<ValueTuple<int, int>> hops, byte[] innerPayload)
-```
-
-##### SendViaRelay
-
-```csharp
-public ResponseFrame SendViaRelay(object hops, byte[] innerPayload)
+public void CommitFrBlock(int index)
 ```
 
 ##### RelayReadWords
@@ -2075,7 +1697,7 @@ public ClockData RelayReadClock(object hops)
 ##### RelayWriteClock
 
 ```csharp
-public void RelayWriteClock(object hops, DateTime value)
+public void RelayWriteClock(object hops, DateTime value, int yearBase)
 ```
 
 ##### RelayResumeScan
@@ -2114,40 +1736,16 @@ public byte[] RelayReadCpuStatusA0Raw(object hops)
 public CpuStatusData RelayReadCpuStatusA0(object hops)
 ```
 
-##### RelayWriteFrWords
+##### RelayWriteFrWorkArea
 
 ```csharp
-public void RelayWriteFrWords(object hops, int index, IEnumerable<int> values, bool commit = false)
-```
-
-##### RelayWriteFrWordsEx
-
-```csharp
-public void RelayWriteFrWordsEx(object hops, int index, IEnumerable<int> values, bool commit = false, bool wait = false, double timeout = 30, double pollInterval = 0.2)
-```
-
-##### RelayFrRegister
-
-```csharp
-public void RelayFrRegister(object hops, int exNo)
+public void RelayWriteFrWorkArea(object hops, int index, IEnumerable<int> values)
 ```
 
 ##### RelayCommitFrBlock
 
 ```csharp
-public CpuStatusData RelayCommitFrBlock(object hops, int index, bool wait = false, double timeout = 30, double pollInterval = 0.2)
-```
-
-##### RelayCommitFrRange
-
-```csharp
-public CpuStatusData RelayCommitFrRange(object hops, int index, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2)
-```
-
-##### RelayWaitFrWriteComplete
-
-```csharp
-public CpuStatusData RelayWaitFrWriteComplete(object hops, double timeout = 30, double pollInterval = 0.2)
+public void RelayCommitFrBlock(object hops, int index)
 ```
 
 ##### ReadClock
@@ -2174,16 +1772,10 @@ public byte[] ReadCpuStatusA0Raw()
 public CpuStatusData ReadCpuStatusA0()
 ```
 
-##### WaitFrWriteComplete
-
-```csharp
-public CpuStatusData WaitFrWriteComplete(double timeout = 30, double pollInterval = 0.2)
-```
-
 ##### WriteClock
 
 ```csharp
-public void WriteClock(DateTime value)
+public void WriteClock(DateTime value, int yearBase)
 ```
 
 ##### ResumeScan
@@ -2231,7 +1823,7 @@ public ToyopucTransportMode Transport { get; }
 ##### Timeout
 
 ```csharp
-public TimeSpan Timeout { get; set; }
+public TimeSpan Timeout { get; }
 ```
 
 ##### Retries
@@ -2246,28 +1838,10 @@ public int Retries { get; }
 public TimeSpan RetryDelay { get; }
 ```
 
-##### RecvBufsize
-
-```csharp
-public int RecvBufsize { get; }
-```
-
 ##### IsOpen
 
 ```csharp
 public bool IsOpen { get; }
-```
-
-##### CaptureTraceFrames
-
-```csharp
-public bool CaptureTraceFrames { get; set; }
-```
-
-##### TraceHook
-
-```csharp
-public Action<ToyopucTraceFrame> TraceHook { get; set; }
 ```
 
 ##### LastTx
@@ -2280,12 +1854,6 @@ public byte[] LastTx { get; }
 
 ```csharp
 public byte[] LastRx { get; }
-```
-
-##### TraceFrames
-
-```csharp
-public IReadOnlyList<TransportTraceFrame> TraceFrames { get; }
 ```
 
 ### ToyopucConnectionOptions
@@ -2303,7 +1871,7 @@ Remarks: This type keeps transport, profile, retry, and relay settings explicit 
 ##### ToyopucConnectionOptions
 
 ```csharp
-public ToyopucConnectionOptions(string Host)
+public ToyopucConnectionOptions(string Host, int Port, ToyopucTransportMode Transport, string PlcProfile, ToyopucRoute Route)
 ```
 
 Explicit connection options for a stable TOYOPUC device session.
@@ -2312,6 +1880,10 @@ Remarks: This type keeps transport, profile, retry, and relay settings explicit 
 
 Parameters:
 - `Host`: PLC IP address or hostname.
+- `Port`: PLC port number.
+- `Transport`: Explicit TCP or UDP transport.
+- `PlcProfile`: Required canonical PLC profile name.
+- `Route`: Explicit direct or relay route.
 
 ##### Host
 
@@ -2327,19 +1899,7 @@ PLC IP address or hostname.
 public int Port { get; set; }
 ```
 
-Gets or sets the PLC port number.
-
-Remarks: The default TOYOPUC communication port is `1025`.
-
-##### Timeout
-
-```csharp
-public TimeSpan Timeout { get; set; }
-```
-
-Gets or sets the communication timeout.
-
-Remarks: A zero value falls back to `EffectiveTimeout`.
+PLC port number.
 
 ##### Transport
 
@@ -2347,7 +1907,7 @@ Remarks: A zero value falls back to `EffectiveTimeout`.
 public ToyopucTransportMode Transport { get; set; }
 ```
 
-Gets or sets the transport protocol.
+Explicit TCP or UDP transport.
 
 ##### PlcProfile
 
@@ -2355,19 +1915,25 @@ Gets or sets the transport protocol.
 public string PlcProfile { get; set; }
 ```
 
-Gets or sets the required canonical PLC profile name.
+Required canonical PLC profile name.
 
-Remarks: Use the low-level client directly when a fully generic/manual session is required.
-
-##### RelayHops
+##### Route
 
 ```csharp
-public string RelayHops { get; set; }
+public ToyopucRoute Route { get; set; }
 ```
 
-Gets or sets the optional relay hop chain text.
+Explicit direct or relay route.
 
-Remarks: Leave this empty for direct connections; provide relay hops for routed sessions.
+##### Timeout
+
+```csharp
+public TimeSpan? Timeout { get; set; }
+```
+
+Gets or sets the communication timeout.
+
+Remarks: When omitted, each communication attempt uses three seconds.
 
 ##### LocalPort
 
@@ -2388,18 +1954,10 @@ Gets or sets the retry count for transport operations.
 ##### RetryDelay
 
 ```csharp
-public TimeSpan RetryDelay { get; set; }
+public TimeSpan? RetryDelay { get; set; }
 ```
 
 Gets or sets the retry delay.
-
-##### RecvBufsize
-
-```csharp
-public int RecvBufsize { get; set; }
-```
-
-Gets or sets the receive buffer size.
 
 ##### EffectiveTimeout
 
@@ -2512,19 +2070,7 @@ public static bool IsSupportedIndex(string area, int index, bool prefixed, strin
 ##### GetSuggestedStartAddresses
 
 ```csharp
-public static IReadOnlyList<string> GetSuggestedStartAddresses(string area, string prefix = null, string profile = null)
-```
-
-##### GetSuggestedStartAddresses
-
-```csharp
-public static IReadOnlyList<string> GetSuggestedStartAddresses(string area, ToyopucAddressingOptions options)
-```
-
-##### GetSuggestedStartAddresses
-
-```csharp
-public static IReadOnlyList<string> GetSuggestedStartAddresses(string area, string prefix, ToyopucAddressingOptions options)
+public static IReadOnlyList<string> GetSuggestedStartAddresses(string area, string prefix, string profile)
 ```
 
 ##### GetSuggestedStartAddresses
@@ -2556,13 +2102,13 @@ public void WriteDWord(object device, uint value)
 ##### ReadDWords
 
 ```csharp
-public uint[] ReadDWords(object device, int count, bool atomicTransfer = false)
+public uint[] ReadDWords(object device, int count)
 ```
 
 ##### WriteDWords
 
 ```csharp
-public void WriteDWords(object device, IEnumerable<uint> values, bool atomicTransfer = false)
+public void WriteDWords(object device, IEnumerable<uint> values)
 ```
 
 ##### ReadFloat32
@@ -2580,13 +2126,13 @@ public void WriteFloat32(object device, float value)
 ##### ReadFloat32s
 
 ```csharp
-public float[] ReadFloat32s(object device, int count, bool atomicTransfer = false)
+public float[] ReadFloat32s(object device, int count)
 ```
 
 ##### WriteFloat32s
 
 ```csharp
-public void WriteFloat32s(object device, IEnumerable<float> values, bool atomicTransfer = false)
+public void WriteFloat32s(object device, IEnumerable<float> values)
 ```
 
 ##### RelayReadDWord
@@ -2604,13 +2150,13 @@ public void RelayWriteDWord(object hops, object device, uint value)
 ##### RelayReadDWords
 
 ```csharp
-public uint[] RelayReadDWords(object hops, object device, int count, bool atomicTransfer = false)
+public uint[] RelayReadDWords(object hops, object device, int count)
 ```
 
 ##### RelayWriteDWords
 
 ```csharp
-public void RelayWriteDWords(object hops, object device, IEnumerable<uint> values, bool atomicTransfer = false)
+public void RelayWriteDWords(object hops, object device, IEnumerable<uint> values)
 ```
 
 ##### RelayReadFloat32
@@ -2628,13 +2174,13 @@ public void RelayWriteFloat32(object hops, object device, float value)
 ##### RelayReadFloat32s
 
 ```csharp
-public float[] RelayReadFloat32s(object hops, object device, int count, bool atomicTransfer = false)
+public float[] RelayReadFloat32s(object hops, object device, int count)
 ```
 
 ##### RelayWriteFloat32s
 
 ```csharp
-public void RelayWriteFloat32s(object hops, object device, IEnumerable<float> values, bool atomicTransfer = false)
+public void RelayWriteFloat32s(object hops, object device, IEnumerable<float> values)
 ```
 
 ##### ResolveDeviceAsync
@@ -2643,10 +2189,10 @@ public void RelayWriteFloat32s(object hops, object device, IEnumerable<float> va
 public Task<ResolvedDevice> ResolveDeviceAsync(string device, CancellationToken cancellationToken = default)
 ```
 
-##### RelayReadAsync
+##### RelayReadOneAsync
 
 ```csharp
-public Task<object> RelayReadAsync(object hops, object device, int count = 1, CancellationToken cancellationToken = default)
+public Task<object> RelayReadOneAsync(object hops, object device, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayWriteAsync
@@ -2658,7 +2204,7 @@ public Task RelayWriteAsync(object hops, object device, object value, Cancellati
 ##### RelayReadWordsAsync
 
 ```csharp
-public Task<object> RelayReadWordsAsync(object hops, object device, int count = 1, CancellationToken cancellationToken = default)
+public Task<object[]> RelayReadWordsAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayWriteWordsAsync
@@ -2670,7 +2216,13 @@ public Task RelayWriteWordsAsync(object hops, object device, object value, Cance
 ##### RelayReadManyAsync
 
 ```csharp
-public Task<object[]> RelayReadManyAsync(object hops, IEnumerable<object> devices, CancellationToken cancellationToken = default)
+public Task<object[]> RelayReadManyAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
+```
+
+##### RelayReadDevicesAsync
+
+```csharp
+public Task<object[]> RelayReadDevicesAsync(object hops, IEnumerable<object> devices, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayWriteManyAsync
@@ -2679,46 +2231,58 @@ public Task<object[]> RelayReadManyAsync(object hops, IEnumerable<object> device
 public Task RelayWriteManyAsync(object hops, IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
 ```
 
+##### ReadFrOneAsync
+
+```csharp
+public Task<object> ReadFrOneAsync(object device, CancellationToken cancellationToken = default)
+```
+
 ##### ReadFrAsync
 
 ```csharp
-public Task<object> ReadFrAsync(object device, int count = 1, CancellationToken cancellationToken = default)
+public Task<object[]> ReadFrAsync(object device, int count, CancellationToken cancellationToken = default)
+```
+
+##### RelayReadFrOneAsync
+
+```csharp
+public Task<object> RelayReadFrOneAsync(object hops, object device, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayReadFrAsync
 
 ```csharp
-public Task<object> RelayReadFrAsync(object hops, object device, int count = 1, CancellationToken cancellationToken = default)
+public Task<object[]> RelayReadFrAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
 ```
 
-##### WriteFrAsync
+##### WriteFrWorkAreaAsync
 
 ```csharp
-public Task WriteFrAsync(object device, object value, bool commit = false, bool? wait = null, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
+public Task WriteFrWorkAreaAsync(object device, object value, CancellationToken cancellationToken = default)
 ```
 
-##### RelayWriteFrAsync
+##### RelayWriteFrWorkAreaAsync
 
 ```csharp
-public Task RelayWriteFrAsync(object hops, object device, object value, bool commit = false, bool? wait = null, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
+public Task RelayWriteFrWorkAreaAsync(object hops, object device, object value, CancellationToken cancellationToken = default)
 ```
 
-##### CommitFrAsync
+##### CommitFrBlockAsync
 
 ```csharp
-public Task CommitFrAsync(object device, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
+public Task CommitFrBlockAsync(object device, CancellationToken cancellationToken = default)
 ```
 
-##### RelayCommitFrAsync
+##### RelayCommitFrBlockAsync
 
 ```csharp
-public Task RelayCommitFrAsync(object hops, object device, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2, CancellationToken cancellationToken = default)
+public Task RelayCommitFrBlockAsync(object hops, object device, CancellationToken cancellationToken = default)
 ```
 
-##### ReadAsync
+##### ReadOneAsync
 
 ```csharp
-public Task<object> ReadAsync(object device, int count = 1, CancellationToken cancellationToken = default)
+public Task<object> ReadOneAsync(object device, CancellationToken cancellationToken = default)
 ```
 
 ##### WriteAsync
@@ -2730,7 +2294,13 @@ public Task WriteAsync(object device, object value, CancellationToken cancellati
 ##### ReadManyAsync
 
 ```csharp
-public Task<object[]> ReadManyAsync(IEnumerable<object> devices, CancellationToken cancellationToken = default)
+public Task<object[]> ReadManyAsync(object device, int count, CancellationToken cancellationToken = default)
+```
+
+##### ReadDevicesAsync
+
+```csharp
+public Task<object[]> ReadDevicesAsync(IEnumerable<object> devices, CancellationToken cancellationToken = default)
 ```
 
 ##### WriteManyAsync
@@ -2754,13 +2324,13 @@ public Task WriteDWordAsync(object device, uint value, CancellationToken cancell
 ##### ReadDWordsAsync
 
 ```csharp
-public Task<uint[]> ReadDWordsAsync(object device, int count, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task<uint[]> ReadDWordsAsync(object device, int count, CancellationToken cancellationToken = default)
 ```
 
 ##### WriteDWordsAsync
 
 ```csharp
-public Task WriteDWordsAsync(object device, IEnumerable<uint> values, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task WriteDWordsAsync(object device, IEnumerable<uint> values, CancellationToken cancellationToken = default)
 ```
 
 ##### ReadFloat32Async
@@ -2778,13 +2348,13 @@ public Task WriteFloat32Async(object device, float value, CancellationToken canc
 ##### ReadFloat32sAsync
 
 ```csharp
-public Task<float[]> ReadFloat32sAsync(object device, int count, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task<float[]> ReadFloat32sAsync(object device, int count, CancellationToken cancellationToken = default)
 ```
 
 ##### WriteFloat32sAsync
 
 ```csharp
-public Task WriteFloat32sAsync(object device, IEnumerable<float> values, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task WriteFloat32sAsync(object device, IEnumerable<float> values, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayReadDWordAsync
@@ -2802,13 +2372,13 @@ public Task RelayWriteDWordAsync(object hops, object device, uint value, Cancell
 ##### RelayReadDWordsAsync
 
 ```csharp
-public Task<uint[]> RelayReadDWordsAsync(object hops, object device, int count, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task<uint[]> RelayReadDWordsAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayWriteDWordsAsync
 
 ```csharp
-public Task RelayWriteDWordsAsync(object hops, object device, IEnumerable<uint> values, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task RelayWriteDWordsAsync(object hops, object device, IEnumerable<uint> values, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayReadFloat32Async
@@ -2826,19 +2396,19 @@ public Task RelayWriteFloat32Async(object hops, object device, float value, Canc
 ##### RelayReadFloat32sAsync
 
 ```csharp
-public Task<float[]> RelayReadFloat32sAsync(object hops, object device, int count, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task<float[]> RelayReadFloat32sAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
 ```
 
 ##### RelayWriteFloat32sAsync
 
 ```csharp
-public Task RelayWriteFloat32sAsync(object hops, object device, IEnumerable<float> values, bool atomicTransfer = false, CancellationToken cancellationToken = default)
+public Task RelayWriteFloat32sAsync(object hops, object device, IEnumerable<float> values, CancellationToken cancellationToken = default)
 ```
 
 ##### ToyopucDeviceClient
 
 ```csharp
-public ToyopucDeviceClient(string host, int port, int localPort = 0, ToyopucTransportMode transport = Tcp, TimeSpan timeout = default, int retries = 0, TimeSpan retryDelay = default, int recvBufsize = 65535, ToyopucAddressingOptions addressingOptions = null, string plcProfile = null)
+public ToyopucDeviceClient(string host, int port, ToyopucTransportMode transport, string plcProfile, int localPort = 0, TimeSpan? timeout = null, int retries = 0, TimeSpan? retryDelay = null)
 ```
 
 ##### ResolveDevice
@@ -2847,10 +2417,10 @@ public ToyopucDeviceClient(string host, int port, int localPort = 0, ToyopucTran
 public ResolvedDevice ResolveDevice(string device)
 ```
 
-##### RelayRead
+##### RelayReadOne
 
 ```csharp
-public object RelayRead(object hops, object device, int count = 1)
+public object RelayReadOne(object hops, object device)
 ```
 
 ##### RelayWrite
@@ -2862,7 +2432,7 @@ public void RelayWrite(object hops, object device, object value)
 ##### RelayReadWords
 
 ```csharp
-public object RelayReadWords(object hops, object device, int count = 1)
+public object[] RelayReadWords(object hops, object device, int count)
 ```
 
 ##### RelayWriteWords
@@ -2874,7 +2444,13 @@ public void RelayWriteWords(object hops, object device, object value)
 ##### RelayReadMany
 
 ```csharp
-public object[] RelayReadMany(object hops, IEnumerable<object> devices)
+public object[] RelayReadMany(object hops, object device, int count)
+```
+
+##### RelayReadDevices
+
+```csharp
+public object[] RelayReadDevices(object hops, IEnumerable<object> devices)
 ```
 
 ##### RelayWriteMany
@@ -2883,46 +2459,58 @@ public object[] RelayReadMany(object hops, IEnumerable<object> devices)
 public void RelayWriteMany(object hops, IEnumerable<KeyValuePair<object, object>> items)
 ```
 
+##### ReadFrOne
+
+```csharp
+public object ReadFrOne(object device)
+```
+
 ##### ReadFr
 
 ```csharp
-public object ReadFr(object device, int count = 1)
+public object[] ReadFr(object device, int count)
+```
+
+##### RelayReadFrOne
+
+```csharp
+public object RelayReadFrOne(object hops, object device)
 ```
 
 ##### RelayReadFr
 
 ```csharp
-public object RelayReadFr(object hops, object device, int count = 1)
+public object[] RelayReadFr(object hops, object device, int count)
 ```
 
-##### WriteFr
+##### WriteFrWorkArea
 
 ```csharp
-public void WriteFr(object device, object value, bool commit = false, bool? wait = null, double timeout = 30, double pollInterval = 0.2)
+public void WriteFrWorkArea(object device, object value)
 ```
 
-##### RelayWriteFr
+##### RelayWriteFrWorkArea
 
 ```csharp
-public void RelayWriteFr(object hops, object device, object value, bool commit = false, bool? wait = null, double timeout = 30, double pollInterval = 0.2)
+public void RelayWriteFrWorkArea(object hops, object device, object value)
 ```
 
-##### CommitFr
+##### CommitFrBlock
 
 ```csharp
-public void CommitFr(object device, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2)
+public void CommitFrBlock(object device)
 ```
 
-##### RelayCommitFr
+##### RelayCommitFrBlock
 
 ```csharp
-public void RelayCommitFr(object hops, object device, int count = 1, bool wait = false, double timeout = 30, double pollInterval = 0.2)
+public void RelayCommitFrBlock(object hops, object device)
 ```
 
-##### Read
+##### ReadOne
 
 ```csharp
-public object Read(object device, int count = 1)
+public object ReadOne(object device)
 ```
 
 ##### Write
@@ -2934,19 +2522,19 @@ public void Write(object device, object value)
 ##### ReadMany
 
 ```csharp
-public object[] ReadMany(IEnumerable<object> devices)
+public object[] ReadMany(object device, int count)
+```
+
+##### ReadDevices
+
+```csharp
+public object[] ReadDevices(IEnumerable<object> devices)
 ```
 
 ##### WriteMany
 
 ```csharp
 public void WriteMany(IEnumerable<KeyValuePair<object, object>> items)
-```
-
-##### AddressingOptions
-
-```csharp
-public ToyopucAddressingOptions AddressingOptions { get; }
 ```
 
 ##### PlcProfile
@@ -2962,6 +2550,72 @@ public static class ToyopucDeviceClientExtensions
 ```
 
 #### Members
+
+##### ReadOneAsync
+
+```csharp
+public static Task<object> ReadOneAsync(QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
+```
+
+##### ReadManyAsync
+
+```csharp
+public static Task<object[]> ReadManyAsync(QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
+```
+
+##### ReadDevicesAsync
+
+```csharp
+public static Task<object[]> ReadDevicesAsync(QueuedToyopucDeviceClient client, IEnumerable<object> devices, CancellationToken ct = default)
+```
+
+##### WriteAsync
+
+```csharp
+public static Task WriteAsync(QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
+```
+
+##### WriteManyAsync
+
+```csharp
+public static Task WriteManyAsync(QueuedToyopucDeviceClient client, IEnumerable<KeyValuePair<object, object>> items, CancellationToken ct = default)
+```
+
+##### ReadFrOneAsync
+
+```csharp
+public static Task<object> ReadFrOneAsync(QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
+```
+
+##### ReadFrAsync
+
+```csharp
+public static Task<object[]> ReadFrAsync(QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
+```
+
+##### WriteFrWorkAreaAsync
+
+```csharp
+public static Task WriteFrWorkAreaAsync(QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
+```
+
+##### CommitFrBlockAsync
+
+```csharp
+public static Task CommitFrBlockAsync(QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
+```
+
+##### ReadClockAsync
+
+```csharp
+public static Task<ClockData> ReadClockAsync(QueuedToyopucDeviceClient client, CancellationToken ct = default)
+```
+
+##### WriteClockAsync
+
+```csharp
+public static Task WriteClockAsync(QueuedToyopucDeviceClient client, DateTime value, int yearBase, CancellationToken ct = default)
+```
 
 ##### ReadTypedAsync
 
@@ -3047,112 +2701,28 @@ public static Task<uint[]> ReadDWordsAsync(ToyopucDeviceClient client, string de
 public static Task<uint[]> ReadDWordsAsync(QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
 ```
 
-##### ReadWordsSingleRequestAsync
+##### WriteWordsAsync
 
 ```csharp
-public static Task<ushort[]> ReadWordsSingleRequestAsync(ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+public static Task WriteWordsAsync(ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
 ```
 
-##### ReadWordsSingleRequestAsync
+##### WriteWordsAsync
 
 ```csharp
-public static Task<ushort[]> ReadWordsSingleRequestAsync(QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+public static Task WriteWordsAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
 ```
 
-##### ReadDWordsSingleRequestAsync
+##### WriteDWordsAsync
 
 ```csharp
-public static Task<uint[]> ReadDWordsSingleRequestAsync(ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+public static Task WriteDWordsAsync(ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
 ```
 
-##### ReadDWordsSingleRequestAsync
+##### WriteDWordsAsync
 
 ```csharp
-public static Task<uint[]> ReadDWordsSingleRequestAsync(QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-```
-
-##### WriteWordsSingleRequestAsync
-
-```csharp
-public static Task WriteWordsSingleRequestAsync(ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
-```
-
-##### WriteWordsSingleRequestAsync
-
-```csharp
-public static Task WriteWordsSingleRequestAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
-```
-
-##### WriteDWordsSingleRequestAsync
-
-```csharp
-public static Task WriteDWordsSingleRequestAsync(ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
-```
-
-##### WriteDWordsSingleRequestAsync
-
-```csharp
-public static Task WriteDWordsSingleRequestAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
-```
-
-##### ReadWordsChunkedAsync
-
-```csharp
-public static Task<ushort[]> ReadWordsChunkedAsync(ToyopucDeviceClient client, string device, int count, int maxWordsPerRequest, CancellationToken ct = default)
-```
-
-##### ReadWordsChunkedAsync
-
-```csharp
-public static Task<ushort[]> ReadWordsChunkedAsync(QueuedToyopucDeviceClient client, string device, int count, int maxWordsPerRequest, CancellationToken ct = default)
-```
-
-##### ReadDWordsChunkedAsync
-
-```csharp
-public static Task<uint[]> ReadDWordsChunkedAsync(ToyopucDeviceClient client, string device, int count, int maxDwordsPerRequest, CancellationToken ct = default)
-```
-
-##### ReadDWordsChunkedAsync
-
-```csharp
-public static Task<uint[]> ReadDWordsChunkedAsync(QueuedToyopucDeviceClient client, string device, int count, int maxDwordsPerRequest, CancellationToken ct = default)
-```
-
-##### WriteWordsChunkedAsync
-
-```csharp
-public static Task WriteWordsChunkedAsync(ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, int maxWordsPerRequest, CancellationToken ct = default)
-```
-
-##### WriteWordsChunkedAsync
-
-```csharp
-public static Task WriteWordsChunkedAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, int maxWordsPerRequest, CancellationToken ct = default)
-```
-
-##### WriteDWordsChunkedAsync
-
-```csharp
-public static Task WriteDWordsChunkedAsync(ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, int maxDwordsPerRequest, CancellationToken ct = default)
-```
-
-##### WriteDWordsChunkedAsync
-
-```csharp
-public static Task WriteDWordsChunkedAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, int maxDwordsPerRequest, CancellationToken ct = default)
-```
-
-##### OpenAndConnectAsync
-
-```csharp
-public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(ToyopucConnectionOptions options, CancellationToken ct = default)
-```
-
-##### OpenAndConnectAsync
-
-```csharp
-public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(string host, string plcProfile, int port = 1025, CancellationToken ct = default)
+public static Task WriteDWordsAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
 ```
 
 ### ToyopucDeviceClientFactory
@@ -3175,7 +2745,7 @@ public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(ToyopucConnect
 
 Creates, configures, and opens a queued TOYOPUC client.
 
-Remarks: When `RelayHops` is supplied, the returned queued client keeps the normalized relay chain available through `RelayHops`.
+Remarks: The returned queued client keeps the required direct or relay route for every operation.
 
 Returns: A connected queued client.
 
@@ -3194,7 +2764,7 @@ public static class ToyopucDeviceResolver
 ##### ResolveDevice
 
 ```csharp
-public static ResolvedDevice ResolveDevice(string device, ToyopucAddressingOptions options = null, string profile = null)
+public static ResolvedDevice ResolveDevice(string device, string profile)
 ```
 
 ### ToyopucError
@@ -3223,6 +2793,22 @@ public ToyopucError(string message)
 public ToyopucError(string message, Exception innerException)
 ```
 
+### ToyopucOperationOutcomeUnknownException
+
+```csharp
+public sealed class ToyopucOperationOutcomeUnknownException
+```
+
+Indicates that cancellation or transport loss occurred after a state-changing request may have been sent.
+
+#### Members
+
+##### ToyopucOperationOutcomeUnknownException
+
+```csharp
+public ToyopucOperationOutcomeUnknownException(string message, Exception innerException)
+```
+
 ### ToyopucPlcProfile
 
 ```csharp
@@ -3231,34 +2817,22 @@ public sealed class ToyopucPlcProfile
 
 #### Members
 
-##### ToyopucPlcProfile
-
-```csharp
-public ToyopucPlcProfile(string Name, string DisplayName, ToyopucAddressingOptions AddressingOptions, IReadOnlyList<ToyopucAreaDescriptor> Areas)
-```
-
 ##### Name
 
 ```csharp
-public string Name { get; set; }
+public string Name { get; }
 ```
 
 ##### DisplayName
 
 ```csharp
-public string DisplayName { get; set; }
-```
-
-##### AddressingOptions
-
-```csharp
-public ToyopucAddressingOptions AddressingOptions { get; set; }
+public string DisplayName { get; }
 ```
 
 ##### Areas
 
 ```csharp
-public IReadOnlyList<ToyopucAreaDescriptor> Areas { get; set; }
+public IReadOnlyList<ToyopucAreaDescriptor> Areas { get; }
 ```
 
 ### ToyopucPlcProfileDescriptor
@@ -3427,12 +3001,6 @@ public const byte FtCommand
 
 ```csharp
 public const byte FtResponse
-```
-
-##### BuildCommand
-
-```csharp
-public static byte[] BuildCommand(int cmd, byte[] data = null)
 ```
 
 ##### ParseResponse
@@ -3666,7 +3234,7 @@ public static byte[] BuildFrRegister(int exNo)
 ##### BuildRelayCommand
 
 ```csharp
-public static byte[] BuildRelayCommand(int linkNo, int stationNo, byte[] innerPayload, int enq = 5)
+public static byte[] BuildRelayCommand(int linkNo, int stationNo, byte[] innerPayload)
 ```
 
 ##### BuildRelayNested
@@ -3745,6 +3313,53 @@ public static ValueTuple<ResponseFrame, byte[]> ParseRelayInnerResponse(byte[] i
 public static ValueTuple<IReadOnlyList<RelayLayer>, ResponseFrame> UnwrapRelayResponseChain(ResponseFrame response)
 ```
 
+### ToyopucRoute
+
+```csharp
+public sealed class ToyopucRoute
+```
+
+Selects the direct or relay route used by a high-level TOYOPUC session.
+
+#### Members
+
+##### Relay
+
+```csharp
+public static ToyopucRoute Relay(object hops)
+```
+
+Creates an explicit relay route with one or more validated hops.
+
+Returns: A validated relay route.
+
+Parameters:
+- `hops`: Relay text or link/station tuples.
+
+##### Direct
+
+```csharp
+public static ToyopucRoute Direct { get; }
+```
+
+Gets the explicit direct route.
+
+##### UsesRelay
+
+```csharp
+public bool UsesRelay { get; }
+```
+
+Gets a value indicating whether this is a relay route.
+
+##### RelayHops
+
+```csharp
+public IReadOnlyList<ValueTuple<int, int>> RelayHops { get; }
+```
+
+Gets the validated relay hops, or `null` for a direct route.
+
 ### ToyopucTimeoutError
 
 ```csharp
@@ -3771,58 +3386,6 @@ public ToyopucTimeoutError(string message)
 public ToyopucTimeoutError(string message, Exception innerException)
 ```
 
-### ToyopucTraceDirection
-
-```csharp
-public enum ToyopucTraceDirection
-```
-
-#### Members
-
-##### Send
-
-```csharp
-public const ToyopucTraceDirection Send
-```
-
-##### Receive
-
-```csharp
-public const ToyopucTraceDirection Receive
-```
-
-### ToyopucTraceFrame
-
-```csharp
-public sealed class ToyopucTraceFrame
-```
-
-#### Members
-
-##### ToyopucTraceFrame
-
-```csharp
-public ToyopucTraceFrame(ToyopucTraceDirection Direction, byte[] Data, DateTime Timestamp)
-```
-
-##### Direction
-
-```csharp
-public ToyopucTraceDirection Direction { get; set; }
-```
-
-##### Data
-
-```csharp
-public byte[] Data { get; set; }
-```
-
-##### Timestamp
-
-```csharp
-public DateTime Timestamp { get; set; }
-```
-
 ### ToyopucTransportMode
 
 ```csharp
@@ -3830,6 +3393,12 @@ public enum ToyopucTransportMode
 ```
 
 #### Members
+
+##### Unspecified
+
+```csharp
+public const ToyopucTransportMode Unspecified
+```
 
 ##### Tcp
 
@@ -3841,30 +3410,4 @@ public const ToyopucTransportMode Tcp
 
 ```csharp
 public const ToyopucTransportMode Udp
-```
-
-### TransportTraceFrame
-
-```csharp
-public sealed class TransportTraceFrame
-```
-
-#### Members
-
-##### TransportTraceFrame
-
-```csharp
-public TransportTraceFrame(byte[] Tx, byte[] Rx)
-```
-
-##### Tx
-
-```csharp
-public byte[] Tx { get; set; }
-```
-
-##### Rx
-
-```csharp
-public byte[] Rx { get; set; }
 ```

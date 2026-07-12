@@ -66,7 +66,7 @@ try
         var clock = string.IsNullOrWhiteSpace(options.Hops)
             ? plc.ReadClock()
             : plc.RelayReadClock(options.Hops);
-        logger.Info($"clock   : {clock.AsDateTime():yyyy-MM-dd HH:mm:ss}");
+        logger.Info($"clock   : {clock.AsDateTime(2000):yyyy-MM-dd HH:mm:ss}");
         DumpFrames(logger, plc, options, "clock-read");
     }
 
@@ -185,7 +185,8 @@ try
             if (string.IsNullOrWhiteSpace(options.Hops))
             {
                 PrepareTrace(plc);
-                plc.WriteFr(options.FrDevice, options.FrWriteValue.Value, commit: options.FrCommit);
+                plc.WriteFrWorkArea(options.FrDevice, options.FrWriteValue.Value);
+                if (options.FrCommit) plc.CommitFrBlock(options.FrDevice);
                 logger.Info($"fr-write: {options.FrDevice} <= {FormatValue(options.FrWriteValue.Value)} commit={options.FrCommit}");
                 DumpFrames(logger, plc, options, $"fr-write {options.FrDevice}");
 
@@ -198,7 +199,8 @@ try
                 if (options.RestoreAfterWrite)
                 {
                     PrepareTrace(plc);
-                    plc.WriteFr(options.FrDevice, frBefore, commit: options.FrCommit);
+                    plc.WriteFrWorkArea(options.FrDevice, frBefore);
+                    if (options.FrCommit) plc.CommitFrBlock(options.FrDevice);
                     logger.Info($"fr-restore: {options.FrDevice} <= {FormatValue(frBefore)} commit={options.FrCommit}");
                     DumpFrames(logger, plc, options, $"fr-restore {options.FrDevice}");
 
@@ -212,7 +214,8 @@ try
             else
             {
                 PrepareTrace(plc);
-                plc.RelayWriteFr(options.Hops, options.FrDevice, options.FrWriteValue.Value, commit: options.FrCommit);
+                plc.RelayWriteFrWorkArea(options.Hops, options.FrDevice, options.FrWriteValue.Value);
+                if (options.FrCommit) plc.RelayCommitFrBlock(options.Hops, options.FrDevice);
                 logger.Info($"fr-write: {options.FrDevice} <= {FormatValue(options.FrWriteValue.Value)} commit={options.FrCommit}");
                 DumpFrames(logger, plc, options, $"relay-fr-write {options.FrDevice}");
 
@@ -225,7 +228,8 @@ try
                 if (options.RestoreAfterWrite)
                 {
                     PrepareTrace(plc);
-                    plc.RelayWriteFr(options.Hops, options.FrDevice, frBefore, commit: options.FrCommit);
+                    plc.RelayWriteFrWorkArea(options.Hops, options.FrDevice, frBefore);
+                    if (options.FrCommit) plc.RelayCommitFrBlock(options.Hops, options.FrDevice);
                     logger.Info($"fr-restore: {options.FrDevice} <= {FormatValue(frBefore)} commit={options.FrCommit}");
                     DumpFrames(logger, plc, options, $"relay-fr-restore {options.FrDevice}");
 
@@ -748,17 +752,23 @@ static int RunFrRangeWrite(SmokeLogger logger, ToyopucDeviceClient plc, SmokeTes
                 var chunkDevice = $"FR{writeChunk.StartIndex:X6}";
                 var chunkValues = BuildFrPatternBlock(writeChunk.StartIndex, writeChunk.WordCount, options.FrRangePattern, options.FrRangeSeed);
                 PrepareTrace(plc);
-                plc.RelayWriteFr(options.Hops, chunkDevice, chunkValues, commit: false, wait: false);
+                plc.RelayWriteFrWorkArea(options.Hops, chunkDevice, chunkValues);
             }
 
             PrepareTrace(plc);
-            plc.RelayCommitFr(options.Hops, device, wait: true);
+            plc.RelayCommitFrBlock(options.Hops, device);
         }
         else
         {
-            var values = BuildFrPatternBlock(segment.StartIndex, segment.WordCount, options.FrRangePattern, options.FrRangeSeed);
-            PrepareTrace(plc);
-            plc.WriteFr(device, values, commit: true);
+            foreach (var writeChunk in EnumerateFrSegments(segment.StartIndex, segment.WordCount, writeChunkWords))
+            {
+                var chunkDevice = $"FR{writeChunk.StartIndex:X6}";
+                var chunkValues = BuildFrPatternBlock(writeChunk.StartIndex, writeChunk.WordCount, options.FrRangePattern, options.FrRangeSeed);
+                PrepareTrace(plc);
+                plc.WriteFrWorkArea(chunkDevice, chunkValues);
+            }
+
+            plc.CommitFrBlock(device);
         }
 
         logger.Info($"fr-write-block: {i + 1}/{segments.Length} {device} words=0x{segment.WordCount:X}");
@@ -1141,7 +1151,7 @@ static IReadOnlyList<SuiteProbe> BuildGeneratedSuiteProbes(string profile)
             return;
         }
 
-        if (!CanResolveSuiteDevice(device, options))
+        if (!CanResolveSuiteDevice(device, profile))
         {
             return;
         }
@@ -1168,11 +1178,11 @@ static string FormatSuiteDevice(ToyopucAreaDescriptor descriptor, string? prefix
     return prefix is null ? body : $"{prefix}-{body}";
 }
 
-static bool CanResolveSuiteDevice(string device, ToyopucAddressingOptions options)
+static bool CanResolveSuiteDevice(string device, string profile)
 {
     try
     {
-        _ = ToyopucDeviceResolver.ResolveDevice(device, options);
+        _ = ToyopucDeviceResolver.ResolveDevice(device, profile);
         return true;
     }
     catch

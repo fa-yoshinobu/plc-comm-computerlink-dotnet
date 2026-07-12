@@ -478,18 +478,13 @@ internal static class Program
 
     private static (int Word, int Low, int High) ReadPacked(ToyopucDeviceClient client, ProbeCase probeCase)
     {
-        var values = client.ReadMany(new object[] { probeCase.WordDevice, probeCase.LowDevice, probeCase.HighDevice });
+        var values = client.ReadDevices(new object[] { probeCase.WordDevice, probeCase.LowDevice, probeCase.HighDevice });
         return (ToInt32(values[0]), ToInt32(values[1]), ToInt32(values[2]));
     }
 
     private static bool[] ReadBits(ToyopucDeviceClient client, string bitDevice)
     {
-        var values = client.Read(bitDevice, 16);
-        return values switch
-        {
-            object[] items => items.Select(ToBool).ToArray(),
-            _ => throw new InvalidOperationException($"Unexpected bit read result type for {bitDevice}: {values.GetType().FullName}"),
-        };
+        return client.ReadMany(bitDevice, 16).Select(ToBool).ToArray();
     }
 
     private static bool[] ToBitValues(int pattern)
