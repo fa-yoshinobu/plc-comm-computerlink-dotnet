@@ -118,15 +118,16 @@ Breaking impact: negative values are rejected rather than coerced.
 
 Acceptance criteria: omitted/zero/positive/negative values and cancellation during delay are verified.
 
-- [x] Implementation completed, including cancellation-aware async retry wait.
+- [x] Implementation completed: after cancellation is observed, both async execution paths close the active session and require explicit reconnect before returning the cancellation result.
 - [x] Cancellation-during-delay test verifies that cancellation stops the delay and prevents a second request.
-- [x] Current automated checks passed.
-- [x] Codex self-review completed for delay validation and cancellation behavior.
+- [x] Current automated checks passed: the strengthened focused test passed once plus 30 consecutive .NET 8 runs, followed by the complete release check on 2026-07-13.
+- [x] Codex self-review completed for delay validation, cancellation cleanup, retry send count, explicit reconnect state, exception classification, and unchanged public API.
 - [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [ ] Claude delta review of the 2026-07-13 cancellation cleanup is pending user authorization.
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; retry-delay validation and cancellation/no-second-send behavior are deterministic state-machine properties).
 - [x] Documentation/API reference agree.
-- [x] Final acceptance verified.
+- [ ] Final acceptance pending Claude delta review and the pushed GitHub CI result.
 
 ## D-071 — Receive buffer setting removed
 
@@ -390,15 +391,16 @@ Breaking impact: canceled write-like operations can now return `ToyopucOperation
 
 Acceptance criteria: omitted token with timeout, pre-cancel, gate wait, connect/send/receive cancel, no background retry/delay, post-send unknown result, closed state, explicit reconnect.
 
-- [x] Core implementation completed, including cancellation-aware retry delay and explicit reconnect state.
+- [x] Core implementation completed: the cancellation catch path independently enforces close and explicit reconnect state instead of relying only on callback timing.
 - [x] Pre-cancel, gate isolation, pending-connect, blocked-send, receive cancellation, retry-delay/no-second-send, post-send unknown result, worker completion, closed state, implicit-reconnect rejection, explicit reconnect, and token-omitted timeout tests pass.
-- [x] Current automated checks passed.
-- [x] Codex self-review completed for gate ownership, worker completion, retry delay, unknown outcome, and reconnect state.
+- [x] Current automated checks passed: the regression now verifies no second send, closed state, and rejection before explicit reconnect; focused repetition and the complete release check passed.
+- [x] Codex self-review completed for gate ownership, worker completion, retry delay, unknown outcome, close idempotence, and explicit reconnect state.
 - [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
+- [ ] Claude delta review of the 2026-07-13 cancellation cleanup is pending user authorization.
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
 - [x] Live/release disposition recorded (no live PLC required; cancellation ownership, worker completion, unknown-outcome classification, closed state, and explicit reconnect use controlled transports).
 - [x] Documentation/API reference agree.
-- [x] Final acceptance verified.
+- [ ] Final acceptance pending Claude delta review and the pushed GitHub CI result.
 
 ## D-086 — Ambiguous connection convenience overload removed
 

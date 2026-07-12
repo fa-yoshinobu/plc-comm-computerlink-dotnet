@@ -390,6 +390,7 @@ public sealed class OverhaulContractTests
         await serverTask;
         Assert.Equal(1, Volatile.Read(ref requestCount));
         Assert.False(client.IsOpen);
+        Assert.Throws<InvalidOperationException>(() => client.ReadWords(0x2000, 1));
     }
 
     [Fact]
