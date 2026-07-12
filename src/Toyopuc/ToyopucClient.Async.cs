@@ -5,7 +5,7 @@ namespace PlcComm.Toyopuc;
 
 public partial class ToyopucClient
 {
-    private readonly ConcurrentExclusiveSchedulerPair _asyncSchedulerPair = new(TaskScheduler.Default, maxConcurrencyLevel: 1);
+    private readonly SemaphoreSlim _asyncGate = new(1, 1);
 
     public uint ReadDWord(int address)
     {
@@ -74,21 +74,16 @@ public partial class ToyopucClient
         return ValueTask.CompletedTask;
     }
 
-    public Task ClearTraceFramesAsync(CancellationToken cancellationToken = default)
+    internal Task ClearTraceFramesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ClearTraceFrames();
         return Task.CompletedTask;
     }
 
-    public Task<ResponseFrame> SendRawAsync(int cmd, byte[]? data = null, CancellationToken cancellationToken = default)
+    internal Task<ResponseFrame> SendRawAsync(int cmd, byte[] data, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => SendRaw(cmd, data), cancellationToken);
-    }
-
-    public Task<ResponseFrame> SendPayloadAsync(byte[] payload, CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => SendPayload(payload), cancellationToken);
+        return RunStateChangingAsync(() => SendRaw(cmd, data), cancellationToken);
     }
 
     public Task<int[]> ReadWordsAsync(int address, int count, CancellationToken cancellationToken = default)
@@ -98,7 +93,7 @@ public partial class ToyopucClient
 
     public Task WriteWordsAsync(int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteWords(address, values), cancellationToken);
+        return RunStateChangingAsync(() => WriteWords(address, values), cancellationToken);
     }
 
     public Task<byte[]> ReadBytesAsync(int address, int count, CancellationToken cancellationToken = default)
@@ -108,7 +103,7 @@ public partial class ToyopucClient
 
     public Task WriteBytesAsync(int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteBytes(address, values), cancellationToken);
+        return RunStateChangingAsync(() => WriteBytes(address, values), cancellationToken);
     }
 
     public Task<bool> ReadBitAsync(int address, CancellationToken cancellationToken = default)
@@ -118,7 +113,7 @@ public partial class ToyopucClient
 
     public Task WriteBitAsync(int address, bool value, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteBit(address, value), cancellationToken);
+        return RunStateChangingAsync(() => WriteBit(address, value), cancellationToken);
     }
 
     public Task<uint> ReadDWordAsync(int address, CancellationToken cancellationToken = default)
@@ -128,7 +123,7 @@ public partial class ToyopucClient
 
     public Task WriteDWordAsync(int address, uint value, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteDWord(address, value), cancellationToken);
+        return RunStateChangingAsync(() => WriteDWord(address, value), cancellationToken);
     }
 
     public Task<uint[]> ReadDWordsAsync(int address, int count, CancellationToken cancellationToken = default)
@@ -138,7 +133,7 @@ public partial class ToyopucClient
 
     public Task WriteDWordsAsync(int address, IEnumerable<uint> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteDWords(address, values), cancellationToken);
+        return RunStateChangingAsync(() => WriteDWords(address, values), cancellationToken);
     }
 
     public Task<float> ReadFloat32Async(int address, CancellationToken cancellationToken = default)
@@ -148,7 +143,7 @@ public partial class ToyopucClient
 
     public Task WriteFloat32Async(int address, float value, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteFloat32(address, value), cancellationToken);
+        return RunStateChangingAsync(() => WriteFloat32(address, value), cancellationToken);
     }
 
     public Task<float[]> ReadFloat32sAsync(int address, int count, CancellationToken cancellationToken = default)
@@ -158,7 +153,7 @@ public partial class ToyopucClient
 
     public Task WriteFloat32sAsync(int address, IEnumerable<float> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteFloat32s(address, values), cancellationToken);
+        return RunStateChangingAsync(() => WriteFloat32s(address, values), cancellationToken);
     }
 
     public Task<int[]> ReadWordsMultiAsync(IEnumerable<int> addresses, CancellationToken cancellationToken = default)
@@ -168,7 +163,7 @@ public partial class ToyopucClient
 
     public Task WriteWordsMultiAsync(IEnumerable<(int Address, int Value)> pairs, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteWordsMulti(pairs), cancellationToken);
+        return RunStateChangingAsync(() => WriteWordsMulti(pairs), cancellationToken);
     }
 
     public Task<byte[]> ReadBytesMultiAsync(IEnumerable<int> addresses, CancellationToken cancellationToken = default)
@@ -178,7 +173,7 @@ public partial class ToyopucClient
 
     public Task WriteBytesMultiAsync(IEnumerable<(int Address, int Value)> pairs, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteBytesMulti(pairs), cancellationToken);
+        return RunStateChangingAsync(() => WriteBytesMulti(pairs), cancellationToken);
     }
 
     public Task<int[]> ReadExtWordsAsync(int number, int address, int count, CancellationToken cancellationToken = default)
@@ -188,7 +183,7 @@ public partial class ToyopucClient
 
     public Task WriteExtWordsAsync(int number, int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteExtWords(number, address, values), cancellationToken);
+        return RunStateChangingAsync(() => WriteExtWords(number, address, values), cancellationToken);
     }
 
     public Task<byte[]> ReadExtBytesAsync(int number, int address, int count, CancellationToken cancellationToken = default)
@@ -198,7 +193,7 @@ public partial class ToyopucClient
 
     public Task WriteExtBytesAsync(int number, int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteExtBytes(number, address, values), cancellationToken);
+        return RunStateChangingAsync(() => WriteExtBytes(number, address, values), cancellationToken);
     }
 
     public Task<byte[]> ReadExtMultiAsync(
@@ -216,7 +211,7 @@ public partial class ToyopucClient
         IEnumerable<(int No, int Address, int Value)> wordPoints,
         CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteExtMulti(bitPoints, bytePoints, wordPoints), cancellationToken);
+        return RunStateChangingAsync(() => WriteExtMulti(bitPoints, bytePoints, wordPoints), cancellationToken);
     }
 
     public Task<byte[]> Pc10BlockReadAsync(int address32, int count, CancellationToken cancellationToken = default)
@@ -226,7 +221,7 @@ public partial class ToyopucClient
 
     public Task Pc10BlockWriteAsync(int address32, byte[] dataBytes, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => Pc10BlockWrite(address32, dataBytes), cancellationToken);
+        return RunStateChangingAsync(() => Pc10BlockWrite(address32, dataBytes), cancellationToken);
     }
 
     public Task<byte[]> Pc10MultiReadAsync(byte[] payload, CancellationToken cancellationToken = default)
@@ -236,7 +231,7 @@ public partial class ToyopucClient
 
     public Task Pc10MultiWriteAsync(byte[] payload, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => Pc10MultiWrite(payload), cancellationToken);
+        return RunStateChangingAsync(() => Pc10MultiWrite(payload), cancellationToken);
     }
 
     public Task<int[]> ReadFrWordsAsync(int index, int count, CancellationToken cancellationToken = default)
@@ -244,70 +239,39 @@ public partial class ToyopucClient
         return RunAsync(() => ReadFrWords(index, count), cancellationToken);
     }
 
-    public Task WriteFrWordsAsync(int index, IEnumerable<int> values, bool commit = false, CancellationToken cancellationToken = default)
+    public Task WriteFrWorkAreaAsync(int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteFrWords(index, values, commit), cancellationToken);
+        return RunStateChangingAsync(() => WriteFrWorkArea(index, values), cancellationToken);
     }
 
-    public Task WriteFrWordsExAsync(
+    public Task CommitFrBlockAsync(
         int index,
-        IEnumerable<int> values,
-        bool commit = false,
-        bool wait = false,
-        double timeout = 30.0,
-        double pollInterval = 0.2,
         CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WriteFrWordsEx(index, values, commit, wait, timeout, pollInterval), cancellationToken);
+        return RunStateChangingAsync(() => CommitFrBlock(index), cancellationToken);
     }
 
-    public Task<CpuStatusData?> CommitFrBlockAsync(
-        int index,
-        bool wait = false,
-        double timeout = 30.0,
-        double pollInterval = 0.2,
-        CancellationToken cancellationToken = default)
+    internal Task<ResponseFrame> RelayCommandAsync(int linkNo, int stationNo, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => CommitFrBlock(index, wait, timeout, pollInterval), cancellationToken);
+        return RunStateChangingAsync(() => RelayCommand(linkNo, stationNo, innerPayload), cancellationToken);
     }
 
-    public Task<CpuStatusData?> CommitFrRangeAsync(
-        int index,
-        int count = 1,
-        bool wait = false,
-        double timeout = 30.0,
-        double pollInterval = 0.2,
-        CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => CommitFrRange(index, count, wait, timeout, pollInterval), cancellationToken);
-    }
-
-    public Task WriteFrWordsCommittedAsync(int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => WriteFrWordsCommitted(index, values), cancellationToken);
-    }
-
-    public Task FrRegisterAsync(int exNo, CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => FrRegister(exNo), cancellationToken);
-    }
-
-    public Task<ResponseFrame> RelayCommandAsync(int linkNo, int stationNo, byte[] innerPayload, CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => RelayCommand(linkNo, stationNo, innerPayload), cancellationToken);
-    }
-
-    public Task<ResponseFrame> RelayNestedAsync(
+    internal Task<ResponseFrame> RelayNestedAsync(
         IEnumerable<(int LinkNo, int StationNo)> hops,
         byte[] innerPayload,
         CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayNested(hops, innerPayload), cancellationToken);
+        return RunStateChangingAsync(() => RelayNested(hops, innerPayload), cancellationToken);
     }
 
-    public Task<ResponseFrame> SendViaRelayAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
+    internal Task<ResponseFrame> SendViaRelayAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => SendViaRelay(hops, innerPayload), cancellationToken);
+        return RunStateChangingAsync(() => SendViaRelay(hops, innerPayload), cancellationToken);
+    }
+
+    internal Task<ResponseFrame> SendViaRelayReadAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
+    {
+        return RunAsync(() => SendViaRelayRead(hops, innerPayload), cancellationToken);
     }
 
     public Task<int[]> RelayReadWordsAsync(object hops, int address, int count, CancellationToken cancellationToken = default)
@@ -317,7 +281,7 @@ public partial class ToyopucClient
 
     public Task RelayWriteWordsAsync(object hops, int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayWriteWords(hops, address, values), cancellationToken);
+        return RunStateChangingAsync(() => RelayWriteWords(hops, address, values), cancellationToken);
     }
 
     public Task<ClockData> RelayReadClockAsync(object hops, CancellationToken cancellationToken = default)
@@ -325,24 +289,24 @@ public partial class ToyopucClient
         return RunAsync(() => RelayReadClock(hops), cancellationToken);
     }
 
-    public Task RelayWriteClockAsync(object hops, DateTime value, CancellationToken cancellationToken = default)
+    public Task RelayWriteClockAsync(object hops, DateTime value, int yearBase, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayWriteClock(hops, value), cancellationToken);
+        return RunStateChangingAsync(() => RelayWriteClock(hops, value, yearBase), cancellationToken);
     }
 
     public Task RelayResumeScanAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayResumeScan(hops), cancellationToken);
+        return RunStateChangingAsync(() => RelayResumeScan(hops), cancellationToken);
     }
 
     public Task RelayStopScanAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayStopScan(hops), cancellationToken);
+        return RunStateChangingAsync(() => RelayStopScan(hops), cancellationToken);
     }
 
     public Task RelayReleaseScanStopAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReleaseScanStop(hops), cancellationToken);
+        return RunStateChangingAsync(() => RelayReleaseScanStop(hops), cancellationToken);
     }
 
     public Task<CpuStatusData> RelayReadCpuStatusAsync(object hops, CancellationToken cancellationToken = default)
@@ -360,59 +324,17 @@ public partial class ToyopucClient
         return RunAsync(() => RelayReadCpuStatusA0(hops), cancellationToken);
     }
 
-    public Task RelayWriteFrWordsAsync(object hops, int index, IEnumerable<int> values, bool commit = false, CancellationToken cancellationToken = default)
+    public Task RelayWriteFrWorkAreaAsync(object hops, int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayWriteFrWords(hops, index, values, commit), cancellationToken);
+        return RunStateChangingAsync(() => RelayWriteFrWorkArea(hops, index, values), cancellationToken);
     }
 
-    public Task RelayWriteFrWordsExAsync(
+    public Task RelayCommitFrBlockAsync(
         object hops,
         int index,
-        IEnumerable<int> values,
-        bool commit = false,
-        bool wait = false,
-        double timeout = 30.0,
-        double pollInterval = 0.2,
         CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayWriteFrWordsEx(hops, index, values, commit, wait, timeout, pollInterval), cancellationToken);
-    }
-
-    public Task RelayFrRegisterAsync(object hops, int exNo, CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => RelayFrRegister(hops, exNo), cancellationToken);
-    }
-
-    public Task<CpuStatusData?> RelayCommitFrBlockAsync(
-        object hops,
-        int index,
-        bool wait = false,
-        double timeout = 30.0,
-        double pollInterval = 0.2,
-        CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => RelayCommitFrBlock(hops, index, wait, timeout, pollInterval), cancellationToken);
-    }
-
-    public Task<CpuStatusData?> RelayCommitFrRangeAsync(
-        object hops,
-        int index,
-        int count = 1,
-        bool wait = false,
-        double timeout = 30.0,
-        double pollInterval = 0.2,
-        CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => RelayCommitFrRange(hops, index, count, wait, timeout, pollInterval), cancellationToken);
-    }
-
-    public Task<CpuStatusData> RelayWaitFrWriteCompleteAsync(
-        object hops,
-        double timeout = 30.0,
-        double pollInterval = 0.2,
-        CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => RelayWaitFrWriteComplete(hops, timeout, pollInterval), cancellationToken);
+        return RunStateChangingAsync(() => RelayCommitFrBlock(hops, index), cancellationToken);
     }
 
     public Task<ClockData> ReadClockAsync(CancellationToken cancellationToken = default)
@@ -435,68 +357,134 @@ public partial class ToyopucClient
         return RunAsync(ReadCpuStatusA0, cancellationToken);
     }
 
-    public Task<CpuStatusData> WaitFrWriteCompleteAsync(
-        double timeout = 30.0,
-        double pollInterval = 0.2,
-        CancellationToken cancellationToken = default)
+    public Task WriteClockAsync(DateTime value, int yearBase, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => WaitFrWriteComplete(timeout, pollInterval), cancellationToken);
-    }
-
-    public Task WriteClockAsync(DateTime value, CancellationToken cancellationToken = default)
-    {
-        return RunAsync(() => WriteClock(value), cancellationToken);
+        return RunStateChangingAsync(() => WriteClock(value, yearBase), cancellationToken);
     }
 
     public Task ResumeScanAsync(CancellationToken cancellationToken = default)
     {
-        return RunAsync(ResumeScan, cancellationToken);
+        return RunStateChangingAsync(ResumeScan, cancellationToken);
     }
 
     public Task StopScanAsync(CancellationToken cancellationToken = default)
     {
-        return RunAsync(StopScan, cancellationToken);
+        return RunStateChangingAsync(StopScan, cancellationToken);
     }
 
     public Task ReleaseScanStopAsync(CancellationToken cancellationToken = default)
     {
-        return RunAsync(ReleaseScanStop, cancellationToken);
+        return RunStateChangingAsync(ReleaseScanStop, cancellationToken);
     }
 
     protected Task RunAsync(Action action, CancellationToken cancellationToken = default)
     {
-        return RunAsyncCore(action, cancellationToken);
+        return RunAsyncCore(action, outcomeUnknownAfterSend: false, cancellationToken);
+    }
+
+    protected Task RunStateChangingAsync(Action action, CancellationToken cancellationToken = default)
+    {
+        return RunAsyncCore(action, outcomeUnknownAfterSend: true, cancellationToken);
     }
 
     protected Task<T> RunAsync<T>(Func<T> action, CancellationToken cancellationToken = default)
     {
-        return RunAsyncCore(action, cancellationToken);
+        return RunAsyncCore(action, outcomeUnknownAfterSend: false, cancellationToken);
     }
 
-    private async Task RunAsyncCore(Action action, CancellationToken cancellationToken)
+    protected Task<T> RunStateChangingAsync<T>(Func<T> action, CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        using var cancellationRegistration = cancellationToken.Register(
-            static state => ((ToyopucClient)state!).Close(),
-            this);
-        await Task.Factory.StartNew(
-            action,
-            cancellationToken,
-            TaskCreationOptions.DenyChildAttach,
-            _asyncSchedulerPair.ExclusiveScheduler).ConfigureAwait(false);
+        return RunAsyncCore(action, outcomeUnknownAfterSend: true, cancellationToken);
     }
 
-    private async Task<T> RunAsyncCore<T>(Func<T> action, CancellationToken cancellationToken)
+    private async Task RunAsyncCore(
+        Action action,
+        bool outcomeUnknownAfterSend,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        using var cancellationRegistration = cancellationToken.Register(
-            static state => ((ToyopucClient)state!).Close(),
-            this);
-        return await Task.Factory.StartNew(
-            action,
-            cancellationToken,
-            TaskCreationOptions.DenyChildAttach,
-            _asyncSchedulerPair.ExclusiveScheduler).ConfigureAwait(false);
+        await _asyncGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await Task.Run(
+                () =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    _requestMayHaveBeenSent = false;
+                    _operationCancellation.Value = cancellationToken;
+                    using var cancellationRegistration = cancellationToken.Register(
+                        static state => ((ToyopucClient)state!).CancelActiveOperation(),
+                        this);
+                    try
+                    {
+                        action();
+                    }
+                    catch (Exception exception) when (cancellationToken.IsCancellationRequested)
+                    {
+                        CancelActiveOperation();
+                        if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
+                        {
+                            throw new ToyopucOperationOutcomeUnknownException(
+                                "The operation was canceled after its request may have been sent; the PLC state is unknown.",
+                                exception);
+                        }
+                        throw new OperationCanceledException(cancellationToken);
+                    }
+                    finally
+                    {
+                        _operationCancellation.Value = default;
+                    }
+                }).ConfigureAwait(false);
+        }
+        finally
+        {
+            _asyncGate.Release();
+        }
+    }
+
+    private async Task<T> RunAsyncCore<T>(
+        Func<T> action,
+        bool outcomeUnknownAfterSend,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await _asyncGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await Task.Run(
+                () =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    _requestMayHaveBeenSent = false;
+                    _operationCancellation.Value = cancellationToken;
+                    using var cancellationRegistration = cancellationToken.Register(
+                        static state => ((ToyopucClient)state!).CancelActiveOperation(),
+                        this);
+                    try
+                    {
+                        return action();
+                    }
+                    catch (Exception exception) when (cancellationToken.IsCancellationRequested)
+                    {
+                        CancelActiveOperation();
+                        if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
+                        {
+                            throw new ToyopucOperationOutcomeUnknownException(
+                                "The operation was canceled after its request may have been sent; the PLC state is unknown.",
+                                exception);
+                        }
+                        throw new OperationCanceledException(cancellationToken);
+                    }
+                    finally
+                    {
+                        _operationCancellation.Value = default;
+                    }
+                }).ConfigureAwait(false);
+        }
+        finally
+        {
+            _asyncGate.Release();
+        }
     }
 
     protected static uint[] UnpackUInt32LowWordFirst(IReadOnlyList<int> words)

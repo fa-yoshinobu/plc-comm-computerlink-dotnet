@@ -18,11 +18,10 @@ public static class ToyopucDeviceClientFactory
     /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">The host name is empty or whitespace.</exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// A configured port, local port, or receive buffer size falls outside the supported range.
+    /// A configured port, local port, timeout, retry count, or retry delay is invalid.
     /// </exception>
     /// <remarks>
-    /// When <see cref="ToyopucConnectionOptions.RelayHops"/> is supplied, the returned queued client keeps
-    /// the normalized relay chain available through <see cref="QueuedToyopucDeviceClient.RelayHops"/>.
+    /// The returned queued client keeps the required direct or relay route for every operation.
     /// </remarks>
     public static async Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(
         ToyopucConnectionOptions options,
@@ -35,26 +34,38 @@ public static class ToyopucDeviceClientFactory
             throw new ArgumentOutOfRangeException(nameof(options), "Port must be in the range 1-65535.");
         if (options.LocalPort is < 0 or > 65535)
             throw new ArgumentOutOfRangeException(nameof(options), "LocalPort must be in the range 0-65535.");
-        if (options.RecvBufsize < 1)
-            throw new ArgumentOutOfRangeException(nameof(options), "RecvBufsize must be 1 or greater.");
+        if (!Enum.IsDefined(options.Transport) || options.Transport == ToyopucTransportMode.Unspecified)
+            throw new ArgumentOutOfRangeException(nameof(options), "Transport must be explicitly Tcp or Udp.");
+        if (options.Transport == ToyopucTransportMode.Tcp && options.LocalPort != 0)
+            throw new ArgumentException("LocalPort can only be specified for UDP.", nameof(options));
+        if (options.Timeout is { } timeout && timeout <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(options), "Timeout must be greater than zero.");
+        if (options.Timeout is { } boundedTimeout && boundedTimeout.TotalMilliseconds > int.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(options), $"Timeout must not exceed {int.MaxValue} milliseconds.");
+        if (options.Retries < 0)
+            throw new ArgumentOutOfRangeException(nameof(options), "Retries must be zero or greater.");
+        if (options.RetryDelay is { } retryDelay && retryDelay < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(options), "RetryDelay must be zero or greater.");
+        if (options.RetryDelay is { } boundedRetryDelay && boundedRetryDelay.TotalMilliseconds > int.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(options), $"RetryDelay must not exceed {int.MaxValue} milliseconds.");
 
         if (string.IsNullOrWhiteSpace(options.PlcProfile))
             throw new ArgumentException("PlcProfile is required.", nameof(options));
+        ArgumentNullException.ThrowIfNull(options.Route);
 
         var normalizedProfile = ToyopucPlcProfiles.NormalizeName(options.PlcProfile);
 
         var inner = new ToyopucDeviceClient(
             options.Host,
             options.Port,
-            options.LocalPort,
             options.Transport,
+            normalizedProfile,
+            options.LocalPort,
             options.EffectiveTimeout,
             options.Retries,
-            options.EffectiveRetryDelay,
-            options.RecvBufsize,
-            plcProfile: normalizedProfile);
+            options.EffectiveRetryDelay);
 
-        var queued = new QueuedToyopucDeviceClient(inner, options.RelayHops);
+        var queued = new QueuedToyopucDeviceClient(inner, options.Route);
         await queued.OpenAsync(cancellationToken).ConfigureAwait(false);
         return queued;
     }

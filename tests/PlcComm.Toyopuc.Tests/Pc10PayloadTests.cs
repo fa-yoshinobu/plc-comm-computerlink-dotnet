@@ -5,9 +5,11 @@ public class Pc10PayloadTests
     [Fact]
     public void PackWordValues_PreservesCurrentLittleEndianWordPacking()
     {
-        var payload = Pc10Payloads.PackWordValues(new[] { 0x1234, 0x5678, -1 });
+        var payload = Pc10Payloads.PackWordValues(new[] { 0x1234, 0x5678, 0xFFFF });
 
         Assert.Equal(new byte[] { 0x34, 0x12, 0x78, 0x56, 0xFF, 0xFF }, payload);
+        Assert.Throws<ArgumentOutOfRangeException>(() => Pc10Payloads.PackWordValues([-1]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Pc10Payloads.PackWordValues([65536]));
     }
 
     [Fact]

@@ -15,7 +15,6 @@ public sealed class ToyopucClientExtensionsTests
     {
         var normalized = ToyopucAddress.Normalize(
             "p1-d0000l",
-            ToyopucAddressingOptions.FromProfile("toyopuc:pc10g:pc10"),
             "toyopuc:pc10g:pc10");
 
         Assert.Equal("P1-D0000L", normalized);
@@ -29,12 +28,14 @@ public sealed class ToyopucClientExtensionsTests
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
 
         var acceptTask = listener.AcceptTcpClientAsync();
-        await using var client = await ToyopucDeviceClientExtensions.OpenAndConnectAsync(
-            new ToyopucConnectionOptions("127.0.0.1")
+        await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(
+            new ToyopucConnectionOptions(
+                "127.0.0.1",
+                port,
+                ToyopucTransportMode.Tcp,
+                Pc10Profile,
+                ToyopucRoute.Relay("P1-L2:N2"))
             {
-                Port = port,
-                RelayHops = "P1-L2:N2",
-                PlcProfile = "toyopuc:pc10g:pc10",
             });
 
         using var server = await acceptTask;
@@ -47,16 +48,12 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
-    public async Task ReadDWordsChunkedAsync_AdvancesByWholeDwordBoundaries()
+    public async Task ReadDWordsAsync_UsesExactlyOneRequest()
     {
         await using var server = new ScriptedToyopucServer(frame =>
         {
-            if (frame.SequenceEqual(ToyopucProtocol.BuildWordRead(0x6100, 2)))
-                return BuildResponse(0x1C, new byte[] { 0x01, 0x00, 0x01, 0x00 });
-            if (frame.SequenceEqual(ToyopucProtocol.BuildWordRead(0x6102, 2)))
-                return BuildResponse(0x1C, new byte[] { 0x02, 0x00, 0x02, 0x00 });
-            if (frame.SequenceEqual(ToyopucProtocol.BuildWordRead(0x6104, 2)))
-                return BuildResponse(0x1C, new byte[] { 0x03, 0x00, 0x03, 0x00 });
+            if (frame.SequenceEqual(ToyopucProtocol.BuildWordRead(0x6100, 6)))
+                return BuildResponse(0x1C, new byte[] { 0x01, 0x00, 0x01, 0x00, 0x02, 0x00, 0x02, 0x00, 0x03, 0x00, 0x03, 0x00 });
             return BuildResponse(0x10, new byte[] { 0x40 });
         });
 
@@ -67,16 +64,11 @@ public sealed class ToyopucClientExtensionsTests
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
             plcProfile: Pc10Profile);
 
-        var values = await client.ReadDWordsChunkedAsync("B0100", 3, 1);
+        var values = await client.ReadDWordsAsync("B0100", 3);
 
         Assert.Equal(new uint[] { 0x00010001, 0x00020002, 0x00030003 }, values);
         Assert.Equal(
-            new[]
-            {
-                Convert.ToHexString(ToyopucProtocol.BuildWordRead(0x6100, 2)),
-                Convert.ToHexString(ToyopucProtocol.BuildWordRead(0x6102, 2)),
-                Convert.ToHexString(ToyopucProtocol.BuildWordRead(0x6104, 2)),
-            },
+            new[] { Convert.ToHexString(ToyopucProtocol.BuildWordRead(0x6100, 6)) },
             server.ReceivedFrames.ToArray());
     }
 
@@ -126,6 +118,7 @@ public sealed class ToyopucClientExtensionsTests
         await using var client = new ToyopucDeviceClient(
             "127.0.0.1",
             1,
+            transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromMilliseconds(1),
             addressingOptions: ToyopucAddressingOptions.Pc10GMode,
             plcProfile: Pc10Profile);
@@ -139,6 +132,7 @@ public sealed class ToyopucClientExtensionsTests
         await using var client = new ToyopucDeviceClient(
             "127.0.0.1",
             1,
+            transport: ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromMilliseconds(1),
             addressingOptions: ToyopucAddressingOptions.Pc10GMode,
             plcProfile: Pc10Profile);
@@ -184,7 +178,7 @@ public sealed class ToyopucClientExtensionsTests
             transport: ToyopucTransportMode.Udp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
 
-        var response = client.SendRaw(0x1C);
+        var response = client.SendRaw(0x1C, Array.Empty<byte>());
         await serverTask;
 
         Assert.Equal(0x1C, response.Cmd);

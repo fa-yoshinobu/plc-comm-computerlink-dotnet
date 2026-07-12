@@ -102,8 +102,8 @@ static async Task<int> RunAsync(string[] args)
             try
             {
                 var values = string.IsNullOrWhiteSpace(options.Hops)
-                    ? plc.ReadMany(deviceObjects)
-                    : plc.RelayReadMany(options.Hops, deviceObjects);
+                    ? plc.ReadDevices(deviceObjects)
+                    : plc.RelayReadDevices(options.Hops, deviceObjects);
 
                 stopwatch.Stop();
                 summary.SuccessfulPolls++;
@@ -208,12 +208,11 @@ static ToyopucDeviceClient CreateClient(SoakMonitorOptions options, ToyopucAddre
     return new ToyopucDeviceClient(
         options.Host,
         options.Port,
+        Enum.Parse<ToyopucTransportMode>(options.Transport, ignoreCase: true),
+        options.Profile,
         localPort: options.LocalPort,
-        transport: Enum.Parse<ToyopucTransportMode>(options.Transport, ignoreCase: true),
         timeout: TimeSpan.FromSeconds(options.Timeout),
-        retries: options.Retries,
-        addressingOptions: addressingOptions,
-        plcProfile: options.Profile);
+        retries: options.Retries);
 }
 
 static bool ShouldLogSuccess(SoakMonitorOptions options, int pollNumber)

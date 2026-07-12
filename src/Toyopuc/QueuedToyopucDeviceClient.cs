@@ -14,7 +14,7 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
     private readonly ToyopucDeviceClient _client;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private int _disposed;
-    private readonly IReadOnlyList<(int LinkNo, int StationNo)>? _relayHops;
+    private readonly ToyopucRoute _route;
 
     private async Task EnterAsync(CancellationToken cancellationToken)
     {
@@ -31,11 +31,11 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
     /// Initializes a new instance of the <see cref="QueuedToyopucDeviceClient"/> class.
     /// </summary>
     /// <param name="client">The underlying TOYOPUC client.</param>
-    /// <param name="relayHops">Optional relay hop configuration.</param>
-    public QueuedToyopucDeviceClient(ToyopucDeviceClient client, object? relayHops = null)
+    /// <param name="route">Required direct or relay route.</param>
+    public QueuedToyopucDeviceClient(ToyopucDeviceClient client, ToyopucRoute route)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
-        _relayHops = relayHops is null ? null : ToyopucRelay.NormalizeRelayHops(relayHops);
+        _route = route ?? throw new ArgumentNullException(nameof(route));
     }
 
     /// <summary>Gets the wrapped low-level client.</summary>
@@ -43,14 +43,17 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
     /// Use <see cref="ExecuteAsync{T}(Func{ToyopucDeviceClient, Task{T}}, CancellationToken)"/> when you need
     /// direct client access while preserving serialized execution.
     /// </remarks>
-    public ToyopucDeviceClient InnerClient => _client;
+    internal ToyopucDeviceClient InnerClient => _client;
 
     /// <summary>Gets the configured relay hops, if any.</summary>
     /// <remarks>The returned sequence is already normalized to link/station tuples.</remarks>
-    public IReadOnlyList<(int LinkNo, int StationNo)>? RelayHops => _relayHops;
+    public IReadOnlyList<(int LinkNo, int StationNo)>? RelayHops => _route.RelayHops;
+
+    /// <summary>Gets the explicit direct or relay route.</summary>
+    public ToyopucRoute Route => _route;
 
     /// <summary>Gets a value indicating whether relay mode is enabled.</summary>
-    public bool UsesRelay => _relayHops is not null;
+    public bool UsesRelay => _route.UsesRelay;
 
     /// <summary>Gets the PLC host.</summary>
     public string Host => _client.Host;
@@ -61,32 +64,11 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
     /// <summary>Gets the selected transport protocol.</summary>
     public ToyopucTransportMode Transport => _client.Transport;
 
-    /// <summary>Gets or sets the operation timeout.</summary>
-    public TimeSpan Timeout
-    {
-        get => _client.Timeout;
-        set => _client.Timeout = value;
-    }
+    /// <summary>Gets the validated per-attempt operation timeout.</summary>
+    public TimeSpan Timeout => _client.Timeout;
 
     /// <summary>Gets the normalized PLC profile name.</summary>
     public string PlcProfile => _client.PlcProfile;
-
-    /// <summary>Gets the addressing options used by the wrapped client.</summary>
-    public ToyopucAddressingOptions AddressingOptions => _client.AddressingOptions;
-
-    /// <summary>Gets or sets a value indicating whether transport trace frames are captured.</summary>
-    public bool CaptureTraceFrames
-    {
-        get => _client.CaptureTraceFrames;
-        set => _client.CaptureTraceFrames = value;
-    }
-
-    /// <summary>Gets or sets the raw trace callback.</summary>
-    public Action<ToyopucTraceFrame>? TraceHook
-    {
-        get => _client.TraceHook;
-        set => _client.TraceHook = value;
-    }
 
     /// <summary>Gets a value indicating whether the underlying transport is open.</summary>
     public bool IsOpen => _client.IsOpen;
@@ -111,7 +93,7 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
     /// <param name="operation">Delegate that receives the wrapped <see cref="ToyopucDeviceClient"/>.</param>
     /// <param name="cancellationToken">Cancellation token used while waiting for exclusive access.</param>
     /// <returns>The value returned by <paramref name="operation"/>.</returns>
-    public async Task<T> ExecuteAsync<T>(
+    internal async Task<T> ExecuteAsync<T>(
         Func<ToyopucDeviceClient, Task<T>> operation,
         CancellationToken cancellationToken = default)
     {
@@ -130,7 +112,7 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
     /// <summary>Executes an async operation with exclusive access to the wrapped client.</summary>
     /// <param name="operation">Delegate that receives the wrapped <see cref="ToyopucDeviceClient"/>.</param>
     /// <param name="cancellationToken">Cancellation token used while waiting for exclusive access.</param>
-    public async Task ExecuteAsync(
+    internal async Task ExecuteAsync(
         Func<ToyopucDeviceClient, Task> operation,
         CancellationToken cancellationToken = default)
     {

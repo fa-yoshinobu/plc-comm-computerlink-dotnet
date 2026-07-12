@@ -4,13 +4,13 @@ namespace PlcComm.Toyopuc;
 
 public sealed record ResponseFrame(byte Ft, byte Rc, byte Cmd, byte[] Data);
 
-public sealed record TransportTraceFrame(byte[] Tx, byte[]? Rx);
+internal sealed record TransportTraceFrame(byte[] Tx, byte[]? Rx);
 
-public enum ToyopucTransportMode { Tcp, Udp }
+public enum ToyopucTransportMode { Unspecified, Tcp, Udp }
 
-public enum ToyopucTraceDirection { Send, Receive }
+internal enum ToyopucTraceDirection { Send, Receive }
 
-public sealed record ToyopucTraceFrame(
+internal sealed record ToyopucTraceFrame(
     ToyopucTraceDirection Direction,
     byte[] Data,
     DateTime Timestamp);
@@ -24,8 +24,14 @@ public sealed record ClockData(
     int Year2Digit,
     int Weekday)
 {
-    public DateTime AsDateTime(int yearBase = 2000)
+    public DateTime AsDateTime(int yearBase)
     {
+        if (yearBase < 0 || yearBase % 100 != 0)
+            throw new ArgumentOutOfRangeException(nameof(yearBase), "yearBase must be a non-negative century divisible by 100.");
+        if (Weekday is < 0 or > 6)
+            throw new ArgumentOutOfRangeException(nameof(Weekday), "Weekday must be in the range 0-6.");
+        if (yearBase + Year2Digit is < 1 or > 9999)
+            throw new ArgumentOutOfRangeException(nameof(yearBase), "The resulting full year must be in the range 1-9999.");
         return new DateTime(yearBase + Year2Digit, Month, Day, Hour, Minute, Second);
     }
 }
@@ -150,7 +156,11 @@ public sealed record ResolvedDevice(
     int? No = null,
     int? Address = null,
     int? BitNo = null,
-    int? Address32 = null);
+    int? Address32 = null)
+{
+    /// <summary>Gets the canonical PLC profile used to resolve this device.</summary>
+    public string PlcProfile { get; init; } = string.Empty;
+}
 
 public sealed record RelayLayer(
     int LinkNo,

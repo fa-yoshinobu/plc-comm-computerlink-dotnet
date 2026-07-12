@@ -72,19 +72,25 @@ public static class ToyopucProtocol
 
     private static byte[] CreateCommandFrame(int cmd, int dataLength)
     {
+        if (cmd is < byte.MinValue or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(cmd), "Command code must be in the range 0-255.");
+        if (dataLength is < 0 or > 65534)
+            throw new ArgumentOutOfRangeException(nameof(dataLength), "Command data must fit the 16-bit frame length field.");
         var frame = new byte[5 + dataLength];
         var length = 1 + dataLength;
         frame[0] = FtCommand;
         frame[1] = 0x00;
         frame[2] = (byte)(length & 0xFF);
         frame[3] = (byte)((length >> 8) & 0xFF);
-        frame[4] = (byte)(cmd & 0xFF);
+        frame[4] = (byte)cmd;
         return frame;
     }
 
     private static void WriteU16(byte[] buffer, int offset, int value)
     {
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset, 2), unchecked((ushort)value));
+        if (value is < ushort.MinValue or > ushort.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(value), "Unsigned 16-bit value must be in the range 0..65535.");
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset, 2), (ushort)value);
     }
 
     private static byte[] MaterializeByteValues(IEnumerable<int> values)
@@ -95,7 +101,9 @@ public static class ToyopucProtocol
             var index = 0;
             foreach (var value in values)
             {
-                bytes[index++] = (byte)(value & 0xFF);
+                if (value is < byte.MinValue or > byte.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(values), "Byte values must be in the range 0..255.");
+                bytes[index++] = (byte)value;
             }
 
             return bytes;
@@ -104,19 +112,21 @@ public static class ToyopucProtocol
         var list = new List<byte>();
         foreach (var value in values)
         {
-            list.Add((byte)(value & 0xFF));
+            if (value is < byte.MinValue or > byte.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(values), "Byte values must be in the range 0..255.");
+            list.Add((byte)value);
         }
 
         return list.ToArray();
     }
 
-    public static byte[] BuildCommand(int cmd, byte[]? data = null)
+    internal static byte[] BuildCommand(int cmd, byte[] data)
     {
-        var payload = data ?? Array.Empty<byte>();
-        var frame = CreateCommandFrame(cmd, payload.Length);
-        if (payload.Length > 0)
+        ArgumentNullException.ThrowIfNull(data);
+        var frame = CreateCommandFrame(cmd, data.Length);
+        if (data.Length > 0)
         {
-            Buffer.BlockCopy(payload, 0, frame, 5, payload.Length);
+            Buffer.BlockCopy(data, 0, frame, 5, data.Length);
         }
 
         return frame;
@@ -382,9 +392,11 @@ public static class ToyopucProtocol
 
     public static byte[] BuildBitWrite(int address, int value)
     {
+        if (value is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(value), "Bit value must be 0 or 1.");
         var frame = CreateCommandFrame(0x21, 3);
         WriteU16(frame, 5, address);
-        frame[7] = (byte)(value != 0 ? 1 : 0);
+        frame[7] = (byte)value;
         return frame;
     }
 
@@ -436,7 +448,9 @@ public static class ToyopucProtocol
         for (var i = 0; i < items.Length; i++)
         {
             WriteU16(frame, 5 + (i * 3), items[i].Address);
-            frame[7 + (i * 3)] = (byte)(items[i].Value & 0xFF);
+            if (items[i].Value is < byte.MinValue or > byte.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(pairs), "Byte values must be in the range 0..255.");
+            frame[7 + (i * 3)] = (byte)items[i].Value;
         }
 
         return frame;
@@ -548,18 +562,22 @@ public static class ToyopucProtocol
 
         foreach (var (number, bit, address, value) in bits)
         {
+            if (value is < 0 or > 1)
+                throw new ArgumentOutOfRangeException(nameof(bitPoints), "Bit values must be 0 or 1.");
             frame[offset++] = (byte)PackExtBitSpec(number, bit);
             WriteU16(frame, offset, address);
             offset += 2;
-            frame[offset++] = (byte)(value & 0x01);
+            frame[offset++] = (byte)value;
         }
 
         foreach (var (number, address, value) in bytes)
         {
+            if (value is < byte.MinValue or > byte.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(bytePoints), "Byte values must be in the range 0..255.");
             frame[offset++] = (byte)(number & 0xFF);
             WriteU16(frame, offset, address);
             offset += 2;
-            frame[offset++] = (byte)(value & 0xFF);
+            frame[offset++] = (byte)value;
         }
 
         foreach (var (number, address, value) in words)
@@ -619,14 +637,15 @@ public static class ToyopucProtocol
         return frame;
     }
 
-    public static byte[] BuildRelayCommand(int linkNo, int stationNo, byte[] innerPayload, int enq = 0x05)
+    public static byte[] BuildRelayCommand(int linkNo, int stationNo, byte[] innerPayload)
     {
+        var hop = ToyopucRelay.NormalizeRelayHops([(linkNo, stationNo)])[0];
         var inner = NormalizeInnerPayload(innerPayload);
         var frame = CreateCommandFrame(0x60, 5 + inner.Length);
-        frame[5] = (byte)(linkNo & 0xFF);
-        frame[6] = (byte)(stationNo & 0xFF);
-        frame[7] = (byte)((stationNo >> 8) & 0xFF);
-        frame[8] = (byte)(enq & 0xFF);
+        frame[5] = (byte)hop.LinkNo;
+        frame[6] = (byte)(hop.StationNo & 0xFF);
+        frame[7] = (byte)((hop.StationNo >> 8) & 0xFF);
+        frame[8] = 0x05;
         Buffer.BlockCopy(inner, 0, frame, 9, inner.Length);
         frame[^1] = 0x00;
         return frame;
@@ -634,15 +653,12 @@ public static class ToyopucProtocol
 
     public static byte[] BuildRelayNested(IEnumerable<(int LinkNo, int StationNo)> hops, byte[] innerPayload)
     {
-        var hopList = hops.ToArray();
-        if (hopList.Length == 0)
-        {
-            throw new ArgumentException("at least one relay hop is required", nameof(hops));
-        }
+        ArgumentNullException.ThrowIfNull(hops);
+        var hopList = ToyopucRelay.NormalizeRelayHops(hops);
 
         var inner = NormalizeInnerPayload(innerPayload);
         byte[]? frame = null;
-        for (var i = hopList.Length - 1; i >= 0; i--)
+        for (var i = hopList.Count - 1; i >= 0; i--)
         {
             frame = BuildRelayCommand(hopList[i].LinkNo, hopList[i].StationNo, inner);
             inner = FrameToInnerPayload(frame);

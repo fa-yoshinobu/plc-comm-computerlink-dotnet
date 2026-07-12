@@ -10,9 +10,11 @@ public class AddressAndResolverTests
     [Fact]
     public void ResolveDevice_RequiresExplicitPlcProfile()
     {
-        var ex = Assert.Throws<ArgumentException>(() => ToyopucDeviceResolver.ResolveDevice("B0100"));
-
-        Assert.Contains("PLC profile is required", ex.Message);
+        Assert.DoesNotContain(
+            typeof(ToyopucDeviceResolver).GetMethods(),
+            static method => method.Name == nameof(ToyopucDeviceResolver.ResolveDevice)
+                && method.IsPublic
+                && method.GetParameters().Length == 1);
     }
 
     [Fact]
@@ -612,7 +614,7 @@ public class AddressAndResolverTests
     [Fact]
     public void DeviceCatalog_StartAddresses_ContainOnlyResolvableCandidates()
     {
-        var frStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("FR", profile: NanoCompatibleProfile);
+        var frStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("FR", prefix: null, profile: NanoCompatibleProfile);
         var prefixedMStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", GenericProfile);
         var prefixedMWordStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("M", "P1", unit: "word", packed: true, profile: "toyopuc:generic");
         var plusPrefixedDStarts = ToyopucDeviceCatalog.GetSuggestedStartAddresses("D", "P1", "toyopuc:plus:extended");

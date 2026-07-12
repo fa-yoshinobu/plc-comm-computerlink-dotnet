@@ -140,8 +140,8 @@ public static class ToyopucDeviceCatalog
 
     public static IReadOnlyList<string> GetSuggestedStartAddresses(
         string area,
-        string? prefix = null,
-        string? profile = null)
+        string? prefix,
+        string profile)
     {
         var profileInfo = ToyopucPlcProfiles.FromName(profile);
         var prefixed = !string.IsNullOrWhiteSpace(prefix);
@@ -151,7 +151,7 @@ public static class ToyopucDeviceCatalog
         return GetSuggestedStartAddresses(descriptor, ranges, prefix, unit, packed: false, profileInfo.AddressingOptions, profileInfo.Name);
     }
 
-    public static IReadOnlyList<string> GetSuggestedStartAddresses(
+    internal static IReadOnlyList<string> GetSuggestedStartAddresses(
         string area,
         ToyopucAddressingOptions? options)
     {
@@ -160,7 +160,7 @@ public static class ToyopucDeviceCatalog
             nameof(options));
     }
 
-    public static IReadOnlyList<string> GetSuggestedStartAddresses(
+    internal static IReadOnlyList<string> GetSuggestedStartAddresses(
         string area,
         string? prefix,
         ToyopucAddressingOptions? options)
@@ -287,7 +287,7 @@ public static class ToyopucDeviceCatalog
     {
         try
         {
-            _ = ToyopucDeviceResolver.ResolveDevice(device, options, profile);
+            _ = ToyopucDeviceResolver.ResolveDeviceForMaintainer(device, options, profile);
             return true;
         }
         catch

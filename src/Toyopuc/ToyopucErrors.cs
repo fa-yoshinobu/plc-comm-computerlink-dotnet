@@ -50,3 +50,14 @@ public class ToyopucTimeoutError : ToyopucProtocolError
     {
     }
 }
+
+/// <summary>
+/// Indicates that cancellation or transport loss occurred after a state-changing request may have been sent.
+/// </summary>
+public sealed class ToyopucOperationOutcomeUnknownException : ToyopucError
+{
+    public ToyopucOperationOutcomeUnknownException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+}

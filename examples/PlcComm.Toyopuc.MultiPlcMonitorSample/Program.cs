@@ -50,8 +50,8 @@ internal sealed record MultiPlcOptions(
     {
         var plcSpecs = new List<string>();
         var tagSpecs = new List<string>();
-        var defaultPort = 1025;
-        var defaultTransport = ToyopucTransportMode.Tcp;
+        int? defaultPort = null;
+        ToyopucTransportMode? defaultTransport = null;
         var timeout = TimeSpan.FromSeconds(3);
         var interval = TimeSpan.FromSeconds(1);
         int? cycles = null;

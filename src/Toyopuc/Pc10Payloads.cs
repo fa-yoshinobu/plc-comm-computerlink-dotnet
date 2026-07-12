@@ -31,7 +31,8 @@ internal static class Pc10Payloads
         var data = new byte[items.Length * 2];
         for (var i = 0; i < items.Length; i++)
         {
-            WriteU16LittleEndian(data, i * 2, items[i] & 0xFFFF);
+            RequireWordValue(items[i]);
+            WriteU16LittleEndian(data, i * 2, items[i]);
         }
 
         return data;
@@ -64,6 +65,7 @@ internal static class Pc10Payloads
         var valuesOffset = 4 + (items.Length * 4);
         for (var i = 0; i < items.Length; i++)
         {
+            RequireWordValue(items[i].Value);
             WriteU16LittleEndian(payload, valuesOffset + (i * 2), items[i].Value);
         }
 
@@ -79,8 +81,10 @@ internal static class Pc10Payloads
         payload[0] = (byte)(items.Length & 0xFF);
         for (var i = 0; i < items.Length; i++)
         {
+            if (items[i].Value is < 0 or > 1)
+                throw new ArgumentOutOfRangeException(nameof(addressValues), "Bit values must be 0 or 1.");
             WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
-            if ((items[i].Value & 0x01) != 0)
+            if (items[i].Value == 1)
             {
                 payload[bitBytesOffset + (i / 8)] |= (byte)(1 << (i % 8));
             }
@@ -108,6 +112,12 @@ internal static class Pc10Payloads
     {
         buffer[offset] = (byte)(value & 0xFF);
         buffer[offset + 1] = (byte)((value >> 8) & 0xFF);
+    }
+
+    private static void RequireWordValue(int value)
+    {
+        if (value is < 0 or > ushort.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(value), "Word values must be in the range 0..65535.");
     }
 
     private static void WriteAddress32LittleEndian(byte[] buffer, int offset, int address32)

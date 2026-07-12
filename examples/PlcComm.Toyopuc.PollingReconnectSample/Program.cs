@@ -40,12 +40,14 @@ try
             Log("reconnecting", $"{transport.ToString().ToLowerInvariant()} {host}:{port} profile={plcProfile}");
             try
             {
-                var options = new ToyopucConnectionOptions(host)
+                var options = new ToyopucConnectionOptions(
+                    host,
+                    port,
+                    transport,
+                    plcProfile,
+                    ToyopucRoute.Direct)
                 {
-                    Port = port,
-                    Transport = transport,
                     Timeout = TimeSpan.FromSeconds(3),
-                    PlcProfile = plcProfile,
                 };
                 client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options, shutdown.Token);
             }

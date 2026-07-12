@@ -110,22 +110,15 @@ ToyopucDeviceClient CreateClient()
     return new ToyopucDeviceClient(
         options.Host,
         options.Port,
-        transport: Enum.Parse<ToyopucTransportMode>(options.Transport, ignoreCase: true),
+        Enum.Parse<ToyopucTransportMode>(options.Transport, ignoreCase: true),
+        options.Profile,
         timeout: TimeSpan.FromSeconds(options.TimeoutSeconds),
-        addressingOptions: options.AddressingOptions,
-        plcProfile: options.Profile);
+        retries: 0);
 }
 
 int[] ReadWords(ToyopucDeviceClient client, string device, int count)
 {
-    var value = client.Read(device, count);
-    return value switch
-    {
-        int word => new[] { word },
-        object[] items => items.Select(ToInt32).ToArray(),
-        Array array => array.Cast<object>().Select(ToInt32).ToArray(),
-        _ => throw new InvalidOperationException($"Unexpected read result type: {value.GetType().FullName}"),
-    };
+    return client.ReadMany(device, count).Select(ToInt32).ToArray();
 }
 
 int[] ReadAfterFailure(string device, int count)

@@ -57,8 +57,8 @@ internal static class OperationalCommon
 
     public static PlcEndpoint ParsePlcSpec(
         string value,
-        int defaultPort,
-        ToyopucTransportMode defaultTransport,
+        int? defaultPort,
+        ToyopucTransportMode? defaultTransport,
         TimeSpan defaultTimeout,
         TimeSpan defaultInterval)
     {
@@ -76,13 +76,17 @@ internal static class OperationalCommon
         var transport = parts.Length == 4 && !string.IsNullOrWhiteSpace(parts[3])
             ? ParseTransport(parts[3])
             : defaultTransport;
+        if (port is null)
+            throw new ArgumentException("port is required either in --plc or --port.", nameof(value));
+        if (transport is null)
+            throw new ArgumentException("transport is required either in --plc or --transport.", nameof(value));
 
         return new PlcEndpoint(
             named[0].Trim(),
             parts[0],
             parts[1],
-            port,
-            transport,
+            port.Value,
+            transport.Value,
             defaultTimeout,
             defaultInterval);
     }
@@ -194,12 +198,14 @@ internal static class OperationalCommon
         };
 
     private static ToyopucConnectionOptions BuildOptions(PlcEndpoint endpoint)
-        => new(endpoint.Host)
+        => new(
+            endpoint.Host,
+            endpoint.Port,
+            endpoint.Transport,
+            endpoint.PlcProfile,
+            ToyopucRoute.Direct)
         {
-            Port = endpoint.Port,
-            Transport = endpoint.Transport,
             Timeout = endpoint.Timeout,
-            PlcProfile = endpoint.PlcProfile,
         };
 
     private static string NormalizeTagName(string address)

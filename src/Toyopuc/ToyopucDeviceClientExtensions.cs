@@ -5,6 +5,96 @@ namespace PlcComm.Toyopuc;
 
 public static class ToyopucDeviceClientExtensions
 {
+    public static Task<object> ReadOneAsync(this QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayReadOneAsync(client.RelayHops!, device, ct)
+                : inner.ReadOneAsync(device, ct),
+            ct);
+
+    public static Task<object[]> ReadManyAsync(this QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayReadManyAsync(client.RelayHops!, device, count, ct)
+                : inner.ReadManyAsync(device, count, ct),
+            ct);
+
+    public static Task<object[]> ReadDevicesAsync(this QueuedToyopucDeviceClient client, IEnumerable<object> devices, CancellationToken ct = default)
+    {
+        var materialized = devices as IList<object> ?? devices.ToList();
+        return client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayReadDevicesAsync(client.RelayHops!, materialized, ct)
+                : inner.ReadDevicesAsync(materialized, ct),
+            ct);
+    }
+
+    public static Task WriteAsync(this QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayWriteAsync(client.RelayHops!, device, value, ct)
+                : inner.WriteAsync(device, value, ct),
+            ct);
+
+    public static Task WriteManyAsync(
+        this QueuedToyopucDeviceClient client,
+        IEnumerable<KeyValuePair<object, object>> items,
+        CancellationToken ct = default)
+    {
+        var materialized = items as IList<KeyValuePair<object, object>> ?? items.ToList();
+        return client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayWriteManyAsync(client.RelayHops!, materialized, ct)
+                : inner.WriteManyAsync(materialized, ct),
+            ct);
+    }
+
+    public static Task<object> ReadFrOneAsync(this QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayReadFrOneAsync(client.RelayHops!, device, ct)
+                : inner.ReadFrOneAsync(device, ct),
+            ct);
+
+    public static Task<object[]> ReadFrAsync(this QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayReadFrAsync(client.RelayHops!, device, count, ct)
+                : inner.ReadFrAsync(device, count, ct),
+            ct);
+
+    public static Task WriteFrWorkAreaAsync(this QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayWriteFrWorkAreaAsync(client.RelayHops!, device, value, ct)
+                : inner.WriteFrWorkAreaAsync(device, value, ct),
+            ct);
+
+    public static Task CommitFrBlockAsync(this QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayCommitFrBlockAsync(client.RelayHops!, device, ct)
+                : inner.CommitFrBlockAsync(device, ct),
+            ct);
+
+    public static Task<ClockData> ReadClockAsync(this QueuedToyopucDeviceClient client, CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayReadClockAsync(client.RelayHops!, ct)
+                : inner.ReadClockAsync(ct),
+            ct);
+
+    public static Task WriteClockAsync(
+        this QueuedToyopucDeviceClient client,
+        DateTime value,
+        int yearBase,
+        CancellationToken ct = default)
+        => client.ExecuteAsync(
+            inner => client.UsesRelay
+                ? inner.RelayWriteClockAsync(client.RelayHops!, value, yearBase, ct)
+                : inner.WriteClockAsync(value, yearBase, ct),
+            ct);
+
     public static Task<object> ReadTypedAsync(this ToyopucDeviceClient client, string device, string dtype, CancellationToken ct = default)
         => ReadTypedCoreAsync(client, relayHops: null, device, dtype, ct);
 
@@ -39,6 +129,7 @@ public static class ToyopucDeviceClientExtensions
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         var addrList = addresses as IList<string> ?? addresses.ToList();
+        ValidateNamedAddresses(addrList);
         while (!ct.IsCancellationRequested)
         {
             yield return await ReadNamedCoreAsync(client, relayHops: null, addrList, ct).ConfigureAwait(false);
@@ -53,6 +144,7 @@ public static class ToyopucDeviceClientExtensions
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         var addrList = addresses as IList<string> ?? addresses.ToList();
+        ValidateNamedAddresses(addrList);
         while (!ct.IsCancellationRequested)
         {
             var snapshot = await client.ExecuteAsync(inner => ReadNamedCoreAsync(inner, client.RelayHops, addrList, ct), ct).ConfigureAwait(false);
@@ -63,150 +155,47 @@ public static class ToyopucDeviceClientExtensions
 
     public static async Task<ushort[]> ReadWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
     {
-        if (count < 1)
-            throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
-        var raw = await client.ReadAsync(device, count, ct).ConfigureAwait(false);
-        return ConvertWordReadResult(raw, count);
+        return await ReadWordsSingleRequestCoreAsync(client, relayHops: null, device, count, ct).ConfigureAwait(false);
     }
 
     public static Task<ushort[]> ReadWordsAsync(this QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => client.UsesRelay ? ReadWordsSemanticViaRelayCoreAsync(inner, client.RelayHops!, device, count, ct) : ToyopucDeviceClientExtensions.ReadWordsAsync(inner, device, count, ct), ct);
-
-    public static Task<uint[]> ReadDWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => client.ReadDWordsAsync(device, count, atomicTransfer: false, cancellationToken: ct);
-
-    public static Task<uint[]> ReadDWordsAsync(this QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => client.UsesRelay ? inner.RelayReadDWordsAsync(client.RelayHops!, device, count, atomicTransfer: false, cancellationToken: ct) : inner.ReadDWordsAsync(device, count, atomicTransfer: false, cancellationToken: ct), ct);
-
-    public static Task<ushort[]> ReadWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => ReadWordsSingleRequestCoreAsync(client, relayHops: null, device, count, ct);
-
-    public static Task<ushort[]> ReadWordsSingleRequestAsync(this QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
         => client.ExecuteAsync(inner => ReadWordsSingleRequestCoreAsync(inner, client.RelayHops, device, count, ct), ct);
 
-    public static async Task<uint[]> ReadDWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-    {
-        if (count < 1)
-            throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
-        var words = await ReadWordsSingleRequestCoreAsync(client, relayHops: null, device, checked(count * 2), ct).ConfigureAwait(false);
-        return PackDWords(words);
-    }
+    public static Task<uint[]> ReadDWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+        => ReadDWordsSingleRequestCoreAsync(client, relayHops: null, device, count, ct);
 
-    public static Task<uint[]> ReadDWordsSingleRequestAsync(this QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+    public static Task<uint[]> ReadDWordsAsync(this QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
         => client.ExecuteAsync(inner => ReadDWordsSingleRequestCoreAsync(inner, client.RelayHops, device, count, ct), ct);
 
-    public static Task WriteWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
+    public static Task WriteWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
         => WriteWordsSingleRequestCoreAsync(client, relayHops: null, device, values, ct);
 
-    public static Task WriteWordsSingleRequestAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
+    public static Task WriteWordsAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
         => client.ExecuteAsync(inner => WriteWordsSingleRequestCoreAsync(inner, client.RelayHops, device, values, ct), ct);
 
-    public static Task WriteDWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
+    public static Task WriteDWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
         => WriteWordsSingleRequestCoreAsync(client, relayHops: null, device, ExpandDWords(values), ct);
 
-    public static Task WriteDWordsSingleRequestAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
+    public static Task WriteDWordsAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
         => client.ExecuteAsync(inner => WriteWordsSingleRequestCoreAsync(inner, client.RelayHops, device, ExpandDWords(values), ct), ct);
 
-    public static async Task<ushort[]> ReadWordsChunkedAsync(this ToyopucDeviceClient client, string device, int count, int maxWordsPerRequest, CancellationToken ct = default)
-    {
-        ValidateChunkArguments(count, maxWordsPerRequest, nameof(count), nameof(maxWordsPerRequest));
-        var start = client.ResolveDevice(device);
-        EnsureWordResolved(start, nameof(device), "ReadWordsChunkedAsync()");
-        var result = new ushort[count];
-        var offset = 0;
-        while (offset < count)
-        {
-            var chunkCount = Math.Min(maxWordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
-            var chunk = await ReadWordsSingleRequestCoreAsync(client, relayHops: null, chunkDevice, chunkCount, ct).ConfigureAwait(false);
-            Array.Copy(chunk, 0, result, offset, chunkCount);
-            offset += chunkCount;
-        }
-        return result;
-    }
+    internal static Task<ushort[]> ReadWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+        => ReadWordsSingleRequestCoreAsync(client, relayHops: null, device, count, ct);
 
-    public static Task<ushort[]> ReadWordsChunkedAsync(this QueuedToyopucDeviceClient client, string device, int count, int maxWordsPerRequest, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => ReadWordsChunkedCoreAsync(inner, client.RelayHops, device, count, maxWordsPerRequest, ct), ct);
-
-    public static async Task<uint[]> ReadDWordsChunkedAsync(this ToyopucDeviceClient client, string device, int count, int maxDwordsPerRequest, CancellationToken ct = default)
-    {
-        ValidateChunkArguments(count, maxDwordsPerRequest, nameof(count), nameof(maxDwordsPerRequest));
-        var start = client.ResolveDevice(device);
-        EnsureWordResolved(start, nameof(device), "ReadDWordsChunkedAsync()");
-        var result = new uint[count];
-        var offset = 0;
-        while (offset < count)
-        {
-            var chunkCount = Math.Min(maxDwordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)), client.PlcProfile);
-            var chunk = await client.ReadDWordsSingleRequestAsync(chunkDevice, chunkCount, ct).ConfigureAwait(false);
-            Array.Copy(chunk, 0, result, offset, chunkCount);
-            offset += chunkCount;
-        }
-        return result;
-    }
-
-    public static Task<uint[]> ReadDWordsChunkedAsync(this QueuedToyopucDeviceClient client, string device, int count, int maxDwordsPerRequest, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => ReadDWordsChunkedCoreAsync(inner, client.RelayHops, device, count, maxDwordsPerRequest, ct), ct);
-
-    public static async Task WriteWordsChunkedAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, int maxWordsPerRequest, CancellationToken ct = default)
-    {
-        ArgumentNullException.ThrowIfNull(values);
-        if (values.Count == 0)
-            throw new ToyopucProtocolError("values must not be empty");
-        ValidateChunkSize(maxWordsPerRequest, nameof(maxWordsPerRequest));
-        var start = client.ResolveDevice(device);
-        EnsureWordResolved(start, nameof(device), "WriteWordsChunkedAsync()");
-        var offset = 0;
-        while (offset < values.Count)
-        {
-            var chunkCount = Math.Min(maxWordsPerRequest, values.Count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
-            await client.WriteWordsSingleRequestAsync(chunkDevice, values.Skip(offset).Take(chunkCount).ToArray(), ct).ConfigureAwait(false);
-            offset += chunkCount;
-        }
-    }
-
-    public static Task WriteWordsChunkedAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, int maxWordsPerRequest, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => WriteWordsChunkedCoreAsync(inner, client.RelayHops, device, values, maxWordsPerRequest, ct), ct);
-
-    public static async Task WriteDWordsChunkedAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, int maxDwordsPerRequest, CancellationToken ct = default)
-    {
-        ArgumentNullException.ThrowIfNull(values);
-        if (values.Count == 0)
-            throw new ToyopucProtocolError("values must not be empty");
-        ValidateChunkSize(maxDwordsPerRequest, nameof(maxDwordsPerRequest));
-        var start = client.ResolveDevice(device);
-        EnsureWordResolved(start, nameof(device), "WriteDWordsChunkedAsync()");
-        var offset = 0;
-        while (offset < values.Count)
-        {
-            var chunkCount = Math.Min(maxDwordsPerRequest, values.Count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)), client.PlcProfile);
-            await client.WriteDWordsSingleRequestAsync(chunkDevice, values.Skip(offset).Take(chunkCount).ToArray(), ct).ConfigureAwait(false);
-            offset += chunkCount;
-        }
-    }
-
-    public static Task WriteDWordsChunkedAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, int maxDwordsPerRequest, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => WriteDWordsChunkedCoreAsync(inner, client.RelayHops, device, values, maxDwordsPerRequest, ct), ct);
-
-    public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(ToyopucConnectionOptions options, CancellationToken ct = default)
-        => ToyopucDeviceClientFactory.OpenAndConnectAsync(options, ct);
-
-    public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(string host, string plcProfile, int port = 1025, CancellationToken ct = default)
-        => ToyopucDeviceClientFactory.OpenAndConnectAsync(new ToyopucConnectionOptions(host)
-        {
-            Port = port,
-            PlcProfile = plcProfile,
-        }, ct);
+    internal static Task WriteWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
+        => WriteWordsSingleRequestCoreAsync(client, relayHops: null, device, values, ct);
 
     private static async Task<object> ReadTypedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, string dtype, CancellationToken ct)
     {
         switch (NormalizeDType(dtype))
         {
             case "F":
-                return BitConverter.Int32BitsToSingle(unchecked((int)(await ReadDWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0]));
+                {
+                    float value = BitConverter.Int32BitsToSingle(unchecked((int)(await ReadDWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0]));
+                    if (!float.IsFinite(value))
+                        throw new ToyopucProtocolError("PLC returned a non-finite float32 value.");
+                    return value;
+                }
             case "D":
                 return (await ReadDWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0];
             case "L":
@@ -224,18 +213,75 @@ public static class ToyopucDeviceClientExtensions
         {
             case "F":
                 {
-                    float single = Convert.ToSingle(value, CultureInfo.InvariantCulture);
+                    float single = RequireFiniteSingle(value);
                     return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([unchecked((uint)BitConverter.SingleToInt32Bits(single))]), ct);
                 }
             case "D":
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([Convert.ToUInt32(value, CultureInfo.InvariantCulture)]), ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([(uint)RequireUnsignedIntegral(value, uint.MaxValue, "D")]), ct);
             case "L":
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([unchecked((uint)Convert.ToInt32(value, CultureInfo.InvariantCulture))]), ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, ExpandDWords([unchecked((uint)(int)RequireSignedIntegral(value, int.MinValue, int.MaxValue, "L"))]), ct);
             case "S":
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [unchecked((ushort)Convert.ToInt16(value, CultureInfo.InvariantCulture))], ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [unchecked((ushort)(short)RequireSignedIntegral(value, short.MinValue, short.MaxValue, "S"))], ct);
             default:
-                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [Convert.ToUInt16(value, CultureInfo.InvariantCulture)], ct);
+                return WriteWordsSingleRequestCoreAsync(client, relayHops, device, [(ushort)RequireUnsignedIntegral(value, ushort.MaxValue, "U")], ct);
         }
+    }
+
+    private static long RequireSignedIntegral(object value, long minimum, long maximum, string dtype)
+    {
+        long candidate = value switch
+        {
+            sbyte v => v,
+            byte v => v,
+            short v => v,
+            ushort v => v,
+            int v => v,
+            uint v => v,
+            long v => v,
+            ulong v when v <= long.MaxValue => (long)v,
+            _ => throw new ArgumentException($"{dtype} requires an integer value; Boolean, fractional, and string values are not accepted.", nameof(value)),
+        };
+        if (candidate < minimum || candidate > maximum)
+            throw new ArgumentOutOfRangeException(nameof(value), $"{dtype} value must be in the range {minimum}..{maximum}.");
+        return candidate;
+    }
+
+    private static ulong RequireUnsignedIntegral(object value, ulong maximum, string dtype)
+    {
+        ulong candidate = value switch
+        {
+            sbyte v when v >= 0 => (ulong)v,
+            byte v => v,
+            short v when v >= 0 => (ulong)v,
+            ushort v => v,
+            int v when v >= 0 => (ulong)v,
+            uint v => v,
+            long v when v >= 0 => (ulong)v,
+            ulong v => v,
+            sbyte or short or int or long => throw new ArgumentOutOfRangeException(nameof(value), $"{dtype} value must be non-negative."),
+            _ => throw new ArgumentException($"{dtype} requires an integer value; Boolean, fractional, and string values are not accepted.", nameof(value)),
+        };
+        if (candidate > maximum)
+            throw new ArgumentOutOfRangeException(nameof(value), $"{dtype} value must be in the range 0..{maximum}.");
+        return candidate;
+    }
+
+    private static float RequireFiniteSingle(object value)
+    {
+        if (value is bool or string || value is not (sbyte or byte or short or ushort or int or uint or long or ulong or float or double or decimal))
+            throw new ArgumentException("F requires a finite numeric value; Boolean and string values are not accepted.", nameof(value));
+        float result;
+        try
+        {
+            result = Convert.ToSingle(value, CultureInfo.InvariantCulture);
+        }
+        catch (OverflowException)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), value, "F value is outside the finite float32 range.");
+        }
+        if (!float.IsFinite(result))
+            throw new ArgumentOutOfRangeException(nameof(value), "F value must be finite and representable as float32.");
+        return result;
     }
 
     private static async Task WriteBitInWordCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, int bitIndex, bool value, CancellationToken ct)
@@ -273,14 +319,6 @@ public static class ToyopucDeviceClientExtensions
             }
         }
         return result;
-    }
-
-    private static async Task<ushort[]> ReadWordsSemanticViaRelayCoreAsync(ToyopucDeviceClient client, object relayHops, string device, int count, CancellationToken ct)
-    {
-        if (count < 1)
-            throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
-        var raw = await client.RelayReadAsync(relayHops, device, count, ct).ConfigureAwait(false);
-        return ConvertWordReadResult(raw, count);
     }
 
     private static async Task<ushort[]> ReadWordsSingleRequestCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, int count, CancellationToken ct)
@@ -326,70 +364,6 @@ public static class ToyopucDeviceClientExtensions
         await WriteWordsSingleRequestViaRelayAsync(client, relayHops, devices, group, values, ct).ConfigureAwait(false);
     }
 
-    private static async Task<ushort[]> ReadWordsChunkedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, int count, int maxWordsPerRequest, CancellationToken ct)
-    {
-        ValidateChunkArguments(count, maxWordsPerRequest, nameof(count), nameof(maxWordsPerRequest));
-        var start = client.ResolveDevice(device);
-        EnsureWordResolved(start, nameof(device), "ReadWordsChunkedAsync()");
-        var result = new ushort[count];
-        var offset = 0;
-        while (offset < count)
-        {
-            var chunkCount = Math.Min(maxWordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
-            var chunk = await ReadWordsSingleRequestCoreAsync(client, relayHops, chunkDevice, chunkCount, ct).ConfigureAwait(false);
-            Array.Copy(chunk, 0, result, offset, chunkCount);
-            offset += chunkCount;
-        }
-        return result;
-    }
-
-    private static async Task<uint[]> ReadDWordsChunkedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, int count, int maxDwordsPerRequest, CancellationToken ct)
-    {
-        ValidateChunkArguments(count, maxDwordsPerRequest, nameof(count), nameof(maxDwordsPerRequest));
-        var start = client.ResolveDevice(device);
-        EnsureWordResolved(start, nameof(device), "ReadDWordsChunkedAsync()");
-        var result = new uint[count];
-        var offset = 0;
-        while (offset < count)
-        {
-            var chunkCount = Math.Min(maxDwordsPerRequest, count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + (offset * 2)), client.PlcProfile);
-            var chunk = await ReadDWordsSingleRequestCoreAsync(client, relayHops, chunkDevice, chunkCount, ct).ConfigureAwait(false);
-            Array.Copy(chunk, 0, result, offset, chunkCount);
-            offset += chunkCount;
-        }
-        return result;
-    }
-
-    private static async Task WriteWordsChunkedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, IReadOnlyList<ushort> values, int maxWordsPerRequest, CancellationToken ct)
-    {
-        ArgumentNullException.ThrowIfNull(values);
-        if (values.Count == 0)
-            throw new ToyopucProtocolError("values must not be empty");
-        ValidateChunkSize(maxWordsPerRequest, nameof(maxWordsPerRequest));
-
-        var start = client.ResolveDevice(device);
-        EnsureWordResolved(start, nameof(device), "WriteWordsChunkedAsync()");
-        var offset = 0;
-        while (offset < values.Count)
-        {
-            var chunkCount = Math.Min(maxWordsPerRequest, values.Count - offset);
-            var chunkDevice = ToyopucAddress.Format(start, checked(start.Index + offset), client.PlcProfile);
-            await WriteWordsSingleRequestCoreAsync(client, relayHops, chunkDevice, values.Skip(offset).Take(chunkCount).ToArray(), ct).ConfigureAwait(false);
-            offset += chunkCount;
-        }
-    }
-
-    private static Task WriteDWordsChunkedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, IReadOnlyList<uint> values, int maxDwordsPerRequest, CancellationToken ct)
-    {
-        ArgumentNullException.ThrowIfNull(values);
-        if (values.Count == 0)
-            throw new ToyopucProtocolError("values must not be empty");
-        ValidateChunkSize(maxDwordsPerRequest, nameof(maxDwordsPerRequest));
-        return WriteWordsChunkedCoreAsync(client, relayHops, device, ExpandDWords(values), checked(maxDwordsPerRequest * 2), ct);
-    }
-
     private static async Task<ushort[]> ReadWordsSingleRequestDirectAsync(ToyopucDeviceClient client, IReadOnlyList<ResolvedDevice> devices, string group, CancellationToken ct)
     {
         switch (group)
@@ -420,31 +394,31 @@ public static class ToyopucDeviceClientExtensions
             case "basic-word":
                 if (TryGetConsecutiveStart(devices, static device => device.BasicAddress, 1, out var basicStart))
                 {
-                    var response = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildWordRead(basicStart, devices.Count), ct).ConfigureAwait(false);
+                    var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildWordRead(basicStart, devices.Count), ct).ConfigureAwait(false);
                     EnsureRelayCommand(response, 0x1C, "Unexpected CMD in relay word-read response");
                     return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
                 }
-                var multiBasic = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildMultiWordRead(CollectBasicAddresses(devices)), ct).ConfigureAwait(false);
+                var multiBasic = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildMultiWordRead(CollectBasicAddresses(devices)), ct).ConfigureAwait(false);
                 EnsureRelayCommand(multiBasic, 0x22, "Unexpected CMD in relay multi-word-read response");
                 return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(multiBasic.Data));
             case "ext-word":
                 if (TryGetUniformNumber(devices, out var number) && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var extStart))
                 {
-                    var response = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildExtWordRead(number, extStart, devices.Count), ct).ConfigureAwait(false);
+                    var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildExtWordRead(number, extStart, devices.Count), ct).ConfigureAwait(false);
                     EnsureRelayCommand(response, 0x94, "Unexpected CMD in relay ext word-read response");
                     return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
                 }
-                var multiExt = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildExtMultiRead(Array.Empty<(int No, int Bit, int Address)>(), Array.Empty<(int No, int Address)>(), CollectNoAddresses(devices)), ct).ConfigureAwait(false);
+                var multiExt = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildExtMultiRead(Array.Empty<(int No, int Bit, int Address)>(), Array.Empty<(int No, int Address)>(), CollectNoAddresses(devices)), ct).ConfigureAwait(false);
                 EnsureRelayCommand(multiExt, 0x98, "Unexpected CMD in relay ext multi-read response");
                 return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(multiExt.Data));
             case "pc10-word":
                 if (TryGetConsecutivePc10BlockStart(devices, 2, out var pc10Start))
                 {
-                    var response = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildPc10BlockRead(pc10Start, devices.Count * 2), ct).ConfigureAwait(false);
+                    var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildPc10BlockRead(pc10Start, devices.Count * 2), ct).ConfigureAwait(false);
                     EnsureRelayCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
                     return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
                 }
-                var multiPc10 = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiWordReadPayload(CollectAddress32Values(devices))), ct).ConfigureAwait(false);
+                var multiPc10 = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiWordReadPayload(CollectAddress32Values(devices))), ct).ConfigureAwait(false);
                 EnsureRelayCommand(multiPc10, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
                 return ToUShortArray(ParsePc10MultiWordData(multiPc10.Data, devices.Count));
             default:
@@ -532,7 +506,7 @@ public static class ToyopucDeviceClientExtensions
         devices[0] = start;
         for (var i = 1; i < count; i++)
         {
-            devices[i] = client.ResolveDevice(ToyopucAddress.Format(start, checked(start.Index + i), client.PlcProfile));
+            devices[i] = client.ResolveDevice(ToyopucAddress.Format(start, checked(start.Index + i)));
         }
         return devices;
     }
@@ -765,7 +739,9 @@ public static class ToyopucDeviceClientExtensions
 
     private static string NormalizeDType(string text)
     {
-        var dtype = text.Trim().TrimStart('.').ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(text))
+            throw new ToyopucProtocolError("Logical data type is required.");
+        var dtype = text.Trim().ToUpperInvariant();
         return dtype switch
         {
             "U" => "U",
@@ -779,9 +755,12 @@ public static class ToyopucDeviceClientExtensions
 
     private static (string Base, string DType, int? BitIdx) ParseLogicalAddress(string address)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
         if (address.Contains(':'))
         {
             var index = address.IndexOf(':');
+            if (index == 0)
+                throw new ToyopucProtocolError("Named address must include a device before ':'.");
             return (address[..index], NormalizeDType(address[(index + 1)..]), null);
         }
         if (address.Contains('.'))
@@ -794,19 +773,15 @@ public static class ToyopucDeviceClientExtensions
                 return (address[..index], "BIT_IN_WORD", bitIndex);
             throw new ToyopucProtocolError($"Invalid bit-in-word index in '{address}'. Use one hex digit 0-F or ':' for data type.");
         }
-        return (address, "U", null);
+        throw new ToyopucProtocolError(
+            $"Named address '{address}' must specify :U, :S, :D, :L, :F, or a word bit .0-.F.");
     }
 
-    private static void ValidateChunkArguments(int count, int maxPerRequest, string countParam, string maxParam)
+    private static void ValidateNamedAddresses(IList<string> addresses)
     {
-        if (count < 1)
-            throw new ArgumentOutOfRangeException(countParam, "count must be 1 or greater.");
-        ValidateChunkSize(maxPerRequest, maxParam);
-    }
-
-    private static void ValidateChunkSize(int maxPerRequest, string paramName)
-    {
-        if (maxPerRequest < 1)
-            throw new ArgumentOutOfRangeException(paramName, "Chunk size must be 1 or greater.");
+        if (addresses.Count != 1)
+            throw new ToyopucProtocolError(
+                "A named read must contain exactly one address so the operation remains one request.");
+        _ = ParseLogicalAddress(addresses[0]);
     }
 }

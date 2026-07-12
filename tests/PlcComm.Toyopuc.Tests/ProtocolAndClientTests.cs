@@ -419,23 +419,11 @@ public class ProtocolAndClientTests
     }
 
     [Fact]
-    public async Task HighLevelClient_ReadsUpperUBoundaryWithMixedFrames()
+    public void HighLevelClient_RejectsUpperUBoundaryBeforeTransport()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-
-        byte[]? firstRequest = null;
-        byte[]? secondRequest = null;
-        var serverTask = Task.Run(async () =>
-        {
-            using var serverClient = await listener.AcceptTcpClientAsync();
-            await using var stream = serverClient.GetStream();
-            firstRequest = await ReadFrameAsync(stream);
-            await stream.WriteAsync(BuildResponse(0x94, new byte[] { 0x11, 0x11 }));
-            secondRequest = await ReadFrameAsync(stream);
-            await stream.WriteAsync(BuildResponse(0xC2, new byte[] { 0x22, 0x22 }));
-        });
 
         using var client = new ToyopucDeviceClient(
             "127.0.0.1",
@@ -447,14 +435,9 @@ public class ProtocolAndClientTests
         {
             CaptureTraceFrames = true,
         };
-        var result = Assert.IsType<object[]>(client.Read("U07FFF", 2));
-
-        await serverTask;
-
-        Assert.Equal(new object[] { 0x1111, 0x2222 }, result);
-        Assert.Equal(ToyopucProtocol.BuildExtWordRead(0x08, 0x7FFF, 1), firstRequest);
-        Assert.Equal(ToyopucProtocol.BuildPc10BlockRead(ToyopucAddress.EncodeExNoByteU32(0x04, 0x0000), 2), secondRequest);
-        Assert.Equal(2, client.TraceFrames.Count);
+        Assert.Throws<ToyopucProtocolError>(() => client.ReadMany("U07FFF", 2));
+        Assert.False(client.IsOpen);
+        Assert.Empty(client.TraceFrames);
     }
 
     [Fact]
@@ -700,23 +683,11 @@ public class ProtocolAndClientTests
     }
 
     [Fact]
-    public async Task HighLevelClient_ReadsFrAcrossBlockBoundary_InSeparatePc10BlockReads()
+    public void HighLevelClient_RejectsFrBlockBoundaryBeforeTransport()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-
-        byte[]? firstRequest = null;
-        byte[]? secondRequest = null;
-        var serverTask = Task.Run(async () =>
-        {
-            using var serverClient = await listener.AcceptTcpClientAsync();
-            await using var stream = serverClient.GetStream();
-            firstRequest = await ReadFrameAsync(stream);
-            await stream.WriteAsync(BuildResponse(0xC2, new byte[] { 0x34, 0x12 }));
-            secondRequest = await ReadFrameAsync(stream);
-            await stream.WriteAsync(BuildResponse(0xC2, new byte[] { 0x78, 0x56 }));
-        });
 
         using var client = new ToyopucDeviceClient(
             "127.0.0.1",
@@ -728,14 +699,9 @@ public class ProtocolAndClientTests
         {
             CaptureTraceFrames = true,
         };
-        var result = Assert.IsType<object[]>(client.Read("FR007FFF", 2));
-
-        await serverTask;
-
-        Assert.Equal(new object[] { 0x1234, 0x5678 }, result);
-        Assert.Equal(ToyopucProtocol.BuildPc10BlockRead(ToyopucAddress.EncodeFrWordAddr32(0x007FFF), 2), firstRequest);
-        Assert.Equal(ToyopucProtocol.BuildPc10BlockRead(ToyopucAddress.EncodeFrWordAddr32(0x008000), 2), secondRequest);
-        Assert.Equal(2, client.TraceFrames.Count);
+        Assert.Throws<ToyopucProtocolError>(() => client.ReadFr("FR007FFF", 2));
+        Assert.False(client.IsOpen);
+        Assert.Empty(client.TraceFrames);
     }
 
     [Fact]
@@ -856,7 +822,7 @@ public class ProtocolAndClientTests
         {
             CaptureTraceFrames = true,
         };
-        client.WriteFr("FR000000", new[] { 0x1234, 0x5678 }, commit: false);
+        client.WriteFrWorkArea("FR000000", new[] { 0x1234, 0x5678 });
 
         await serverTask;
 
