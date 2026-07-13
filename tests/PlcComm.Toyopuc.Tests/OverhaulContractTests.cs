@@ -87,6 +87,7 @@ public sealed class OverhaulContractTests
         await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(["B0100:"]));
         await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(["B0100:Q"]));
         Assert.False(client.IsOpen);
+        Assert.Equal(default, client.TrafficStats);
     }
 
     [Fact]
@@ -431,6 +432,9 @@ public sealed class OverhaulContractTests
         Assert.Throws<ToyopucError>(() => client.SendRaw(0x7F, []));
         await serverTask;
         Assert.Equal(1, Volatile.Read(ref requestCount));
+        Assert.Equal(1UL, client.TrafficStats.RequestCount);
+        Assert.True(client.TrafficStats.TxBytes > 0);
+        Assert.Equal((ulong)BuildErrorResponse(0x7F, 0x73).Length, client.TrafficStats.RxBytes);
     }
 
     [Fact]
@@ -512,6 +516,9 @@ public sealed class OverhaulContractTests
         Assert.Equal([0x1234], client.RelayReadWords("P1-L2:N2", 0x2000, 1));
         await serverTask;
         Assert.Equal(2, Volatile.Read(ref requestCount));
+        Assert.Equal(2UL, client.TrafficStats.RequestCount);
+        Assert.True(client.TrafficStats.TxBytes > 0);
+        Assert.True(client.TrafficStats.RxBytes > 0);
     }
 
     [Fact]
@@ -781,6 +788,9 @@ public sealed class OverhaulContractTests
             timeout: TimeSpan.FromMilliseconds(50));
 
         Assert.Throws<ToyopucTimeoutError>(() => client.ReadWords(0, 1));
+        Assert.Equal(1UL, client.TrafficStats.RequestCount);
+        Assert.True(client.TrafficStats.TxBytes > 0);
+        Assert.Equal(0UL, client.TrafficStats.RxBytes);
         Assert.Throws<InvalidOperationException>(() => client.Open());
         Assert.False(client.IsOpen);
     }

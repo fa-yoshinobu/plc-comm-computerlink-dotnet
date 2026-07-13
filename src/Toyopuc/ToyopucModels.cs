@@ -2,6 +2,9 @@ using System.Globalization;
 
 namespace PlcComm.Toyopuc;
 
+/// <summary>Immutable lifetime traffic counters for one TOYOPUC client.</summary>
+public readonly record struct ToyopucTrafficStats(ulong RequestCount, ulong TxBytes, ulong RxBytes);
+
 public sealed record ResponseFrame(byte Ft, byte Rc, byte Cmd, byte[] Data);
 
 internal sealed record TransportTraceFrame(byte[] Tx, byte[]? Rx);

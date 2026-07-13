@@ -72,6 +72,8 @@ public sealed class QueuedToyopucDeviceClient : IAsyncDisposable, IDisposable
 
     /// <summary>Gets a value indicating whether the underlying transport is open.</summary>
     public bool IsOpen => _client.IsOpen;
+    /// <summary>Gets cumulative traffic for the underlying client lifetime.</summary>
+    public ToyopucTrafficStats TrafficStats => _client.TrafficStats;
 
     /// <summary>Opens the connection asynchronously with exclusive access.</summary>
     /// <remarks>Relay and direct sessions both flow through this gate-protected open path.</remarks>

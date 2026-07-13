@@ -178,11 +178,21 @@ public sealed class ToyopucClientExtensionsTests
             transport: ToyopucTransportMode.Udp,
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
 
+        Assert.Equal(default, client.TrafficStats);
         var response = client.SendRaw(0x1C, Array.Empty<byte>());
         await serverTask;
 
         Assert.Equal(0x1C, response.Cmd);
         Assert.Equal(responseData, response.Data);
+        Assert.Equal(
+            new ToyopucTrafficStats(
+                1,
+                (ulong)client.LastTx!.Length,
+                (ulong)client.LastRx!.Length),
+            client.TrafficStats);
+        ToyopucTrafficStats stats = client.TrafficStats;
+        client.Close();
+        Assert.Equal(stats, client.TrafficStats);
     }
 
     private static byte[] BuildResponse(int cmd, byte[] data)
