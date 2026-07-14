@@ -39,6 +39,11 @@ Run these commands locally:
 cmd /c run_ci.bat
 ```
 
+Before treating the release gate as complete, inspect repository-root `TODO.md` and maintainer
+acceptance records. Every open live or platform-dependent item must have an item-by-item result or
+an explicit release disposition in the active release GOAL. An open item must never disappear from
+the final release summary merely because the executable tests pass.
+
 If hardware verification is part of the release, also run:
 
 ```powershell
@@ -174,4 +179,13 @@ After publishing, verify the release:
 gh release view vX.Y.Z --repo fa-yoshinobu/plc-comm-computerlink-dotnet --json tagName,name,assets,url
 gh release list --repo fa-yoshinobu/plc-comm-computerlink-dotnet --limit 3
 ```
+
+## Final Publication Integrity Gate
+
+Before final publication, enumerate every unchecked repository TODO and maintainer checkbox and
+give each item a result or explicit release disposition. Build the shared docs site in a fresh
+virtual environment and require its package version/symbol check plus strict build. After NuGet
+publication, compare the GitHub `.nupkg` with the registry package after allowing only NuGet.org's
+repository signature entries. Finally verify the immutable tag target, Release assets/state, docs
+deployment, open release PR count, and clean working tree.
 

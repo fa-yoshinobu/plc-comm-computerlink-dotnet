@@ -468,3 +468,15 @@ Review purpose: independently identify contract violations, unsafe retry/cancell
 Inputs provided for the completed review: approved target contracts and acceptance criteria in this file; repository diff; public API reference; .NET 8/9/10 results; warning-free build, format, API-reference, example CLI, self-contained publish, and package evidence; the 2026-07-12 FR value-mask self-review finding and correction; and deferred live-verification scope.
 
 Expected output: findings only, each with severity, affected contract identifier, exact file/line evidence, failure scenario, recommended correction, and missing-test recommendation. Claude approval or a general quality score is not a substitute for findings.
+
+## NR-007: Lifetime traffic statistics
+
+Approved next-release contract: `TrafficStats` returns immutable lifetime counters; only complete
+sends and complete response frames/datagrams count, pre-send and partial failures do not, and
+close/reconnect does not reset. Deterministic tests are required; live PLC verification is
+unnecessary. Final packaging remains pending explicit authorization.
+
+- [x] Public API and transport-boundary implementation completed.
+- [x] Deterministic tests, documentation, changelog, and package gate completed.
+- [x] Codex final self-review completed.
+- [ ] Next-release package acceptance completed.

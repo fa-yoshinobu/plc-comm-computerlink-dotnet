@@ -72,3 +72,7 @@ Clock values are timezone-unspecified PLC local time. UTC or offset conversion i
 Cancellation tokens are optional. A token cancels its own gate wait or operation; canceling a queued operation does not close a different operation already using the client. The three-second communication timeout remains active when no token is supplied.
 
 An active cancellation closes that transport session and requires an explicit `OpenAsync()` before it is reused. If a state-changing request may already have been sent, cancellation raises `ToyopucOperationOutcomeUnknownException`; do not assume that the PLC did or did not apply it. A transport timeout also discards the session so a late response cannot be mistaken for the next request; the next ordinary command may establish a new session.
+
+## Traffic statistics
+
+Read `client.TrafficStats` (also available on the queued client) for cumulative `RequestCount`, `TxBytes`, and `RxBytes`.

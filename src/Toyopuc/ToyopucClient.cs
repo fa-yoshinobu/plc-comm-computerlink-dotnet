@@ -17,6 +17,9 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     private bool _requestMayHaveBeenSent;
     private volatile bool _explicitReconnectRequired;
     private bool _fixedUdpSessionTainted;
+    private long _requestCount;
+    private long _txBytes;
+    private long _rxBytes;
     private readonly AsyncLocal<CancellationToken> _operationCancellation = new();
     private readonly Queue<TransportTraceFrame> _traceFrames = new();
     private int _traceFrameCapacity;
@@ -70,6 +73,10 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     public int Retries { get; }
     public TimeSpan RetryDelay { get; }
     public bool IsOpen => _socket is not null;
+    public ToyopucTrafficStats TrafficStats => new(
+        unchecked((ulong)Interlocked.Read(ref _requestCount)),
+        unchecked((ulong)Interlocked.Read(ref _txBytes)),
+        unchecked((ulong)Interlocked.Read(ref _rxBytes)));
     internal Action<ToyopucTraceFrame>? TraceHook { get; private set; }
     internal bool CaptureTraceFrames
     {
@@ -748,6 +755,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 {
                     Span<byte> header = stackalloc byte[4];
                     SendAll(payload);
+                    RecordSend(payload.Length);
                     ReceiveExact(header);
                     var length = header[2] | (header[3] << 8);
                     frame = GC.AllocateUninitializedArray<byte>(header.Length + length);
@@ -760,6 +768,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 }
 
                 _lastRx = frame;
+                Interlocked.Add(ref _rxBytes, frame.Length);
                 FireTrace(ToyopucTraceDirection.Receive, frame);
                 if (_traceFrameCapacity > 0)
                 {
@@ -950,7 +959,9 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
 
         _requestMayHaveBeenSent = true;
-        _socket.Send(payload, SocketFlags.None);
+        if (_socket.Send(payload, SocketFlags.None) != payload.Length)
+            throw new ToyopucProtocolError("UDP send did not accept the complete datagram");
+        RecordSend(payload.Length);
         var buffer = ArrayPool<byte>.Shared.Rent(UdpReceiveBufferSize);
         try
         {
@@ -961,6 +972,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         {
             ArrayPool<byte>.Shared.Return(buffer);
         }
+    }
+
+    private void RecordSend(int length)
+    {
+        Interlocked.Increment(ref _requestCount);
+        Interlocked.Add(ref _txBytes, length);
     }
 
     private void MarkFixedUdpSessionTaintedIfNeeded()

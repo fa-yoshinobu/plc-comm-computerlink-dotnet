@@ -626,6 +626,14 @@ public bool IsOpen { get; }
 
 Gets a value indicating whether the underlying transport is open.
 
+##### TrafficStats
+
+```csharp
+public ToyopucTrafficStats TrafficStats { get; }
+```
+
+Gets cumulative traffic for the underlying client lifetime.
+
 ### RelayLayer
 
 ```csharp
@@ -1842,6 +1850,12 @@ public TimeSpan RetryDelay { get; }
 
 ```csharp
 public bool IsOpen { get; }
+```
+
+##### TrafficStats
+
+```csharp
+public ToyopucTrafficStats TrafficStats { get; }
 ```
 
 ##### LastTx
@@ -3384,6 +3398,42 @@ public ToyopucTimeoutError(string message)
 
 ```csharp
 public ToyopucTimeoutError(string message, Exception innerException)
+```
+
+### ToyopucTrafficStats
+
+```csharp
+public struct ToyopucTrafficStats
+```
+
+Immutable lifetime traffic counters for one TOYOPUC client.
+
+#### Members
+
+##### ToyopucTrafficStats
+
+```csharp
+public ToyopucTrafficStats(ulong RequestCount, ulong TxBytes, ulong RxBytes)
+```
+
+Immutable lifetime traffic counters for one TOYOPUC client.
+
+##### RequestCount
+
+```csharp
+public ulong RequestCount { get; set; }
+```
+
+##### TxBytes
+
+```csharp
+public ulong TxBytes { get; set; }
+```
+
+##### RxBytes
+
+```csharp
+public ulong RxBytes { get; set; }
 ```
 
 ### ToyopucTransportMode
