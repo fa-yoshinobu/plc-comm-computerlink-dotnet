@@ -474,10 +474,9 @@ Expected output: findings only, each with severity, affected contract identifier
 Approved next-release contract: `TrafficStats` returns immutable lifetime counters; only complete
 sends and complete response frames/datagrams count, pre-send and partial failures do not, and
 close/reconnect does not reset. Deterministic tests are required; live PLC verification is
-unnecessary. Claude review and final packaging remain pending explicit authorization.
+unnecessary. Final packaging remains pending explicit authorization.
 
 - [x] Public API and transport-boundary implementation completed.
 - [x] Deterministic tests, documentation, changelog, and package gate completed.
 - [x] Codex final self-review completed.
-- [ ] Claude review completed and findings dispositioned.
 - [ ] Next-release package acceptance completed.
