@@ -432,9 +432,33 @@ The concrete candidate values below come from the maintained samples and the 202
 | D-081 | Nano 10GX TUC-1157; `toyopuc:nano-10gx:compatible`; `192.168.250.100:1025` TCP; Direct; `FR000000` | `pass` (2026-07-12). Starting from the original value `999` immediately after restart, Python wrote and read back `0x74E6`, then executed CA once. An explicit A0 read confirmed after about one second that the write-in-progress state had cleared with no abnormal status. After restart, .NET confirmed `0x74E6`. | .NET restored `999` with C3 and executed CA once. An explicit A0 read confirmed after about 1.5 seconds that the write-in-progress state had cleared with no abnormal status. After another restart, Python and .NET both confirmed `999`. The library performed no polling, retry, or fallback. The temporary .NET project and generated artifacts were removed. |
 | D-083 | Nano 10GX TUC-1157; `toyopuc:nano-10gx:compatible`; `192.168.250.100:1025` TCP; Direct; PLC clock | `pass` (2026-07-12). Python and .NET both succeeded in writing with an explicit century, performing a verification read, and restoring the original time. | Do not generalize the short profile-specific propagation delay into the API contract. No automatic wait, reconnect, or retry was used. The temporary .NET project and generated artifacts were removed. |
 | D-084-A | Nano 10GX; `toyopuc:nano-10gx:compatible`; TCP `192.168.250.100:1025`; `P1-L1:N2`; `P1-D0000` | `pass` (2026-07-12). Python and .NET both confirmed `0xFFFF → 0x3DA4 → 0xFFFF`, outer `CMD=60`, link `0x11`, station `0x0002`, ENQ `0x05`, and successful response unwrapping. | Both implementations restored the original value and verified it by readback. The temporary .NET project and generated artifacts were removed. |
-| D-084-B | Real multi-hop topology, endpoint, route, target PLC/device unavailable | `unverified; release permitted` (2026-07-12). Exact nested-frame, all-hop validation, and response-unwrap tests pass; D-084-A one-hop live behavior passes in Python/.NET. No multi-hop live-pass claim is made. | TODO remains until exact hardware/topology exists. Explicit hops are mandatory; no route discovery, route mutation, or fallback. Any future live command still requires the exact route/target and user `OK`. |
+| D-084-B | Real multi-hop topology, endpoint, route, target PLC/device unavailable | `unverified; release permitted` (2026-07-12). Exact nested-frame, all-hop validation, and response-unwrap tests pass; D-084-A one-hop live behavior passes in Python/.NET. No multi-hop live-pass claim is made. | No active TODO remains. The hardware-unavailable scope was closed on 2026-07-18 without changing its `unverified` result. Reopen only after an exact topology, endpoint, route, target PLC/device, and user `OK` exist. Explicit hops remain mandatory; no route discovery, route mutation, or fallback. |
 
 If hardware is unavailable, each item needs an explicit release disposition. The proposed dispositions are recorded in workspace `quality_overhaul_goal_20260711.md`; no proposal is approved merely by being documented.
+
+### HW-CLOSE-20260718-01: Hardware-unavailable evidence scope
+
+Implementation scope: .NET and Python ComputerLink live-evidence tracking for
+`toyopuc:plus:standard`, `toyopuc:nano-10gx:native`, `toyopuc:pc3jx:pc3-separate`,
+`toyopuc:pc3jg:pc3jg`, `toyopuc:pc3jg:pc3-separate`, and D-084-B real multi-hop behavior.
+
+Target contract: an evidence request with no identified target, endpoint, and exact route is not an
+active implementation obligation. Each affected scope remains `unverified`; no live compatibility
+claim is added, no unsupported conclusion is inferred, and release is not blocked under the existing
+item-by-item dispositions. A future check is a new batch requiring an exact target/profile, endpoint,
+device/address, read intent, expected evidence, restoration requirement, and explicit user `OK`.
+
+Compatibility impact: none. Runtime code, supported API, profile data, and existing deterministic
+tests are unchanged.
+
+Acceptance criteria:
+
+- [x] The five targetless profile sweeps are no longer active root TODO items.
+- [x] D-084-B is closed as an active task while its `unverified` evidence state is preserved.
+- [x] No affected profile or multi-hop behavior is described as live-passed or unsupported.
+- [x] Reactivation requires a new exact, explicitly approved live batch rather than an open-ended
+      collection request.
+- [x] No live PLC communication was performed for this closure.
 
 ## Claude review batch `CLAUDE-CL-20260712-01`
 
@@ -474,9 +498,11 @@ Expected output: findings only, each with severity, affected contract identifier
 Approved next-release contract: `TrafficStats` returns immutable lifetime counters; only complete
 sends and complete response frames/datagrams count, pre-send and partial failures do not, and
 close/reconnect does not reset. Deterministic tests are required; live PLC verification is
-unnecessary. Final packaging remains pending explicit authorization.
+unnecessary. Final packaging and publication acceptance completed with `v3.2.0`.
 
 - [x] Public API and transport-boundary implementation completed.
 - [x] Deterministic tests, documentation, changelog, and package gate completed.
 - [x] Codex final self-review completed.
-- [ ] Next-release package acceptance completed.
+- [x] Next-release package acceptance completed. Evidence: the `v3.2.0` tag equals repository HEAD,
+  the GitHub Release and NuGet `PlcComm.Toyopuc` `3.2.0` package are public, tag-commit checks passed,
+  and the final six-runtime family source/API comparison was completed on 2026-07-18.
