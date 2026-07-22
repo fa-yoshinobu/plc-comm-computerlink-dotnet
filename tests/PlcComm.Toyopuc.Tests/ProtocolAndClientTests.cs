@@ -77,6 +77,16 @@ public class ProtocolAndClientTests
     }
 
     [Fact]
+    public void ParseCpuStatusData_DecodesAbnormalWriteDuringRunBit()
+    {
+        var status = ToyopucProtocol.ParseCpuStatusData(new byte[] { 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00 });
+
+        Assert.True(status.AbnormalWriteDuringRun);
+        Assert.False(status.UnderWritingDuringRun);
+        Assert.False(status.AbnormalWritingEquipmentInfo);
+    }
+
+    [Fact]
     public void ParseCpuStatusDataA0_ReturnsFlags()
     {
         var status = ToyopucProtocol.ParseCpuStatusDataA0(new byte[] { 0x00, 0x11, 0x00, 0x81, 0x20, 0x00, 0x00, 0x00, 0x00, 0x10, 0x02 });
