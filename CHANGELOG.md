@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Tests: Added focused CPU-status coverage for the documented `AbnormalWriteDuringRun` response bit and its adjacent flags.
+
 ## [3.2.0] - 2026-07-17
 
 - Release: Bumped .NET package metadata to `3.2.0`.
