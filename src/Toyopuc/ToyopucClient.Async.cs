@@ -422,6 +422,10 @@ public partial class ToyopucClient
                     catch (Exception exception) when (cancellationToken.IsCancellationRequested)
                     {
                         CancelActiveOperation();
+                        if (exception is ToyopucOperationOutcomeUnknownException)
+                        {
+                            throw;
+                        }
                         if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
                         {
                             throw new ToyopucOperationOutcomeUnknownException(
@@ -467,6 +471,10 @@ public partial class ToyopucClient
                     catch (Exception exception) when (cancellationToken.IsCancellationRequested)
                     {
                         CancelActiveOperation();
+                        if (exception is ToyopucOperationOutcomeUnknownException)
+                        {
+                            throw;
+                        }
                         if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
                         {
                             throw new ToyopucOperationOutcomeUnknownException(

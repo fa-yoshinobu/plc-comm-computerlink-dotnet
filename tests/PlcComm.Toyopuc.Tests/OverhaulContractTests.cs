@@ -642,7 +642,7 @@ public sealed class OverhaulContractTests
             retries: 1,
             retryDelay: TimeSpan.Zero);
 
-        Assert.Throws<ToyopucError>(() =>
+        var error = Assert.Throws<ToyopucError>(() =>
         {
             switch (operation)
             {
@@ -665,6 +665,7 @@ public sealed class OverhaulContractTests
                     throw new InvalidOperationException($"Unknown test operation: {operation}");
             }
         });
+        Assert.IsNotType<ToyopucOperationOutcomeUnknownException>(error);
 
         await serverTask;
         Assert.Equal(1, Volatile.Read(ref requestCount));
@@ -866,6 +867,75 @@ public sealed class OverhaulContractTests
         await client.OpenAsync();
         Assert.Equal([0x5678], client.ReadWords(0x2000, 1));
         await reconnectServer;
+    }
+
+    [Fact]
+    public async Task WriteTimeoutAfterSend_ReportsUnknownOutcomeForSyncAndAsyncCalls()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        var serverTask = Task.Run(async () =>
+        {
+            for (var request = 0; request < 2; request++)
+            {
+                using var server = await listener.AcceptTcpClientAsync();
+                await using var stream = server.GetStream();
+                _ = await ReadFrameAsync(stream);
+                await Task.Delay(TimeSpan.FromMilliseconds(150));
+            }
+        });
+
+        await using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromMilliseconds(50));
+
+        Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+            () => client.WriteWords(0x2000, [0x1234]));
+        Assert.False(client.IsOpen);
+
+        await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
+            async () => await client.WriteWordsAsync(0x2000, [0x5678]));
+        Assert.False(client.IsOpen);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task MismatchedResponseCommand_IsUnknownOnlyForStateChangingCalls()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        var serverTask = Task.Run(async () =>
+        {
+            using (var writeServer = await listener.AcceptTcpClientAsync())
+            {
+                await using var stream = writeServer.GetStream();
+                _ = await ReadFrameAsync(stream);
+                await stream.WriteAsync(BuildResponse(0x1C, []));
+            }
+
+            using var readServer = await listener.AcceptTcpClientAsync();
+            await using var readStream = readServer.GetStream();
+            _ = await ReadFrameAsync(readStream);
+            await readStream.WriteAsync(BuildResponse(0x1D, []));
+        });
+
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2));
+
+        Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+            () => client.WriteWords(0x2000, [0x1234]));
+        var readError = Assert.Throws<ToyopucProtocolError>(() => client.ReadWords(0x2000, 1));
+        Assert.IsNotType<ToyopucOperationOutcomeUnknownException>(readError);
+        await serverTask;
     }
 
     [Fact]

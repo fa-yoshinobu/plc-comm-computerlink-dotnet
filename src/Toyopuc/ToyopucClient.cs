@@ -228,7 +228,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     internal ResponseFrame SendRaw(int cmd, byte[] data)
     {
-        return SendAndReceive(ToyopucProtocol.BuildCommand(cmd, data));
+        return SendAndReceiveStateChanging(ToyopucProtocol.BuildCommand(cmd, data));
     }
 
     public int[] ReadWords(int address, int count)
@@ -240,7 +240,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void WriteWords(int address, IEnumerable<int> values)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildWordWrite(address, values));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildWordWrite(address, values));
         EnsureCommand(response, 0x1D);
     }
 
@@ -253,7 +253,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void WriteBytes(int address, IEnumerable<int> values)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildByteWrite(address, values));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildByteWrite(address, values));
         EnsureCommand(response, 0x1F);
     }
 
@@ -271,7 +271,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void WriteBit(int address, bool value)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildBitWrite(address, value ? 1 : 0));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildBitWrite(address, value ? 1 : 0));
         EnsureCommand(response, 0x21);
     }
 
@@ -284,7 +284,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void WriteWordsMulti(IEnumerable<(int Address, int Value)> pairs)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildMultiWordWrite(pairs));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildMultiWordWrite(pairs));
         EnsureCommand(response, 0x23);
     }
 
@@ -297,7 +297,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void WriteBytesMulti(IEnumerable<(int Address, int Value)> pairs)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildMultiByteWrite(pairs));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildMultiByteWrite(pairs));
         EnsureCommand(response, 0x25);
     }
 
@@ -310,7 +310,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void WriteExtWords(int number, int address, IEnumerable<int> values)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildExtWordWrite(number, address, values));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildExtWordWrite(number, address, values));
         EnsureCommand(response, 0x95);
     }
 
@@ -323,7 +323,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void WriteExtBytes(int number, int address, IEnumerable<int> values)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildExtByteWrite(number, address, values));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildExtByteWrite(number, address, values));
         EnsureCommand(response, 0x97);
     }
 
@@ -342,7 +342,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         IEnumerable<(int No, int Address, int Value)> bytePoints,
         IEnumerable<(int No, int Address, int Value)> wordPoints)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildExtMultiWrite(bitPoints, bytePoints, wordPoints));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildExtMultiWrite(bitPoints, bytePoints, wordPoints));
         EnsureCommand(response, 0x99);
     }
 
@@ -355,7 +355,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void Pc10BlockWrite(int address32, byte[] dataBytes)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildPc10BlockWrite(address32, dataBytes));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildPc10BlockWrite(address32, dataBytes));
         EnsureCommand(response, 0xC3);
     }
 
@@ -368,7 +368,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void Pc10MultiWrite(byte[] payload)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildPc10MultiWrite(payload));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildPc10MultiWrite(payload));
         EnsureCommand(response, 0xC5);
     }
 
@@ -399,18 +399,18 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     private void FrRegister(int exNo)
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildFrRegister(exNo));
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildFrRegister(exNo));
         EnsureCommand(response, 0xCA);
     }
 
     internal ResponseFrame RelayCommand(int linkNo, int stationNo, byte[] innerPayload)
     {
-        return SendAndReceive(ToyopucProtocol.BuildRelayCommand(linkNo, stationNo, innerPayload));
+        return SendAndReceiveStateChanging(ToyopucProtocol.BuildRelayCommand(linkNo, stationNo, innerPayload));
     }
 
     internal ResponseFrame RelayNested(IEnumerable<(int LinkNo, int StationNo)> hops, byte[] innerPayload)
     {
-        return SendAndReceive(ToyopucProtocol.BuildRelayNested(hops, innerPayload));
+        return SendAndReceiveStateChanging(ToyopucProtocol.BuildRelayNested(hops, innerPayload));
     }
 
     internal ResponseFrame SendViaRelay(object hops, byte[] innerPayload)
@@ -436,13 +436,44 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
 
         var outerPayload = ToyopucProtocol.BuildRelayNested(normalizedHops, innerPayload);
-        var outer = SendAndReceive(outerPayload, allowRetry);
-        var (layers, finalResponse) = ToyopucRelay.UnwrapRelayResponseChain(outer);
+        var outer = allowRetry
+            ? SendAndReceive(outerPayload, allowRetry: true)
+            : SendAndReceiveStateChanging(outerPayload);
+        IReadOnlyList<RelayLayer> layers;
+        ResponseFrame? finalResponse;
+        try
+        {
+            (layers, finalResponse) = ToyopucRelay.UnwrapRelayResponseChain(outer);
+        }
+        catch (ToyopucProtocolError exception)
+        {
+            Close();
+            if (!allowRetry)
+            {
+                throw CreateOutcomeUnknownException(exception);
+            }
+            throw;
+        }
         if (finalResponse is null)
         {
             var lastLayer = layers[^1];
             throw new ToyopucProtocolError(
                 $"Relay NAK at link=0x{lastLayer.LinkNo:X2}, station=0x{lastLayer.StationNo:X4}, ack=0x{lastLayer.Ack:X2}");
+        }
+
+        var expectedCommand = innerPayload[0] == ToyopucProtocol.FtCommand
+            ? innerPayload[4]
+            : innerPayload[2];
+        if (finalResponse.Cmd != expectedCommand)
+        {
+            var exception = new ToyopucProtocolError(
+                $"Unexpected relay response command: expected 0x{expectedCommand:X2}, got 0x{finalResponse.Cmd:X2}");
+            Close();
+            if (!allowRetry)
+            {
+                throw CreateOutcomeUnknownException(exception);
+            }
+            throw exception;
         }
 
         return finalResponse;
@@ -644,7 +675,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     {
         ValidateClockWrite(value, yearBase);
         var weekday = (int)value.DayOfWeek;
-        var response = SendAndReceive(
+        var response = SendAndReceiveStateChanging(
             ToyopucProtocol.BuildClockWrite(
                 value.Second,
                 value.Minute,
@@ -662,7 +693,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void ResumeScan()
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildScanResume());
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildScanResume());
         EnsureCommand(response, 0x32);
         EnsureCommand32Data(response, new byte[] { 0x01, 0x00 }, "Unexpected scan-resume response body");
     }
@@ -679,14 +710,14 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public void StopScan()
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildScanStop());
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildScanStop());
         EnsureCommand(response, 0x32);
         EnsureCommand32Data(response, new byte[] { 0x02, 0x00 }, "Unexpected scan-stop response body");
     }
 
     public void ReleaseScanStop()
     {
-        var response = SendAndReceive(ToyopucProtocol.BuildScanStopRelease());
+        var response = SendAndReceiveStateChanging(ToyopucProtocol.BuildScanStopRelease());
         EnsureCommand(response, 0x32);
         EnsureCommand32Data(response, new byte[] { 0x02, 0x00 }, "Unexpected scan-stop-release response body");
     }
@@ -729,6 +760,19 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     }
 
     protected ResponseFrame SendAndReceive(byte[] payload, bool allowRetry = false)
+    {
+        return SendAndReceiveCore(payload, allowRetry, outcomeUnknownAfterSend: false);
+    }
+
+    private ResponseFrame SendAndReceiveStateChanging(byte[] payload)
+    {
+        return SendAndReceiveCore(payload, allowRetry: false, outcomeUnknownAfterSend: true);
+    }
+
+    private ResponseFrame SendAndReceiveCore(
+        byte[] payload,
+        bool allowRetry,
+        bool outcomeUnknownAfterSend)
     {
         if (_explicitReconnectRequired)
             throw new InvalidOperationException("The canceled session requires an explicit Open/OpenAsync before another command.");
@@ -787,6 +831,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                     throw new ToyopucError(FormatResponseError(response));
                 }
 
+                if (payload.Length >= 5 && response.Cmd != payload[4])
+                {
+                    throw new ToyopucProtocolError(
+                        $"Unexpected response command: expected 0x{payload[4]:X2}, got 0x{response.Cmd:X2}");
+                }
+
                 return response;
             }
             catch (SocketException exception) when (exception.SocketErrorCode == SocketError.TimedOut)
@@ -800,7 +850,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                     continue;
                 }
 
+                var requestMayHaveBeenSent = _requestMayHaveBeenSent;
                 Close();
+                if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
+                {
+                    throw CreateOutcomeUnknownException(lastError);
+                }
                 throw (ToyopucTimeoutError)lastError;
             }
             catch (TimeoutException exception)
@@ -814,7 +869,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                     continue;
                 }
 
+                var requestMayHaveBeenSent = _requestMayHaveBeenSent;
                 Close();
+                if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
+                {
+                    throw CreateOutcomeUnknownException(lastError);
+                }
                 throw (ToyopucTimeoutError)lastError;
             }
             catch (ToyopucError exception)
@@ -830,7 +890,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
                 if (exception is ToyopucProtocolError)
                 {
+                    var requestMayHaveBeenSent = _requestMayHaveBeenSent;
                     Close();
+                    if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
+                    {
+                        throw CreateOutcomeUnknownException(exception);
+                    }
                 }
 
                 throw;
@@ -846,7 +911,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                     continue;
                 }
 
+                var requestMayHaveBeenSent = _requestMayHaveBeenSent;
                 Close();
+                if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
+                {
+                    throw CreateOutcomeUnknownException(lastError);
+                }
                 throw (ToyopucError)lastError;
             }
         }
@@ -857,6 +927,13 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
 
         throw new ToyopucError("Send/receive failed");
+    }
+
+    private static ToyopucOperationOutcomeUnknownException CreateOutcomeUnknownException(Exception innerException)
+    {
+        return new ToyopucOperationOutcomeUnknownException(
+            "A state-changing request may have been sent, but no confirmed response was received; the PLC state is unknown.",
+            innerException);
     }
 
     private static IPAddress ResolveRemoteAddress(string host)
