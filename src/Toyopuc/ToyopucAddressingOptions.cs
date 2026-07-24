@@ -3,9 +3,7 @@ namespace PlcComm.Toyopuc;
 internal sealed record ToyopucAddressingOptions(
     bool UseUpperUPc10 = true,
     bool UseEbPc10 = true,
-    bool UseFrPc10 = true,
-    bool UseUpperBitPc10 = true,
-    bool UseUpperMBitPc10 = true)
+    bool UseFrPc10 = true)
 {
     public static ToyopucAddressingOptions Default { get; } = new();
 
@@ -14,9 +12,7 @@ internal sealed record ToyopucAddressingOptions(
     public static ToyopucAddressingOptions ToyopucPlusStandard { get; } = new(
         UseUpperUPc10: false,
         UseEbPc10: false,
-        UseFrPc10: false,
-        UseUpperBitPc10: false,
-        UseUpperMBitPc10: false);
+        UseFrPc10: false);
 
     public static ToyopucAddressingOptions ToyopucPlusExtended { get; } = ToyopucPlusStandard;
 
@@ -27,25 +23,19 @@ internal sealed record ToyopucAddressingOptions(
     public static ToyopucAddressingOptions Pc10GStandardPc3Jg { get; } = new(
         UseUpperUPc10: false,
         UseEbPc10: true,
-        UseFrPc10: false,
-        UseUpperBitPc10: false,
-        UseUpperMBitPc10: false);
+        UseFrPc10: false);
 
     public static ToyopucAddressingOptions Pc10GMode { get; } = new();
 
     public static ToyopucAddressingOptions Pc3JxPc3Separate { get; } = new(
         UseUpperUPc10: false,
         UseEbPc10: false,
-        UseFrPc10: false,
-        UseUpperBitPc10: false,
-        UseUpperMBitPc10: false);
+        UseFrPc10: false);
 
     public static ToyopucAddressingOptions Pc3JxPlusExpansion { get; } = new(
         UseUpperUPc10: false,
         UseEbPc10: false,
-        UseFrPc10: false,
-        UseUpperBitPc10: false,
-        UseUpperMBitPc10: false);
+        UseFrPc10: false);
 
     public static ToyopucAddressingOptions Pc3JgMode { get; } = Pc10GStandardPc3Jg;
 

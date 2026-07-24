@@ -553,12 +553,15 @@ public sealed class OverhaulContractTests
             timeout: TimeSpan.FromSeconds(3),
             retries: 1,
             retryDelay: TimeSpan.Zero);
+        client.EnableMaintainerTrace(4);
 
         var clock = client.ReadClock();
         await serverTask;
 
         Assert.Equal(new ClockData(56, 34, 12, 11, 7, 26, 6), clock);
         Assert.Equal(2, Volatile.Read(ref requestCount));
+        Assert.True(client.CaptureTraceFrames);
+        Assert.Equal(2, client.TraceFrames.Count);
     }
 
     [Fact]

@@ -15,9 +15,7 @@
       "addressing_options": {
         "use_upper_u_pc10": true,
         "use_eb_pc10": true,
-        "use_fr_pc10": true,
-        "use_upper_bit_pc10": true,
-        "use_upper_m_bit_pc10": true
+        "use_fr_pc10": true
       },
       "areas": [
         {
@@ -475,9 +473,7 @@
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,
-        "use_fr_pc10": false,
-        "use_upper_bit_pc10": false,
-        "use_upper_m_bit_pc10": false
+        "use_fr_pc10": false
       },
       "areas": [
         {
@@ -812,9 +808,7 @@
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,
-        "use_fr_pc10": false,
-        "use_upper_bit_pc10": false,
-        "use_upper_m_bit_pc10": false
+        "use_fr_pc10": false
       },
       "areas": [
         {
@@ -1201,9 +1195,7 @@
       "addressing_options": {
         "use_upper_u_pc10": true,
         "use_eb_pc10": true,
-        "use_fr_pc10": true,
-        "use_upper_bit_pc10": true,
-        "use_upper_m_bit_pc10": true
+        "use_fr_pc10": true
       },
       "areas": [
         {
@@ -1648,9 +1640,7 @@
       "addressing_options": {
         "use_upper_u_pc10": true,
         "use_eb_pc10": true,
-        "use_fr_pc10": true,
-        "use_upper_bit_pc10": true,
-        "use_upper_m_bit_pc10": true
+        "use_fr_pc10": true
       },
       "areas": [
         {
@@ -2095,9 +2085,7 @@
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": true,
-        "use_fr_pc10": false,
-        "use_upper_bit_pc10": false,
-        "use_upper_m_bit_pc10": false
+        "use_fr_pc10": false
       },
       "areas": [
         {
@@ -2510,9 +2498,7 @@
       "addressing_options": {
         "use_upper_u_pc10": true,
         "use_eb_pc10": true,
-        "use_fr_pc10": true,
-        "use_upper_bit_pc10": true,
-        "use_upper_m_bit_pc10": true
+        "use_fr_pc10": true
       },
       "areas": [
         {
@@ -2976,9 +2962,7 @@
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,
-        "use_fr_pc10": false,
-        "use_upper_bit_pc10": false,
-        "use_upper_m_bit_pc10": false
+        "use_fr_pc10": false
       },
       "areas": [
         {
@@ -3339,9 +3323,7 @@
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,
-        "use_fr_pc10": false,
-        "use_upper_bit_pc10": false,
-        "use_upper_m_bit_pc10": false
+        "use_fr_pc10": false
       },
       "areas": [
         {
@@ -3728,9 +3710,7 @@
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": true,
-        "use_fr_pc10": false,
-        "use_upper_bit_pc10": false,
-        "use_upper_m_bit_pc10": false
+        "use_fr_pc10": false
       },
       "areas": [
         {
@@ -4143,9 +4123,7 @@
       "addressing_options": {
         "use_upper_u_pc10": false,
         "use_eb_pc10": false,
-        "use_fr_pc10": false,
-        "use_upper_bit_pc10": false,
-        "use_upper_m_bit_pc10": false
+        "use_fr_pc10": false
       },
       "areas": [
         {

@@ -599,7 +599,9 @@ public static class ToyopucDeviceClientExtensions
     {
         var result = new (int No, int Address)[devices.Count];
         for (var i = 0; i < devices.Count; i++)
-            result[i] = (devices[i].No ?? throw new ToyopucProtocolError("Missing extended number"), devices[i].Address ?? throw new ToyopucProtocolError("Missing extended address"));
+            result[i] = (
+                devices[i].No ?? throw new ToyopucProtocolError("Missing extended number"),
+                checked((devices[i].Address ?? throw new ToyopucProtocolError("Missing extended address")) * 2));
         return result;
     }
 
@@ -607,7 +609,10 @@ public static class ToyopucDeviceClientExtensions
     {
         var result = new (int No, int Address, int Value)[devices.Count];
         for (var i = 0; i < devices.Count; i++)
-            result[i] = (devices[i].No ?? throw new ToyopucProtocolError("Missing extended number"), devices[i].Address ?? throw new ToyopucProtocolError("Missing extended address"), values[i]);
+            result[i] = (
+                devices[i].No ?? throw new ToyopucProtocolError("Missing extended number"),
+                checked((devices[i].Address ?? throw new ToyopucProtocolError("Missing extended address")) * 2),
+                values[i]);
         return result;
     }
 

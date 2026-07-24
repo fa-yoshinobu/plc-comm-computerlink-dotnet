@@ -51,8 +51,6 @@ public sealed class CanonicalProfilesTests
         Assert.Equal(expected.GetProperty("use_upper_u_pc10").GetBoolean(), actual.UseUpperUPc10);
         Assert.Equal(expected.GetProperty("use_eb_pc10").GetBoolean(), actual.UseEbPc10);
         Assert.Equal(expected.GetProperty("use_fr_pc10").GetBoolean(), actual.UseFrPc10);
-        Assert.Equal(expected.GetProperty("use_upper_bit_pc10").GetBoolean(), actual.UseUpperBitPc10);
-        Assert.Equal(expected.GetProperty("use_upper_m_bit_pc10").GetBoolean(), actual.UseUpperMBitPc10);
     }
 
     private static void AssertAreas(JsonElement expected, IReadOnlyList<ToyopucAreaDescriptor> actual)

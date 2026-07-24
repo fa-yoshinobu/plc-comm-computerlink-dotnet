@@ -136,14 +136,10 @@ public class AddressAndResolverTests
         Assert.True(mode.UseUpperUPc10);
         Assert.True(mode.UseEbPc10);
         Assert.True(mode.UseFrPc10);
-        Assert.True(mode.UseUpperBitPc10);
-        Assert.True(mode.UseUpperMBitPc10);
 
         Assert.True(compatible.UseUpperUPc10);
         Assert.True(compatible.UseEbPc10);
         Assert.True(compatible.UseFrPc10);
-        Assert.True(compatible.UseUpperBitPc10);
-        Assert.True(compatible.UseUpperMBitPc10);
     }
 
     [Fact]
@@ -154,8 +150,6 @@ public class AddressAndResolverTests
         Assert.False(options.UseUpperUPc10);
         Assert.True(options.UseEbPc10);
         Assert.False(options.UseFrPc10);
-        Assert.False(options.UseUpperBitPc10);
-        Assert.False(options.UseUpperMBitPc10);
     }
 
     [Fact]
@@ -166,8 +160,6 @@ public class AddressAndResolverTests
         Assert.True(options.UseUpperUPc10);
         Assert.True(options.UseEbPc10);
         Assert.True(options.UseFrPc10);
-        Assert.True(options.UseUpperBitPc10);
-        Assert.True(options.UseUpperMBitPc10);
     }
 
     [Fact]
@@ -234,8 +226,6 @@ public class AddressAndResolverTests
         Assert.False(plusMode.UseUpperUPc10);
         Assert.False(plusMode.UseEbPc10);
         Assert.False(plusMode.UseFrPc10);
-        Assert.False(plusMode.UseUpperBitPc10);
-        Assert.False(plusMode.UseUpperMBitPc10);
     }
 
     [Fact]
@@ -247,14 +237,24 @@ public class AddressAndResolverTests
         Assert.False(pc3jgMode.UseUpperUPc10);
         Assert.True(pc3jgMode.UseEbPc10);
         Assert.False(pc3jgMode.UseFrPc10);
-        Assert.False(pc3jgMode.UseUpperBitPc10);
-        Assert.False(pc3jgMode.UseUpperMBitPc10);
 
         Assert.False(pc3SeparateMode.UseUpperUPc10);
         Assert.False(pc3SeparateMode.UseEbPc10);
         Assert.False(pc3SeparateMode.UseFrPc10);
-        Assert.False(pc3SeparateMode.UseUpperBitPc10);
-        Assert.False(pc3SeparateMode.UseUpperMBitPc10);
+    }
+
+    [Fact]
+    public void DeviceClient_ResolverCacheHonorsInjectedAddressingOptions()
+    {
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucAddressingOptions.ToyopucPlusStandard,
+            "toyopuc:generic",
+            ToyopucTransportMode.Tcp);
+
+        Assert.Equal("ext-word", client.ResolveDevice("EB00010").Scheme);
+        Assert.Equal("ext-word", client.ResolveDevice("EB00010").Scheme);
     }
 
     [Fact]

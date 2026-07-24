@@ -90,8 +90,10 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
         return _resolvedDeviceCache.GetOrAdd(
             key,
-            static (cacheKey, state) =>
-                ToyopucDeviceResolver.ResolveDevice(cacheKey, state.PlcProfile),
+            static (cacheKey, state) => ToyopucDeviceResolver.ResolveDevice(
+                cacheKey,
+                state.AddressingOptions,
+                state.PlcProfile),
             (AddressingOptions, PlcProfile));
     }
 
