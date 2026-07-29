@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Release: Bumped .NET package metadata to `3.2.1`.
 - Release: GitHub Release drafts now prepend this version's changelog section to generated notes and repair a missing section on workflow reruns.
+- Tooling: Pinned canonical profile fixture refreshes to `plc-comm-computerlink-profiles` `v1.0.4`, matching the embedded profile data used by this release.
 
 - Tests: Added focused CPU-status coverage for the documented `AbnormalWriteDuringRun` response bit and its adjacent flags.
 - Library: State-changing requests that may have reached the PLC but do not receive a confirmed matching response now raise `ToyopucOperationOutcomeUnknownException`. This covers timeout, disconnect, send failure, malformed or command-mismatched responses, and relay response failures; pre-send failures, reads, and confirmed PLC errors retain their existing classifications. Callers must resolve PLC state before retrying an unknown-outcome operation.
