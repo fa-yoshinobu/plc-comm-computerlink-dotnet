@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests: Added focused CPU-status coverage for the documented `AbnormalWriteDuringRun` response bit and its adjacent flags.
 - Library: State-changing requests that may have reached the PLC but do not receive a confirmed matching response now raise `ToyopucOperationOutcomeUnknownException`. This covers timeout, disconnect, send failure, malformed or command-mismatched responses, and relay response failures; pre-send failures, reads, and confirmed PLC errors retain their existing classifications. Callers must resolve PLC state before retrying an unknown-outcome operation.
 - Tests: Added synchronous, asynchronous, direct, and relay regression coverage for unknown-outcome classification without double-wrapping.
+- Library: CMD 98/99 word-address requests now encode byte offsets, injected profile options are isolated per client instead of sharing stale cached state, and retry reconnects preserve trace callbacks.
+- Library: Profile catalog address bounds are advisory and do not reject transport sends; wire-format width checks remain.
 
 ## [3.2.0] - 2026-07-17
 

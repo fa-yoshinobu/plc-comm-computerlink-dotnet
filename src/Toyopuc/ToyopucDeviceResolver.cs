@@ -155,11 +155,6 @@ public static class ToyopucDeviceResolver
 
         if (unit == "bit")
         {
-            if (TryResolveDirectPc10Bit(parsedAddress, text, options, out var directPc10Bit))
-            {
-                return directPc10Bit;
-            }
-
             if (BasicBitAreas.Contains(parsedAddress.Area))
             {
                 return new ResolvedDevice(
@@ -180,11 +175,6 @@ public static class ToyopucDeviceResolver
             if (parsedAddress.Packed && (BasicWordAreas.Contains(parsedAddress.Area) || ExtWordAreas.Contains(parsedAddress.Area)))
             {
                 throw new ArgumentException($"W suffix is only valid for bit-device families: {text}", nameof(device));
-            }
-
-            if (TryResolveDirectPc10Derived(parsedAddress, text, options, out var directPc10DerivedWord))
-            {
-                return directPc10DerivedWord;
             }
 
             if (BasicWordAreas.Contains(parsedAddress.Area) || BasicBitAreas.Contains(parsedAddress.Area))
@@ -245,11 +235,6 @@ public static class ToyopucDeviceResolver
                 Packed: parsedAddress.Packed,
                 No: ext.No,
                 Address: ext.Address);
-        }
-
-        if (TryResolveDirectPc10Derived(parsedAddress, text, options, out var directPc10DerivedByte))
-        {
-            return directPc10DerivedByte;
         }
 
         if (BasicWordAreas.Contains(parsedAddress.Area) || BasicBitAreas.Contains(parsedAddress.Area))
@@ -418,75 +403,6 @@ public static class ToyopucDeviceResolver
             Address: spec.ByteBase + (parsedAddress.Index >> 3));
     }
 
-    private static bool TryResolveDirectPc10Bit(
-        ParsedAddress parsedAddress,
-        string text,
-        ToyopucAddressingOptions options,
-        out ResolvedDevice resolved)
-    {
-        var allowed = parsedAddress.Area switch
-        {
-            "P" or "V" or "T" or "C" => options.UseUpperBitPc10 && parsedAddress.Index is >= 0x1000 and <= 0x17FF,
-            "L" => options.UseUpperBitPc10 && parsedAddress.Index is >= 0x1000 and <= 0x2FFF,
-            "M" => options.UseUpperMBitPc10 && parsedAddress.Index is >= 0x1000 and <= 0x17FF,
-            _ => false,
-        };
-
-        if (!allowed)
-        {
-            resolved = null!;
-            return false;
-        }
-
-        resolved = new ResolvedDevice(
-            text,
-            "pc10-bit",
-            "bit",
-            parsedAddress.Area,
-            parsedAddress.Index,
-            Packed: parsedAddress.Packed,
-            Address32: ToyopucAddress.EncodePc10BitAddress(parsedAddress));
-        return true;
-    }
-
-    private static bool TryResolveDirectPc10Derived(
-        ParsedAddress parsedAddress,
-        string text,
-        ToyopucAddressingOptions options,
-        out ResolvedDevice resolved)
-    {
-        var allowed = parsedAddress.Area switch
-        {
-            "P" or "V" or "T" or "C" or "L" => options.UseUpperBitPc10 && parsedAddress.Index >= 0x100,
-            "M" => options.UseUpperMBitPc10 && parsedAddress.Index >= 0x100,
-            _ => false,
-        };
-
-        if (!allowed)
-        {
-            resolved = null!;
-            return false;
-        }
-
-        var byteAddress = parsedAddress.Unit switch
-        {
-            "word" => ToyopucAddress.EncodeWordAddress(parsedAddress) * 2,
-            "byte" => ToyopucAddress.EncodeByteAddress(parsedAddress),
-            _ => throw new ArgumentException($"Unsupported direct PC10 derived unit: {parsedAddress.Unit}", nameof(parsedAddress)),
-        };
-
-        resolved = new ResolvedDevice(
-            text,
-            parsedAddress.Unit == "word" ? "pc10-word" : "pc10-byte",
-            parsedAddress.Unit,
-            parsedAddress.Area,
-            parsedAddress.Index,
-            High: parsedAddress.High,
-            Packed: parsedAddress.Packed,
-            Address32: ToyopucAddress.EncodeExNoByteU32(0x00, byteAddress));
-        return true;
-    }
-
     private static void ValidateProfileAccess(ParsedAddress parsedAddress, string? prefix, string? profile, string device)
     {
         var profileName = profile ?? "toyopuc:generic";
@@ -518,7 +434,7 @@ public static class ToyopucDeviceResolver
                 nameof(device));
         }
 
-        // Catalog index ranges are advisory application/UI metadata. The
+        // PROFILE_RANGE_NOT_A_TRANSPORT_GUARD: Catalog index ranges are advisory application/UI metadata. The
         // communication resolver deliberately does not reject a syntactically
         // encodable address solely because it falls outside those ranges; the
         // connected PLC and configuration remain the runtime authority.

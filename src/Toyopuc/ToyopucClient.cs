@@ -167,6 +167,16 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     public virtual void Close()
     {
+        CloseCore(clearTraceConfiguration: true);
+    }
+
+    private void CloseTransport()
+    {
+        CloseCore(clearTraceConfiguration: false);
+    }
+
+    private void CloseCore(bool clearTraceConfiguration)
+    {
         if (_socket is not null)
         {
             try
@@ -181,15 +191,18 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
         _lastTx = null;
         _lastRx = null;
-        _traceFrames.Clear();
-        _traceFrameCapacity = 0;
-        TraceHook = null;
+        if (clearTraceConfiguration)
+        {
+            _traceFrames.Clear();
+            _traceFrameCapacity = 0;
+            TraceHook = null;
+        }
     }
 
     private void CancelActiveOperation()
     {
         _explicitReconnectRequired = true;
-        Close();
+        CloseTransport();
     }
 
     public void Dispose()
@@ -447,7 +460,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
         catch (ToyopucProtocolError exception)
         {
-            Close();
+            CloseTransport();
             if (!allowRetry)
             {
                 throw CreateOutcomeUnknownException(exception);
@@ -468,7 +481,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         {
             var exception = new ToyopucProtocolError(
                 $"Unexpected relay response command: expected 0x{expectedCommand:X2}, got 0x{finalResponse.Cmd:X2}");
-            Close();
+            CloseTransport();
             if (!allowRetry)
             {
                 throw CreateOutcomeUnknownException(exception);
@@ -846,12 +859,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 if (!_fixedUdpSessionTainted && (allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
                 {
                     RetryDelaySleep();
-                    Close();
+                    CloseTransport();
                     continue;
                 }
 
                 var requestMayHaveBeenSent = _requestMayHaveBeenSent;
-                Close();
+                CloseTransport();
                 if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
                 {
                     throw CreateOutcomeUnknownException(lastError);
@@ -865,12 +878,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 if (!_fixedUdpSessionTainted && (allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
                 {
                     RetryDelaySleep();
-                    Close();
+                    CloseTransport();
                     continue;
                 }
 
                 var requestMayHaveBeenSent = _requestMayHaveBeenSent;
-                Close();
+                CloseTransport();
                 if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
                 {
                     throw CreateOutcomeUnknownException(lastError);
@@ -884,14 +897,14 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                     && (!_requestMayHaveBeenSent || (allowRetry && IsRetryableResponseError(exception))))
                 {
                     RetryDelaySleep();
-                    Close();
+                    CloseTransport();
                     continue;
                 }
 
                 if (exception is ToyopucProtocolError)
                 {
                     var requestMayHaveBeenSent = _requestMayHaveBeenSent;
-                    Close();
+                    CloseTransport();
                     if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
                     {
                         throw CreateOutcomeUnknownException(exception);
@@ -907,12 +920,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 if (!_fixedUdpSessionTainted && (allowRetry || !_requestMayHaveBeenSent) && attempt <= Retries)
                 {
                     RetryDelaySleep();
-                    Close();
+                    CloseTransport();
                     continue;
                 }
 
                 var requestMayHaveBeenSent = _requestMayHaveBeenSent;
-                Close();
+                CloseTransport();
                 if (outcomeUnknownAfterSend && requestMayHaveBeenSent)
                 {
                     throw CreateOutcomeUnknownException(lastError);

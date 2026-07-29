@@ -9,6 +9,7 @@ public sealed class ToyopucClientExtensionsTests
 {
     private const double LocalTestTimeoutSeconds = 3.0;
     private const string Pc10Profile = "toyopuc:pc10g:pc10";
+    private const string Pc3JgSeparateProfile = "toyopuc:pc3jg:pc3-separate";
 
     [Fact]
     public void ToyopucAddress_Normalize_PreservesPrefixAndSuffix()
@@ -155,6 +156,50 @@ public sealed class ToyopucClientExtensionsTests
             plcProfile: Pc10Profile);
 
         await client.WriteWordsSingleRequestAsync("P1-D0000", new ushort[] { 0x1234, 0x5678 });
+
+        Assert.Equal([Convert.ToHexString(expected)], server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task ReadWordsSingleRequestAsync_ExtMultiFallbackUsesByteAddresses()
+    {
+        var expected = ToyopucProtocol.BuildExtMultiRead(
+            Array.Empty<(int No, int Bit, int Address)>(),
+            Array.Empty<(int No, int Address)>(),
+            [(0x09, 0xFFFE), (0x0A, 0x0000)]);
+        await using var server = new ScriptedToyopucServer(_ =>
+            BuildResponse(0x98, new byte[] { 0x34, 0x12, 0x78, 0x56 }));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucAddressingOptions.Pc3JgPc3Separate,
+            Pc3JgSeparateProfile,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+
+        var values = await client.ReadWordsSingleRequestAsync("EB07FFF", 2);
+
+        Assert.Equal(new ushort[] { 0x1234, 0x5678 }, values);
+        Assert.Equal([Convert.ToHexString(expected)], server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task WriteWordsSingleRequestAsync_ExtMultiFallbackUsesByteAddresses()
+    {
+        var expected = ToyopucProtocol.BuildExtMultiWrite(
+            Array.Empty<(int No, int Bit, int Address, int Value)>(),
+            Array.Empty<(int No, int Address, int Value)>(),
+            [(0x09, 0xFFFE, 0x1234), (0x0A, 0x0000, 0x5678)]);
+        await using var server = new ScriptedToyopucServer(_ => BuildResponse(0x99, Array.Empty<byte>()));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucAddressingOptions.Pc3JgPc3Separate,
+            Pc3JgSeparateProfile,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+
+        await client.WriteWordsSingleRequestAsync("EB07FFF", new ushort[] { 0x1234, 0x5678 });
 
         Assert.Equal([Convert.ToHexString(expected)], server.ReceivedFrames.ToArray());
     }
