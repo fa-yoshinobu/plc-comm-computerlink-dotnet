@@ -506,3 +506,43 @@ unnecessary. Final packaging and publication acceptance completed with `v3.2.0`.
 - [x] Next-release package acceptance completed. Evidence: the `v3.2.0` tag equals repository HEAD,
   the GitHub Release and NuGet `PlcComm.Toyopuc` `3.2.0` package are public, tag-commit checks passed,
   and the final six-runtime family source/API comparison was completed on 2026-07-18.
+
+## BH-LIVE-OUTCOME-20260729 — State-changing unknown-outcome verification
+
+Scope: commit `640d66c243ff2a1f20acd1dd729dc64eaa5f14bd`; Nano 10GX;
+`toyopuc:nano-10gx:compatible`; TCP `192.168.250.100:1025`; Direct; `FR000000`.
+
+Target contract: if one state-changing request reaches the PLC but its matching response cannot be
+confirmed, the .NET client reports `ToyopucOperationOutcomeUnknownException`, does not retry even
+when retries are configured, requires the caller to inspect PLC state, and permits controlled
+recovery through a new normal session.
+
+Acceptance evidence:
+
+- [x] A normal baseline read returned `FR000000=0x03E7` (`999`).
+- [x] A local response-withholding proxy forwarded one `CMD=C3` write for test value `0x6A3D` to the
+  PLC and received one normal `CMD=C3` response, but did not return that response to the client.
+- [x] With `retries=3`, the client returned `ToyopucOperationOutcomeUnknownException`; the proxy
+  observed exactly one PLC request and no automatic retry.
+- [x] A new normal session read `FR000000=0x6A3D`, proving that the PLC had executed the write while
+  the client had correctly declined to claim success.
+- [x] A normal `CMD=C3` write restored `FR000000` to `0x03E7` without a commit command, and the final
+  read returned `0x03E7`.
+- [x] The temporary proxy/probe source and all generated build artifacts were removed. The
+  repository working tree was clean before this evidence record was added.
+
+Disposition: the synchronous direct TCP post-send response-loss path passes on the stated hardware.
+Deterministic fault injection remains the acceptance evidence for exact pre-send boundaries,
+disconnect/malformed/mismatched/PLC-error classifications, async operation, and relay routing that
+this single live path does not cover; no live compatibility claim is made for those untested paths.
+The user explicitly accepted this combined evidence as the REL-010 high-risk release disposition on
+2026-07-29.
+
+Final candidate verification on 2026-07-29 used the current working tree and the current local
+`plc-comm-computerlink-profiles` candidate. The profile fixture was unchanged, the source archive
+contract passed (`49` files, `13` samples), build and generated API checks passed with zero warnings,
+and tests passed on net8 (`240`), net9 (`253`), and net10 (`240`). `dotnet format
+--verify-no-changes`, self-contained HighLevelSample publish, and Release package generation for all
+three TFMs also passed. Self-review found mixed LF/CRLF markers in changed C# files; the finding was
+accepted, normalized with `dotnet format`, and the complete gate was rerun successfully. REL-010 is
+complete; publication remains separately gated by explicit user authorization.
