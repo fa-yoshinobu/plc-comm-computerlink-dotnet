@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($Ref)) {
-    $Ref = "v1.0.1"
+    $Ref = "v1.0.4"
 }
 
 $RawBase = "https://raw.githubusercontent.com/fa-yoshinobu/plc-comm-computerlink-profiles/$Ref"
