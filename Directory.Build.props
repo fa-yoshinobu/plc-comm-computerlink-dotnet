@@ -2,5 +2,14 @@
   <PropertyGroup>
     <Version>3.2.1</Version>
     <IsPackable>false</IsPackable>
+    <Company>fa-yoshinobu</Company>
+    <Copyright>Copyright (c) 2026 fa-yoshinobu</Copyright>
+    <RepositoryUrl>https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="License" Value="MIT" />
+    <AssemblyMetadata Include="RepositoryUrl" Value="https://github.com/fa-yoshinobu/plc-comm-computerlink-dotnet" />
+  </ItemGroup>
 </Project>
