@@ -502,138 +502,6 @@ public bool Packed { get; set; }
 public int? DigitCount { get; set; }
 ```
 
-### QueuedToyopucDeviceClient
-
-```csharp
-public sealed class QueuedToyopucDeviceClient
-```
-
-A wrapper for `ToyopucDeviceClient` that serializes compound async operations.
-
-Remarks: Use this wrapper when one TOYOPUC transport session must serve multiple high-level reads, writes, poll cycles, or relay operations without overlapping command lifetimes.
-
-#### Members
-
-##### QueuedToyopucDeviceClient
-
-```csharp
-public QueuedToyopucDeviceClient(ToyopucDeviceClient client, ToyopucRoute route)
-```
-
-Initializes a new instance of the `QueuedToyopucDeviceClient` class.
-
-Parameters:
-- `client`: The underlying TOYOPUC client.
-- `route`: Required direct or relay route.
-
-##### OpenAsync
-
-```csharp
-public Task OpenAsync(CancellationToken cancellationToken = default)
-```
-
-Opens the connection asynchronously with exclusive access.
-
-Remarks: Relay and direct sessions both flow through this gate-protected open path.
-
-##### Dispose
-
-```csharp
-public void Dispose()
-```
-
-Disposes the wrapper and the underlying client.
-
-##### DisposeAsync
-
-```csharp
-public ValueTask DisposeAsync()
-```
-
-Disposes the wrapper and the underlying client asynchronously.
-
-##### RelayHops
-
-```csharp
-public IReadOnlyList<ValueTuple<int, int>> RelayHops { get; }
-```
-
-Gets the configured relay hops, if any.
-
-Remarks: The returned sequence is already normalized to link/station tuples.
-
-##### Route
-
-```csharp
-public ToyopucRoute Route { get; }
-```
-
-Gets the explicit direct or relay route.
-
-##### UsesRelay
-
-```csharp
-public bool UsesRelay { get; }
-```
-
-Gets a value indicating whether relay mode is enabled.
-
-##### Host
-
-```csharp
-public string Host { get; }
-```
-
-Gets the PLC host.
-
-##### Port
-
-```csharp
-public int Port { get; }
-```
-
-Gets the PLC port.
-
-##### Transport
-
-```csharp
-public ToyopucTransportMode Transport { get; }
-```
-
-Gets the selected transport protocol.
-
-##### Timeout
-
-```csharp
-public TimeSpan Timeout { get; }
-```
-
-Gets the validated per-attempt operation timeout.
-
-##### PlcProfile
-
-```csharp
-public string PlcProfile { get; }
-```
-
-Gets the normalized PLC profile name.
-
-##### IsOpen
-
-```csharp
-public bool IsOpen { get; }
-```
-
-Gets a value indicating whether the underlying transport is open.
-
-##### TrafficStats
-
-```csharp
-public ToyopucTrafficStats TrafficStats { get; }
-```
-
-Gets cumulative traffic for the underlying client lifetime.
-
 ### RelayLayer
 
 ```csharp
@@ -1148,6 +1016,10 @@ public bool SupportsPrefixed { get; }
 public class ToyopucClient
 ```
 
+Provides direct Computer Link operations over one TCP or UDP session.
+
+Remarks: Public asynchronous live operations enter one arrival-order FIFO queue per client. At most one operation owns the transport, queue waiting does not consume the transaction timeout, and cancellation while waiting performs no transport activity.
+
 #### Members
 
 ##### ReadDWord
@@ -1207,14 +1079,18 @@ public virtual Task OpenAsync(CancellationToken cancellationToken = default)
 ##### CloseAsync
 
 ```csharp
-public virtual Task CloseAsync(CancellationToken cancellationToken = default)
+public virtual Task CloseAsync()
 ```
+
+Closes the connection and rejects active and queued operations from its transport generation.
 
 ##### DisposeAsync
 
 ```csharp
 public virtual ValueTask DisposeAsync()
 ```
+
+Asynchronously completes terminal disposal of the client.
 
 ##### ReadWordsAsync
 
@@ -1540,11 +1416,15 @@ public virtual void Open()
 public virtual void Close()
 ```
 
+Closes the connection and rejects active and queued operations from its transport generation.
+
 ##### Dispose
 
 ```csharp
 public void Dispose()
 ```
+
+Permanently disposes the client and rejects active and queued operations.
 
 ##### ReadWords
 
@@ -1870,6 +1750,22 @@ public byte[] LastTx { get; }
 public byte[] LastRx { get; }
 ```
 
+### ToyopucConnectionClosedException
+
+```csharp
+public sealed class ToyopucConnectionClosedException
+```
+
+Indicates that `Close` retired the transport generation that owned an active or queued operation.
+
+#### Members
+
+##### ToyopucConnectionClosedException
+
+```csharp
+public ToyopucConnectionClosedException()
+```
+
 ### ToyopucConnectionOptions
 
 ```csharp
@@ -1893,7 +1789,7 @@ Explicit connection options for a stable TOYOPUC device session.
 Remarks: This type keeps transport, profile, retry, and relay settings explicit for the unified high-level connection flow and generated API documentation.
 
 Parameters:
-- `Host`: PLC IP address or hostname.
+- `Host`: PLC IPv4 address or a hostname that resolves to IPv4.
 - `Port`: PLC port number.
 - `Transport`: Explicit TCP or UDP transport.
 - `PlcProfile`: Required canonical PLC profile name.
@@ -1905,7 +1801,7 @@ Parameters:
 public string Host { get; set; }
 ```
 
-PLC IP address or hostname.
+PLC IPv4 address or a hostname that resolves to IPv4.
 
 ##### Port
 
@@ -1947,7 +1843,7 @@ public TimeSpan? Timeout { get; set; }
 
 Gets or sets the communication timeout.
 
-Remarks: When omitted, each communication attempt uses three seconds.
+Remarks: When omitted, each communication attempt uses three seconds. The inclusive maximum is 2,147,483,647 milliseconds.
 
 ##### LocalPort
 
@@ -1971,7 +1867,7 @@ Gets or sets the retry count for transport operations.
 public TimeSpan? RetryDelay { get; set; }
 ```
 
-Gets or sets the retry delay.
+Gets or sets the retry delay. The inclusive maximum is 2,147,483,647 milliseconds.
 
 ##### EffectiveTimeout
 
@@ -2098,6 +1994,8 @@ public static IReadOnlyList<string> GetSuggestedStartAddresses(string area, stri
 ```csharp
 public class ToyopucDeviceClient
 ```
+
+Provides profile-bound high-level Computer Link operations through one immutable direct or relay route.
 
 #### Members
 
@@ -2419,11 +2317,88 @@ public Task<float[]> RelayReadFloat32sAsync(object hops, object device, int coun
 public Task RelayWriteFloat32sAsync(object hops, object device, IEnumerable<float> values, CancellationToken cancellationToken = default)
 ```
 
+##### ReadClockAsync
+
+```csharp
+public Task<ClockData> ReadClockAsync(CancellationToken cancellationToken = default)
+```
+
+Reads the PLC clock through the route selected for this client.
+
+##### WriteClockAsync
+
+```csharp
+public Task WriteClockAsync(DateTime value, int yearBase, CancellationToken cancellationToken = default)
+```
+
+Writes the PLC clock through the route selected for this client.
+
+##### ResumeScanAsync
+
+```csharp
+public Task ResumeScanAsync(CancellationToken cancellationToken = default)
+```
+
+Resumes PLC scan through the route selected for this client.
+
+##### StopScanAsync
+
+```csharp
+public Task StopScanAsync(CancellationToken cancellationToken = default)
+```
+
+Stops PLC scan through the route selected for this client.
+
+##### ReleaseScanStopAsync
+
+```csharp
+public Task ReleaseScanStopAsync(CancellationToken cancellationToken = default)
+```
+
+Releases PLC scan stop through the route selected for this client.
+
+##### ReadCpuStatusAsync
+
+```csharp
+public Task<CpuStatusData> ReadCpuStatusAsync(CancellationToken cancellationToken = default)
+```
+
+Reads PLC CPU status through the route selected for this client.
+
+##### ReadCpuStatusA0RawAsync
+
+```csharp
+public Task<byte[]> ReadCpuStatusA0RawAsync(CancellationToken cancellationToken = default)
+```
+
+Reads raw A0 CPU status through the route selected for this client.
+
+##### ReadCpuStatusA0Async
+
+```csharp
+public Task<CpuStatusData> ReadCpuStatusA0Async(CancellationToken cancellationToken = default)
+```
+
+Reads parsed A0 CPU status through the route selected for this client.
+
 ##### ToyopucDeviceClient
 
 ```csharp
-public ToyopucDeviceClient(string host, int port, ToyopucTransportMode transport, string plcProfile, int localPort = 0, TimeSpan? timeout = null, int retries = 0, TimeSpan? retryDelay = null)
+public ToyopucDeviceClient(string host, int port, ToyopucTransportMode transport, string plcProfile, int localPort = 0, TimeSpan? timeout = null, int retries = 0, TimeSpan? retryDelay = null, ToyopucRoute route = null)
 ```
+
+Creates a profile-bound client with an optional immutable route.
+
+Parameters:
+- `host`: PLC IPv4 address or hostname that resolves to IPv4.
+- `port`: PLC port.
+- `transport`: Explicit TCP or UDP transport.
+- `plcProfile`: Exact canonical PLC profile.
+- `localPort`: Local UDP port, or zero for an ephemeral port.
+- `timeout`: Per-transaction timeout.
+- `retries`: Retry count for failures proven to occur before any request send.
+- `retryDelay`: Delay between permitted pre-send retries.
+- `route`: Immutable direct or relay route; defaults to direct.
 
 ##### ResolveDevice
 
@@ -2557,79 +2532,41 @@ public void WriteMany(IEnumerable<KeyValuePair<object, object>> items)
 public string PlcProfile { get; }
 ```
 
+##### Route
+
+```csharp
+public ToyopucRoute Route { get; }
+```
+
+Gets the immutable direct or relay route used by ordinary high-level operations.
+
+##### UsesRelay
+
+```csharp
+public bool UsesRelay { get; }
+```
+
+Gets a value indicating whether ordinary high-level operations use relay routing.
+
+##### RelayHops
+
+```csharp
+public IReadOnlyList<ValueTuple<int, int>> RelayHops { get; }
+```
+
+Gets the immutable relay hops, or `null` for direct routing.
+
 ### ToyopucDeviceClientExtensions
 
 ```csharp
 public static class ToyopucDeviceClientExtensions
 ```
 
+High-level typed, named, polling, and contiguous-range operations for `ToyopucDeviceClient`.
+
+Remarks: Typed and contiguous-range methods issue exactly one protocol request. `ReadNamedAsync` and each `PollAsync` cycle accept exactly one named address and therefore issue one request. Only `WriteBitInWordAsync` is a multi-request helper: it performs an explicit read followed by a write while holding one local client FIFO turn.
+
 #### Members
-
-##### ReadOneAsync
-
-```csharp
-public static Task<object> ReadOneAsync(QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
-```
-
-##### ReadManyAsync
-
-```csharp
-public static Task<object[]> ReadManyAsync(QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
-```
-
-##### ReadDevicesAsync
-
-```csharp
-public static Task<object[]> ReadDevicesAsync(QueuedToyopucDeviceClient client, IEnumerable<object> devices, CancellationToken ct = default)
-```
-
-##### WriteAsync
-
-```csharp
-public static Task WriteAsync(QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
-```
-
-##### WriteManyAsync
-
-```csharp
-public static Task WriteManyAsync(QueuedToyopucDeviceClient client, IEnumerable<KeyValuePair<object, object>> items, CancellationToken ct = default)
-```
-
-##### ReadFrOneAsync
-
-```csharp
-public static Task<object> ReadFrOneAsync(QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
-```
-
-##### ReadFrAsync
-
-```csharp
-public static Task<object[]> ReadFrAsync(QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
-```
-
-##### WriteFrWorkAreaAsync
-
-```csharp
-public static Task WriteFrWorkAreaAsync(QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
-```
-
-##### CommitFrBlockAsync
-
-```csharp
-public static Task CommitFrBlockAsync(QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
-```
-
-##### ReadClockAsync
-
-```csharp
-public static Task<ClockData> ReadClockAsync(QueuedToyopucDeviceClient client, CancellationToken ct = default)
-```
-
-##### WriteClockAsync
-
-```csharp
-public static Task WriteClockAsync(QueuedToyopucDeviceClient client, DateTime value, int yearBase, CancellationToken ct = default)
-```
 
 ##### ReadTypedAsync
 
@@ -2637,11 +2574,7 @@ public static Task WriteClockAsync(QueuedToyopucDeviceClient client, DateTime va
 public static Task<object> ReadTypedAsync(ToyopucDeviceClient client, string device, string dtype, CancellationToken ct = default)
 ```
 
-##### ReadTypedAsync
-
-```csharp
-public static Task<object> ReadTypedAsync(QueuedToyopucDeviceClient client, string device, string dtype, CancellationToken ct = default)
-```
+Reads one typed value using exactly one protocol request.
 
 ##### WriteTypedAsync
 
@@ -2649,11 +2582,7 @@ public static Task<object> ReadTypedAsync(QueuedToyopucDeviceClient client, stri
 public static Task WriteTypedAsync(ToyopucDeviceClient client, string device, string dtype, object value, CancellationToken ct = default)
 ```
 
-##### WriteTypedAsync
-
-```csharp
-public static Task WriteTypedAsync(QueuedToyopucDeviceClient client, string device, string dtype, object value, CancellationToken ct = default)
-```
+Writes one typed value using exactly one protocol request.
 
 ##### WriteBitInWordAsync
 
@@ -2661,11 +2590,9 @@ public static Task WriteTypedAsync(QueuedToyopucDeviceClient client, string devi
 public static Task WriteBitInWordAsync(ToyopucDeviceClient client, string device, int bitIndex, bool value, CancellationToken ct = default)
 ```
 
-##### WriteBitInWordAsync
+Sets or clears one bit in a word by an explicit read-modify-write sequence.
 
-```csharp
-public static Task WriteBitInWordAsync(QueuedToyopucDeviceClient client, string device, int bitIndex, bool value, CancellationToken ct = default)
-```
+Remarks: The read and write occupy one FIFO turn on this client, so its other operations cannot interleave. They remain two PLC requests and are not PLC-atomic: another client, PLC logic, or external writer can change the word between them. Applications that require atomic coordination must implement it in the PLC contract.
 
 ##### ReadNamedAsync
 
@@ -2673,11 +2600,9 @@ public static Task WriteBitInWordAsync(QueuedToyopucDeviceClient client, string 
 public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(ToyopucDeviceClient client, IEnumerable<string> addresses, CancellationToken ct = default)
 ```
 
-##### ReadNamedAsync
+Reads exactly one named address using one protocol request.
 
-```csharp
-public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(QueuedToyopucDeviceClient client, IEnumerable<string> addresses, CancellationToken ct = default)
-```
+Remarks: Multiple named addresses are rejected before transport; split reads must be explicit.
 
 ##### PollAsync
 
@@ -2685,11 +2610,9 @@ public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(QueuedToy
 public static IAsyncEnumerable<IReadOnlyDictionary<string, object>> PollAsync(ToyopucDeviceClient client, IEnumerable<string> addresses, TimeSpan interval, CancellationToken ct = default)
 ```
 
-##### PollAsync
+Repeatedly reads exactly one named address, one request per cycle.
 
-```csharp
-public static IAsyncEnumerable<IReadOnlyDictionary<string, object>> PollAsync(QueuedToyopucDeviceClient client, IEnumerable<string> addresses, TimeSpan interval, CancellationToken ct = default)
-```
+Remarks: Each cycle is independent; no atomicity is implied across polling cycles.
 
 ##### ReadWordsAsync
 
@@ -2697,11 +2620,7 @@ public static IAsyncEnumerable<IReadOnlyDictionary<string, object>> PollAsync(Qu
 public static Task<ushort[]> ReadWordsAsync(ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
 ```
 
-##### ReadWordsAsync
-
-```csharp
-public static Task<ushort[]> ReadWordsAsync(QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-```
+Reads a contiguous word range using exactly one protocol request.
 
 ##### ReadDWordsAsync
 
@@ -2709,11 +2628,7 @@ public static Task<ushort[]> ReadWordsAsync(QueuedToyopucDeviceClient client, st
 public static Task<uint[]> ReadDWordsAsync(ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
 ```
 
-##### ReadDWordsAsync
-
-```csharp
-public static Task<uint[]> ReadDWordsAsync(QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-```
+Reads a contiguous double-word range using exactly one protocol request.
 
 ##### WriteWordsAsync
 
@@ -2721,11 +2636,7 @@ public static Task<uint[]> ReadDWordsAsync(QueuedToyopucDeviceClient client, str
 public static Task WriteWordsAsync(ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
 ```
 
-##### WriteWordsAsync
-
-```csharp
-public static Task WriteWordsAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
-```
+Writes a contiguous word range using exactly one protocol request.
 
 ##### WriteDWordsAsync
 
@@ -2733,11 +2644,7 @@ public static Task WriteWordsAsync(QueuedToyopucDeviceClient client, string devi
 public static Task WriteDWordsAsync(ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
 ```
 
-##### WriteDWordsAsync
-
-```csharp
-public static Task WriteDWordsAsync(QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
-```
+Writes a contiguous double-word range using exactly one protocol request.
 
 ### ToyopucDeviceClientFactory
 
@@ -2745,7 +2652,7 @@ public static Task WriteDWordsAsync(QueuedToyopucDeviceClient client, string dev
 public static class ToyopucDeviceClientFactory
 ```
 
-Factory helpers for creating connected queued TOYOPUC clients.
+Factory helpers for creating connected TOYOPUC clients.
 
 Remarks: This factory is the preferred application entry point when you want explicit profile, relay, retry, and timeout settings captured in one documented type.
 
@@ -2754,14 +2661,14 @@ Remarks: This factory is the preferred application entry point when you want exp
 ##### OpenAndConnectAsync
 
 ```csharp
-public static Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(ToyopucConnectionOptions options, CancellationToken cancellationToken = default)
+public static Task<ToyopucDeviceClient> OpenAndConnectAsync(ToyopucConnectionOptions options, CancellationToken cancellationToken = default)
 ```
 
-Creates, configures, and opens a queued TOYOPUC client.
+Creates, configures, and opens a TOYOPUC client.
 
-Remarks: The returned queued client keeps the required direct or relay route for every operation.
+Remarks: The returned client keeps the required direct or relay route for every ordinary high-level operation.
 
-Returns: A connected queued client.
+Returns: A connected client whose ordinary async operations use one FIFO queue.
 
 Parameters:
 - `options`: Explicit connection options.
@@ -2807,6 +2714,22 @@ public ToyopucError(string message)
 public ToyopucError(string message, Exception innerException)
 ```
 
+### ToyopucNotConnectedException
+
+```csharp
+public sealed class ToyopucNotConnectedException
+```
+
+Indicates that an operation requires an explicit reconnect before it can run.
+
+#### Members
+
+##### ToyopucNotConnectedException
+
+```csharp
+public ToyopucNotConnectedException(string message)
+```
+
 ### ToyopucOperationOutcomeUnknownException
 
 ```csharp
@@ -2820,7 +2743,69 @@ Indicates that cancellation or transport loss occurred after a state-changing re
 ##### ToyopucOperationOutcomeUnknownException
 
 ```csharp
-public ToyopucOperationOutcomeUnknownException(string message, Exception innerException)
+public ToyopucOperationOutcomeUnknownException(ToyopucOutcomeUnknownReason reason, string message, Exception innerException)
+```
+
+##### Reason
+
+```csharp
+public ToyopucOutcomeUnknownReason Reason { get; }
+```
+
+### ToyopucOutcomeUnknownReason
+
+```csharp
+public enum ToyopucOutcomeUnknownReason
+```
+
+Machine-readable reason why a state-changing operation has an unknown outcome.
+
+#### Members
+
+##### Timeout
+
+```csharp
+public const ToyopucOutcomeUnknownReason Timeout
+```
+
+##### Cancellation
+
+```csharp
+public const ToyopucOutcomeUnknownReason Cancellation
+```
+
+##### Closed
+
+```csharp
+public const ToyopucOutcomeUnknownReason Closed
+```
+
+##### Transport
+
+```csharp
+public const ToyopucOutcomeUnknownReason Transport
+```
+
+##### MalformedResponse
+
+```csharp
+public const ToyopucOutcomeUnknownReason MalformedResponse
+```
+
+### ToyopucPlcError
+
+```csharp
+public sealed class ToyopucPlcError
+```
+
+Indicates that the PLC returned a syntactically valid NG response.
+
+#### Members
+
+##### ToyopucPlcError
+
+```csharp
+public ToyopucPlcError(string message)
 ```
 
 ### ToyopucPlcProfile
@@ -3380,6 +3365,8 @@ Gets the validated relay hops, or `null` for a direct route.
 public class ToyopucTimeoutError
 ```
 
+Indicates that the configured connect or transaction deadline expired.
+
 #### Members
 
 ##### ToyopucTimeoutError
@@ -3434,6 +3421,22 @@ public ulong TxBytes { get; set; }
 
 ```csharp
 public ulong RxBytes { get; set; }
+```
+
+### ToyopucTransportError
+
+```csharp
+public sealed class ToyopucTransportError
+```
+
+Indicates a transport I/O failure distinct from timeout and protocol decoding.
+
+#### Members
+
+##### ToyopucTransportError
+
+```csharp
+public ToyopucTransportError(string message, Exception innerException)
 ```
 
 ### ToyopucTransportMode

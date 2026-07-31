@@ -19,10 +19,10 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-echo [3/5] Checking GitHub source archive contents...
+echo [3/5] Checking GitHub source archive build and tests...
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check_source_archive.ps1
 if %errorlevel% neq 0 (
-    echo [ERROR] Source archive content check failed.
+    echo [ERROR] Source archive build/test check failed.
     exit /b %errorlevel%
 )
 

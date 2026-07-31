@@ -7,7 +7,7 @@ namespace PlcComm.Toyopuc;
 /// This type keeps transport, profile, retry, and relay settings explicit for the
 /// unified high-level connection flow and generated API documentation.
 /// </remarks>
-/// <param name="Host">PLC IP address or hostname.</param>
+/// <param name="Host">PLC IPv4 address or a hostname that resolves to IPv4.</param>
 /// <param name="Port">PLC port number.</param>
 /// <param name="Transport">Explicit TCP or UDP transport.</param>
 /// <param name="PlcProfile">Required canonical PLC profile name.</param>
@@ -20,7 +20,7 @@ public sealed record ToyopucConnectionOptions(
     ToyopucRoute Route)
 {
     /// <summary>Gets or sets the communication timeout.</summary>
-    /// <remarks>When omitted, each communication attempt uses three seconds.</remarks>
+    /// <remarks>When omitted, each communication attempt uses three seconds. The inclusive maximum is 2,147,483,647 milliseconds.</remarks>
     public TimeSpan? Timeout { get; init; }
 
     /// <summary>Gets or sets the local UDP port. Ignored for TCP.</summary>
@@ -29,7 +29,7 @@ public sealed record ToyopucConnectionOptions(
     /// <summary>Gets or sets the retry count for transport operations.</summary>
     public int Retries { get; init; }
 
-    /// <summary>Gets or sets the retry delay.</summary>
+    /// <summary>Gets or sets the retry delay. The inclusive maximum is 2,147,483,647 milliseconds.</summary>
     public TimeSpan? RetryDelay { get; init; }
 
     /// <summary>Gets the effective timeout used for a new client instance.</summary>

@@ -114,7 +114,7 @@ internal static class OperationalCommon
         if (tags.Count == 0)
             throw new ArgumentException("at least one tag is required.", nameof(tags));
 
-        QueuedToyopucDeviceClient? client = null;
+        ToyopucDeviceClient? client = null;
         var backoff = initialBackoff;
         var connectedOnce = false;
         var completed = 0;
@@ -241,7 +241,7 @@ internal static class OperationalCommon
         }
     }
 
-    private static async Task DisposeClientAsync(QueuedToyopucDeviceClient? client)
+    private static async Task DisposeClientAsync(ToyopucDeviceClient? client)
     {
         if (client is not null)
             await client.DisposeAsync().ConfigureAwait(false);

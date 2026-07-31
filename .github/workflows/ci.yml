@@ -19,10 +19,6 @@ jobs:
         shell: pwsh
         run: ./scripts/check_no_auto_publish.ps1
 
-      - name: Check GitHub source archive contents
-        shell: pwsh
-        run: ./scripts/check_source_archive.ps1
-
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v6
         with:
@@ -30,6 +26,10 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+
+      - name: Check GitHub source archive build and tests
+        shell: pwsh
+        run: ./scripts/check_source_archive.ps1
 
       - name: Restore
         run: dotnet restore PlcComm.Toyopuc.sln
@@ -39,6 +39,10 @@ jobs:
 
       - name: Test
         run: dotnet test PlcComm.Toyopuc.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Validate NuGet package contents
+        shell: pwsh
+        run: ./scripts/check_package_contents.ps1
 
       - name: Format check
         run: dotnet format PlcComm.Toyopuc.sln --verify-no-changes --no-restore

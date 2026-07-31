@@ -4,6 +4,9 @@ using System.Globalization;
 
 namespace PlcComm.Toyopuc;
 
+/// <summary>
+/// Provides profile-bound high-level Computer Link operations through one immutable direct or relay route.
+/// </summary>
 public partial class ToyopucDeviceClient : ToyopucClient
 {
     private const int DeviceCacheMaxEntries = 512;
@@ -38,9 +41,25 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     internal ToyopucAddressingOptions AddressingOptions { get; }
     public string PlcProfile { get; }
+    /// <summary>Gets the immutable direct or relay route used by ordinary high-level operations.</summary>
+    public ToyopucRoute Route { get; }
+    /// <summary>Gets a value indicating whether ordinary high-level operations use relay routing.</summary>
+    public bool UsesRelay => Route.UsesRelay;
+    /// <summary>Gets the immutable relay hops, or <see langword="null"/> for direct routing.</summary>
+    public IReadOnlyList<(int LinkNo, int StationNo)>? RelayHops => Route.RelayHops;
     private readonly ConcurrentDictionary<string, ResolvedDevice> _resolvedDeviceCache = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, int[]> _runPlanCache = new(StringComparer.Ordinal);
 
+    /// <summary>Creates a profile-bound client with an optional immutable route.</summary>
+    /// <param name="host">PLC IPv4 address or hostname that resolves to IPv4.</param>
+    /// <param name="port">PLC port.</param>
+    /// <param name="transport">Explicit TCP or UDP transport.</param>
+    /// <param name="plcProfile">Exact canonical PLC profile.</param>
+    /// <param name="localPort">Local UDP port, or zero for an ephemeral port.</param>
+    /// <param name="timeout">Per-transaction timeout.</param>
+    /// <param name="retries">Retry count for failures proven to occur before any request send.</param>
+    /// <param name="retryDelay">Delay between permitted pre-send retries.</param>
+    /// <param name="route">Immutable direct or relay route; defaults to direct.</param>
     public ToyopucDeviceClient(
         string host,
         int port,
@@ -49,7 +68,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
         int localPort = 0,
         TimeSpan? timeout = null,
         int retries = 0,
-        TimeSpan? retryDelay = null)
+        TimeSpan? retryDelay = null,
+        ToyopucRoute? route = null)
         : base(host, port, transport, localPort, timeout, retries, retryDelay)
     {
         if (string.IsNullOrWhiteSpace(plcProfile))
@@ -61,6 +81,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
         PlcProfile = ToyopucPlcProfiles.NormalizeName(plcProfile);
         AddressingOptions = ToyopucAddressingOptions.FromProfile(PlcProfile);
+        Route = route ?? ToyopucRoute.Direct;
     }
 
     internal ToyopucDeviceClient(
@@ -72,12 +93,14 @@ public partial class ToyopucDeviceClient : ToyopucClient
         int localPort = 0,
         TimeSpan? timeout = null,
         int retries = 0,
-        TimeSpan? retryDelay = null)
+        TimeSpan? retryDelay = null,
+        ToyopucRoute? route = null)
         : base(host, port, transport, localPort, timeout, retries, retryDelay)
     {
         ArgumentNullException.ThrowIfNull(addressingOptions);
         PlcProfile = ToyopucPlcProfiles.NormalizeName(plcProfile);
         AddressingOptions = addressingOptions;
+        Route = route ?? ToyopucRoute.Direct;
     }
 
     public ResolvedDevice ResolveDevice(string device)
@@ -100,7 +123,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     public object RelayReadOne(object hops, object device)
     {
         var resolved = ResolveDeviceObject(device);
-        return RelayReadOne(hops, resolved);
+        return ExecuteSynchronousExclusive(() => RelayReadOne(hops, resolved));
     }
 
     internal object RelayRead(object hops, object device, int count = 1) =>
@@ -169,15 +192,22 @@ public partial class ToyopucDeviceClient : ToyopucClient
         if (count < 1)
             throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
         var resolved = ResolveSequentialDevices(ResolveDeviceObject(device), count);
-        RequireSingleReadRequest(resolved, splitPc10BlockBoundaries: true, nameof(RelayReadMany));
-        return RelayReadRuns(hops, resolved, splitPc10BlockBoundaries: true);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: true);
+        PreflightReadPlan(hopsSnapshot, resolved, plan);
+        return ExecuteSynchronousExclusive(
+            () => RelayReadRuns(hopsSnapshot, resolved, plan));
     }
 
     public object[] RelayReadDevices(object hops, IEnumerable<object> devices)
     {
         var resolved = ResolveDevices(devices);
-        RequireSingleReadRequest(resolved, splitPc10BlockBoundaries: false, nameof(RelayReadDevices));
-        return RelayReadRuns(hops, resolved, splitPc10BlockBoundaries: false);
+        RequireReadItems(resolved, nameof(RelayReadDevices));
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: false);
+        PreflightReadPlan(hopsSnapshot, resolved, plan);
+        return ExecuteSynchronousExclusive(
+            () => RelayReadRuns(hopsSnapshot, resolved, plan));
     }
 
     internal object[] RelayReadMany(object hops, IEnumerable<object> devices) => RelayReadDevices(hops, devices);
@@ -286,7 +316,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     public object ReadOne(object device)
     {
         var resolved = ResolveDeviceObject(device);
-        return ReadOne(resolved);
+        return ExecuteSynchronousExclusive(() => ReadOne(resolved));
     }
 
     internal object Read(object device, int count = 1) =>
@@ -338,15 +368,18 @@ public partial class ToyopucDeviceClient : ToyopucClient
         if (count < 1)
             throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
         var resolved = ResolveSequentialDevices(ResolveDeviceObject(device), count);
-        RequireSingleReadRequest(resolved, splitPc10BlockBoundaries: true, nameof(ReadMany));
-        return ReadRuns(resolved, splitPc10BlockBoundaries: true);
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: true);
+        PreflightReadPlan(resolved, plan);
+        return ExecuteSynchronousExclusive(() => ReadRuns(resolved, plan));
     }
 
     public object[] ReadDevices(IEnumerable<object> devices)
     {
         var resolved = ResolveDevices(devices);
-        RequireSingleReadRequest(resolved, splitPc10BlockBoundaries: false, nameof(ReadDevices));
-        return ReadRuns(resolved, splitPc10BlockBoundaries: false);
+        RequireReadItems(resolved, nameof(ReadDevices));
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: false);
+        PreflightReadPlan(resolved, plan);
+        return ExecuteSynchronousExclusive(() => ReadRuns(resolved, plan));
     }
 
     internal object[] ReadMany(IEnumerable<object> devices) => ReadDevices(devices);
@@ -523,21 +556,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     {
         if (value is bool flag)
             return flag ? 1 : 0;
-        ulong candidate = value switch
-        {
-            sbyte v when v >= 0 => (ulong)v,
-            byte v => v,
-            short v when v >= 0 => (ulong)v,
-            ushort v => v,
-            int v when v >= 0 => (ulong)v,
-            uint v => v,
-            long v when v >= 0 => (ulong)v,
-            ulong v => v,
-            _ => ulong.MaxValue,
-        };
-        if (candidate <= 1)
-            return (int)candidate;
-        throw new ArgumentOutOfRangeException(nameof(value), value, "Bit value must be Boolean or integer 0 or 1.");
+        throw new ArgumentException("Bit value must be Boolean; integer 0 or 1 is not accepted.", nameof(value));
     }
 
     private static int RequireUnsignedDeviceValue(object value, int maximum, string label)
@@ -587,11 +606,11 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return ParsePc10MultiBitData(client.Pc10MultiRead(Pc10Payloads.BuildMultiBitReadPayload(items)), items.Length);
     }
 
-    private object[] ReadRuns(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries)
+    private object[] ReadRuns(IReadOnlyList<ResolvedDevice> devices, IReadOnlyList<int> plan)
     {
         var results = new object[devices.Count];
         var index = 0;
-        foreach (var runLength in GetRunPlan(devices, splitPc10BlockBoundaries))
+        foreach (var runLength in plan)
         {
             var batchResults = ReadBatch(new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
             Array.Copy(batchResults, 0, results, index, runLength);
@@ -601,11 +620,11 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return results;
     }
 
-    private object[] RelayReadRuns(object hops, IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries)
+    private object[] RelayReadRuns(object hops, IReadOnlyList<ResolvedDevice> devices, IReadOnlyList<int> plan)
     {
         var results = new object[devices.Count];
         var index = 0;
-        foreach (var runLength in GetRunPlan(devices, splitPc10BlockBoundaries))
+        foreach (var runLength in plan)
         {
             var batchResults = RelayReadBatch(hops, new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
             Array.Copy(batchResults, 0, results, index, runLength);
@@ -679,6 +698,262 @@ public partial class ToyopucDeviceClient : ToyopucClient
             (Devices: devices, SplitPc10BlockBoundaries: splitPc10BlockBoundaries));
     }
 
+    private int[] GetReadRunPlan(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries)
+    {
+        var planned = new List<int>();
+        var index = 0;
+        foreach (var groupLength in GetRunPlan(devices, splitPc10BlockBoundaries))
+        {
+            var remaining = groupLength;
+            while (remaining > 0)
+            {
+                var slice = new ReadOnlyListSlice<ResolvedDevice>(devices, index, remaining);
+                var requestLength = Math.Min(remaining, GetReadRequestLength(slice));
+                planned.Add(requestLength);
+                index += requestLength;
+                remaining -= requestLength;
+            }
+        }
+
+        return planned.ToArray();
+    }
+
+    private static int GetReadRequestLength(IReadOnlyList<ResolvedDevice> devices)
+    {
+        var group = DeviceRunPlanner.GetBatchGroupKey(devices[0]);
+        return group switch
+        {
+            "basic-word" => SelectContinuousOrSparseLength(
+                devices,
+                ConsecutivePrefixLength(devices, static device => device.BasicAddress, 1),
+                continuousMaximum: 0x0200,
+                sparseMaximum: 0x0080),
+            "basic-byte" => Math.Min(devices.Count, 0x0080),
+            "ext-word" => SelectContinuousOrSparseLength(
+                devices,
+                UniformNumberConsecutivePrefixLength(devices),
+                continuousMaximum: 0x0200,
+                sparseMaximum: 0x0040),
+            "ext-byte" => SelectContinuousOrSparseLength(
+                devices,
+                UniformNumberConsecutivePrefixLength(devices),
+                continuousMaximum: 0x0400,
+                sparseMaximum: 0x0080),
+            "ext-bit" => Math.Min(devices.Count, 0x00B0),
+            "pc10-word" => GetPc10WordReadRequestLength(devices),
+            "pc10-bit" => Math.Min(devices.Count, 0x007F),
+            "pc10-byte" => Math.Min(
+                DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 1, out _)
+                    ? devices.Count
+                    : ConsecutivePc10PrefixLength(devices, 1),
+                0x03F0),
+            _ => 1,
+        };
+    }
+
+    private static int GetPc10WordReadRequestLength(IReadOnlyList<ResolvedDevice> devices)
+    {
+        var firstPacked = -1;
+        for (var i = 0; i < devices.Count; i++)
+        {
+            if (devices[i].Packed)
+            {
+                firstPacked = i;
+                break;
+            }
+        }
+
+        if (firstPacked == 0)
+        {
+            return Math.Min(DeviceRunPlanner.GetConsecutivePc10WordSegmentLength(devices, 0), 0x03F0 / 2);
+        }
+
+        var available = firstPacked > 0 ? firstPacked : devices.Count;
+        var prefix = ConsecutivePc10PrefixLength(
+            new ReadOnlyListSlice<ResolvedDevice>(devices, 0, available),
+            step: 2);
+        return SelectContinuousOrSparseLength(
+            new ReadOnlyListSlice<ResolvedDevice>(devices, 0, available),
+            prefix,
+            continuousMaximum: 0x03F0 / 2,
+            sparseMaximum: 0x007F);
+    }
+
+    private static int SelectContinuousOrSparseLength(
+        IReadOnlyList<ResolvedDevice> devices,
+        int consecutivePrefix,
+        int continuousMaximum,
+        int sparseMaximum)
+    {
+        if (consecutivePrefix == devices.Count || consecutivePrefix > sparseMaximum)
+        {
+            return Math.Min(consecutivePrefix, continuousMaximum);
+        }
+
+        return Math.Min(devices.Count, sparseMaximum);
+    }
+
+    private static int UniformNumberConsecutivePrefixLength(IReadOnlyList<ResolvedDevice> devices)
+    {
+        var number = devices[0].No;
+        var start = devices[0].Address;
+        if (number is null || start is null)
+        {
+            return 1;
+        }
+
+        var length = 1;
+        while (length < devices.Count
+            && devices[length].No == number
+            && devices[length].Address == start + length)
+        {
+            length++;
+        }
+
+        return length;
+    }
+
+    private static int ConsecutivePrefixLength(
+        IReadOnlyList<ResolvedDevice> devices,
+        Func<ResolvedDevice, int?> selector,
+        int step)
+    {
+        var start = selector(devices[0]);
+        if (start is null)
+        {
+            return 1;
+        }
+
+        var length = 1;
+        while (length < devices.Count && selector(devices[length]) == start + (length * step))
+        {
+            length++;
+        }
+
+        return length;
+    }
+
+    private static int ConsecutivePc10PrefixLength(IReadOnlyList<ResolvedDevice> devices, int step)
+    {
+        var start = devices[0].Address32 ?? throw new ArgumentException("Resolved device missing pc10 addr32");
+        var block = start >> 16;
+        var length = 1;
+        while (length < devices.Count)
+        {
+            var current = devices[length].Address32;
+            if (current != start + (length * step) || (current.Value >> 16) != block)
+            {
+                break;
+            }
+
+            length++;
+        }
+
+        return length;
+    }
+
+    private static void PreflightReadPlan(IReadOnlyList<ResolvedDevice> devices, IReadOnlyList<int> plan)
+    {
+        var index = 0;
+        foreach (var runLength in plan)
+        {
+            _ = BuildReadBatchPayload(new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
+            index += runLength;
+        }
+    }
+
+    private static void PreflightReadPlan(
+        IReadOnlyList<(int LinkNo, int StationNo)> hops,
+        IReadOnlyList<ResolvedDevice> devices,
+        IReadOnlyList<int> plan)
+    {
+        var index = 0;
+        foreach (var runLength in plan)
+        {
+            var innerPayload = BuildReadBatchPayload(
+                new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
+            _ = ToyopucProtocol.BuildRelayNested(hops, innerPayload);
+            index += runLength;
+        }
+    }
+
+    private static byte[] BuildReadBatchPayload(IReadOnlyList<ResolvedDevice> devices)
+    {
+        var group = DeviceRunPlanner.GetBatchGroupKey(devices[0]);
+        switch (group)
+        {
+            case "basic-word":
+                return TryGetConsecutiveStart(devices, static device => device.BasicAddress, 1, out var basicStart)
+                    ? ToyopucProtocol.BuildWordRead(basicStart, devices.Count)
+                    : ToyopucProtocol.BuildMultiWordRead(CollectBasicAddresses(devices));
+            case "basic-byte":
+                return ToyopucProtocol.BuildMultiByteRead(CollectBasicAddresses(devices));
+            case "ext-word":
+                return TryGetUniformNumber(devices, out var wordNumber)
+                    && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var wordStart)
+                    ? ToyopucProtocol.BuildExtWordRead(wordNumber, wordStart, devices.Count)
+                    : ToyopucProtocol.BuildExtMultiRead(
+                        Array.Empty<(int No, int Bit, int Address)>(),
+                        Array.Empty<(int No, int Address)>(),
+                        CollectNoWordMonitorAddresses(devices));
+            case "ext-byte":
+                return TryGetUniformNumber(devices, out var byteNumber)
+                    && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var byteStart)
+                    ? ToyopucProtocol.BuildExtByteRead(byteNumber, byteStart, devices.Count)
+                    : ToyopucProtocol.BuildExtMultiRead(
+                        Array.Empty<(int No, int Bit, int Address)>(),
+                        CollectNoAddresses(devices),
+                        Array.Empty<(int No, int Address)>());
+            case "ext-bit":
+                return ToyopucProtocol.BuildExtMultiRead(
+                    CollectNoBitAddresses(devices),
+                    Array.Empty<(int No, int Address)>(),
+                    Array.Empty<(int No, int Address)>());
+            case "pc10-word":
+                if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 2, out var wordAddress32))
+                {
+                    return ToyopucProtocol.BuildPc10BlockRead(wordAddress32, checked(devices.Count * 2));
+                }
+                return ToyopucProtocol.BuildPc10MultiRead(
+                    Pc10Payloads.BuildMultiWordReadPayload(CollectAddress32Values(devices)));
+            case "pc10-bit":
+                return ToyopucProtocol.BuildPc10MultiRead(
+                    Pc10Payloads.BuildMultiBitReadPayload(CollectAddress32Values(devices)));
+            case "pc10-byte":
+                if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 1, out var byteAddress32))
+                {
+                    return ToyopucProtocol.BuildPc10BlockRead(byteAddress32, devices.Count);
+                }
+                break;
+        }
+
+        if (devices.Count != 1)
+        {
+            throw new InvalidOperationException("Read plan contains a non-batchable multi-entry request.");
+        }
+
+        var device = devices[0];
+        return device.Scheme switch
+        {
+            "basic-bit" => ToyopucProtocol.BuildBitRead(Require(device.BasicAddress, "basic_addr")),
+            "basic-word" => ToyopucProtocol.BuildWordRead(Require(device.BasicAddress, "basic_addr"), 1),
+            "basic-byte" => ToyopucProtocol.BuildByteRead(Require(device.BasicAddress, "basic_addr"), 1),
+            "program-bit" or "ext-bit" => ToyopucProtocol.BuildExtMultiRead(
+                new[] { (Require(device.No, "extended number"), Require(device.BitNo, "extended bit"), Require(device.Address, "extended addr")) },
+                Array.Empty<(int No, int Address)>(),
+                Array.Empty<(int No, int Address)>()),
+            "program-word" or "ext-word" => ToyopucProtocol.BuildExtWordRead(
+                Require(device.No, "extended number"), Require(device.Address, "extended addr"), 1),
+            "program-byte" or "ext-byte" => ToyopucProtocol.BuildExtByteRead(
+                Require(device.No, "extended number"), Require(device.Address, "extended addr"), 1),
+            "pc10-bit" => ToyopucProtocol.BuildPc10MultiRead(
+                Pc10Payloads.BuildMultiBitReadPayload(new[] { Require(device.Address32, "pc10 addr32") })),
+            "pc10-word" => ToyopucProtocol.BuildPc10BlockRead(Require(device.Address32, "pc10 addr32"), 2),
+            "pc10-byte" => ToyopucProtocol.BuildPc10BlockRead(Require(device.Address32, "pc10 addr32"), 1),
+            _ => throw new ArgumentException($"Unsupported resolved scheme: {device.Scheme}", nameof(devices)),
+        };
+    }
+
     private int[] GetRunPlan(IReadOnlyList<(ResolvedDevice Device, object Value)> items, bool splitPc10BlockBoundaries)
     {
         var key = DeviceRunPlanner.BuildRunPlanKey(items, splitPc10BlockBoundaries);
@@ -693,13 +968,20 @@ public partial class ToyopucDeviceClient : ToyopucClient
             (Items: items, SplitPc10BlockBoundaries: splitPc10BlockBoundaries));
     }
 
-    private void RequireSingleReadRequest(IReadOnlyList<ResolvedDevice> devices, bool splitPc10BlockBoundaries, string operation)
+    private static void RequireReadItems(IReadOnlyList<ResolvedDevice> devices, string operation)
     {
         if (devices.Count == 0)
         {
             throw new ArgumentException($"{operation} requires at least one device.", nameof(devices));
         }
+    }
 
+    private void RequireSingleEntryAtomicReadRequest(
+        IReadOnlyList<ResolvedDevice> devices,
+        bool splitPc10BlockBoundaries,
+        string operation)
+    {
+        RequireReadItems(devices, operation);
         if (devices.Count == 1)
         {
             return;
@@ -1444,13 +1726,30 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var item in items)
         {
-            if (!seen.Add(item.Device.Text))
+            if (!seen.Add(GetWireIdentity(item.Device)))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static string GetWireIdentity(ResolvedDevice device)
+    {
+        return device.Scheme switch
+        {
+            "basic-bit" or "basic-byte" or "basic-word" =>
+                $"{device.Scheme}:{device.BasicAddress}",
+            "ext-bit" or "program-bit" =>
+                $"{device.Scheme}:{device.No}:{device.BitNo}:{device.Address}",
+            "ext-byte" or "ext-word" or "program-byte" or "program-word" =>
+                $"{device.Scheme}:{device.No}:{device.Address}",
+            "pc10-byte" or "pc10-word" =>
+                $"{device.Scheme}:{device.Address32}",
+            _ =>
+                $"{device.Scheme}:{device.Unit}:{device.BasicAddress}:{device.No}:{device.BitNo}:{device.Address}:{device.Address32}",
+        };
     }
 
     private static bool AllDevicesInGroup(IReadOnlyList<ResolvedDevice> devices, string group)
@@ -1728,9 +2027,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private static int[] ParsePc10MultiWordData(byte[] data, int count)
     {
-        if (data.Length < 4 + (count * 2))
+        if (data.Length != 4 + (count * 2))
         {
-            throw new ToyopucProtocolError("PC10 multi-word response too short");
+            throw new ToyopucProtocolError("PC10 multi-word response length does not match the requested count");
         }
 
         var values = new int[count];
@@ -1745,9 +2044,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private static int[] ParsePc10MultiBitData(byte[] data, int count)
     {
-        if (data.Length < 4 + ((count + 7) / 8))
+        if (data.Length != 4 + ((count + 7) / 8))
         {
-            throw new ToyopucProtocolError("PC10 multi-bit response too short");
+            throw new ToyopucProtocolError("PC10 multi-bit response length does not match the requested count");
         }
 
         var values = new int[count];
@@ -1761,9 +2060,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private static int[] ParseExtMultiBitData(byte[] data, int count)
     {
-        if (data.Length < (count + 7) / 8)
+        if (data.Length != (count + 7) / 8)
         {
-            throw new ToyopucProtocolError("Extended multi-bit response too short");
+            throw new ToyopucProtocolError("Extended multi-bit response length does not match the requested count");
         }
 
         var values = new int[count];

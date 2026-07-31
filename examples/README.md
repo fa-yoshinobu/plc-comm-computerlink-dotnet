@@ -50,7 +50,7 @@ dotnet run --project examples\PlcComm.Toyopuc.MinimalRead -- 127.0.0.1 15000 tcp
 | Project/File | What it demonstrates |
 | --- | --- |
 | `examples/PlcComm.Toyopuc.MinimalRead` | Minimal status, clock, and one-device read. |
-| `examples/PlcComm.Toyopuc.HighLevelSample` | High-level reads, writes, typed helpers, snapshots, block helpers, polling, and FR helpers. |
+| `examples/PlcComm.Toyopuc.HighLevelSample` | High-level reads, writes, typed helpers, aggregate read results, block helpers, polling, and FR helpers. |
 | `examples/PlcComm.Toyopuc.PollingReconnectSample` | Read-only polling loop with automatic reconnect and backoff after transport loss. |
 | `examples/PlcComm.Toyopuc.MultiPlcMonitorSample` | Read-only multi-PLC monitoring with one task and reconnect loop per PLC. |
 | `examples/PlcComm.Toyopuc.ConfigPollingSample` | Read-only JSON-configured polling with `--dry-run` and long-form `timestamp,plc,tag,value` CSV output; YAML config is Python-only. |

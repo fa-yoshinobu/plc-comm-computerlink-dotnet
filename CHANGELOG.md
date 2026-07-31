@@ -17,7 +17,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Release: Aligned artifact roles so the registry package contains consumer runtime, native API metadata, license, README, and ecosystem-native examples where applicable while excluding repository tests and maintainer tooling; the GitHub source archive retains tracked non-hardware validation and maintainer inputs.
+- Library: Audited profile-bound `ResolvedDevice` inputs: every live read/write path requires exact canonical profile identity with the client before request construction or transport state changes; no base-family or addressing-mode fallback is used.
+- Tests: Added profile-mismatch regression coverage for error diagnostics, traffic counters, and trace state.
+- Docs: Getting Started now states that the .NET 8, 9, or 10 SDK is required, matching the package target frameworks and CI matrix.
 - Docs: README documentation links now include the shared Performance and Choosing a Language pages, and package registry metadata was expanded for discoverability. No functional change.
+- CI: GitHub source archives now include the complete test suite and solution-referenced validation tools, and the archive gate extracts each archive and requires its solution build and tests to pass.
+- Docs: Generated API documentation now classifies single-request helpers, one-address named/poll reads, and the explicit two-request, locally exclusive but non-PLC-atomic bit-in-word read-modify-write helper.
+- CI: The NuGet package gate now restores and runs an isolated net8.0 consumer using only the generated local package.
+- CI: The NuGet guard now rejects CI, cache/build, source, maintainer, release-output, and credential-like material in addition to its consumer-file allowlist.
+- CI: Source-archive validation can now synthesize the complete current worktree, including intended new files and deletions, instead of testing stale `HEAD` content during pre-commit review.
+- Samples: Corrected the high-level write/restore example to restore from the renamed aggregate-read result so the sample compiles in the extracted source-archive gate.
+
+### BREAKING
+
+- Library: Removed `QueuedToyopucDeviceClient` and all queued-only extension overloads. `ToyopucClient` and `ToyopucDeviceClient` now provide the required per-instance arrival-order FIFO contract directly; migrate wrapper variables and constructors to the ordinary client.
+- Library: `ToyopucDeviceClientFactory.OpenAndConnectAsync` now returns `ToyopucDeviceClient`. The returned client retains the immutable `ToyopucRoute`, and ordinary high-level async methods automatically use its direct or relay route.
+- Library: Extended-area numbers, FR indices, PC10 addresses, bit ranges, write values, and polling intervals now reject values that cannot be represented by their protocol field instead of truncating, wrapping, or accepting non-finite values.
+- Library: Fixed-format and relay responses now require their exact command-specific length; trailing bytes and malformed fixed fields that were previously ignored now raise a protocol error.
+- Library: Semantic bit-write APIs now accept only Boolean values. Generic callers that pass integer `0`/`1` must migrate to `false`/`true`; raw frame builders continue to use validated wire integers.
+- Library: Connection timeouts, retry delays, and polling intervals now share an inclusive maximum of `2,147,483,647` milliseconds. Larger values fail with `ArgumentOutOfRangeException` before transport or timer creation.
+- Library: TCP and UDP connections are now IPv4-only. IPv6 literals are rejected before socket creation, and hostnames use the first IPv4 result returned by the resolver; callers using IPv6 endpoints must migrate to an IPv4 address or IPv4-resolving hostname.
+
+### Fixed
+
+- Library: Explicit direct and relay read aggregates now validate their complete plan before transport and split only when required by protocol capacity, address block, or route boundaries. Every aggregate preserves caller order in one FIFO turn, remains non-atomic across PLC scan instants, and withholds partial results when a later request fails; writes that require multiple requests remain pre-transport errors.
+- Library: The transaction deadline now includes lazy connection, send, receive, relay unwrapping, exact command-specific response validation, and decoding. No operation, including a read, is automatically retried after sending may have started; configured retries are restricted to failures proven before send.
+- Library: Concurrent async operations now use an explicit FIFO admission queue. Waiting cancellation sends nothing, admitted collections and relay hops are snapshotted, nested compound helpers do not deadlock, and `Close`/dispose reject active and queued work from the retired transport generation.
+- Library: Corrected bit-area size and address encoding, including the previous word/bit span mismatch, and use checked arithmetic for every extended-area wire address.
+- Library: Random/sparse write duplicate detection now compares the actual wire destination, so aliases that encode to the same address cannot bypass overlap guards.
+- Library: Enumerable inputs are materialized once before validation and encoding, preventing one-shot or mutable enumerations from changing a request between passes.
+- Library: EOF and malformed post-send responses for state-changing direct and relay operations now report `ToyopucOperationOutcomeUnknownException`; affected fixed-endpoint UDP clients are tainted before reuse.
+
+### Tests
+
+- Tests: Added read-aggregate capacity splitting, cross-route caller order, whole-plan preflight, one-turn FIFO exclusion, and later-split partial-result suppression coverage.
+- Tests: Added FIFO ordering across failures, reentrancy, cross-instance independence, queued cancellation, mutable-input snapshot, route immutability, factory return-type, and close-generation retirement coverage.
+- Tests: Added boundary, exact-response, finite-value, duplicate-wire-destination, one-shot enumerable, EOF, malformed-response, relay, UDP-taint, IPv6-rejection, and IPv4-resolution regressions.
 
 ## [3.2.1] - 2026-07-29
 

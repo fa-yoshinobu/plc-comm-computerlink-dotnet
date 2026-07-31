@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -32,6 +33,7 @@ public sealed class OverhaulContractTests
     [Fact]
     public void ConnectionValidation_RejectsUnspecifiedTransportAndTcpLocalPort()
     {
+        var maximumTimer = TimeSpan.FromMilliseconds(int.MaxValue);
         Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient("127.0.0.1", 1025, ToyopucTransportMode.Unspecified));
         Assert.Throws<ArgumentException>(() => new ToyopucClient("127.0.0.1", 1025, ToyopucTransportMode.Tcp, localPort: 1234));
         Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient("127.0.0.1", 1025, ToyopucTransportMode.Tcp, timeout: TimeSpan.Zero));
@@ -43,12 +45,168 @@ public sealed class OverhaulContractTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient(
             "127.0.0.1", 1025, ToyopucTransportMode.Tcp,
             retryDelay: TimeSpan.FromMilliseconds((double)int.MaxValue + 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ToyopucClient(
+            "127.0.0.1", 1025, ToyopucTransportMode.Tcp,
+            timeout: maximumTimer + TimeSpan.FromTicks(1)));
+
+        using var boundary = new ToyopucClient(
+            "127.0.0.1",
+            1025,
+            ToyopucTransportMode.Tcp,
+            timeout: maximumTimer,
+            retryDelay: maximumTimer);
+        Assert.Equal(maximumTimer, boundary.Timeout);
+        Assert.Equal(maximumTimer, boundary.RetryDelay);
+    }
+
+    [Fact]
+    public async Task FactoryAndPoll_EnforceTheCommonTimerBoundaryBeforeTransport()
+    {
+        var maximumTimer = TimeSpan.FromMilliseconds(int.MaxValue);
+        var invalidOptions = new ToyopucConnectionOptions(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            Profile,
+            ToyopucRoute.Direct)
+        {
+            Timeout = maximumTimer + TimeSpan.FromTicks(1),
+        };
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            ToyopucDeviceClientFactory.OpenAndConnectAsync(invalidOptions));
+        var invalidRetryOptions = invalidOptions with
+        {
+            Timeout = null,
+            RetryDelay = maximumTimer + TimeSpan.FromTicks(1),
+        };
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            ToyopucDeviceClientFactory.OpenAndConnectAsync(invalidRetryOptions));
+
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            Profile);
+        foreach (var invalidInterval in new[] { TimeSpan.Zero, TimeSpan.FromTicks(-1), maximumTimer + TimeSpan.FromTicks(1) })
+        {
+            await using var invalidPoll = client.PollAsync(["P1-D0000:U"], invalidInterval).GetAsyncEnumerator();
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await invalidPoll.MoveNextAsync());
+        }
+
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        await using var boundaryPoll = client.PollAsync(["P1-D0000:U"], maximumTimer, cancelled.Token).GetAsyncEnumerator();
+        Assert.False(await boundaryPoll.MoveNextAsync());
+        Assert.False(client.IsOpen);
+
+    }
+
+    [Theory]
+    [InlineData(ToyopucTransportMode.Tcp)]
+    [InlineData(ToyopucTransportMode.Udp)]
+    public void ConnectionValidation_RejectsIPv6LiteralBeforeSocketCreation(ToyopucTransportMode transport)
+    {
+        foreach (var host in new[] { "::1", "[::1]" })
+        {
+            Assert.Throws<ArgumentException>(() =>
+                new ToyopucClient(host, 1025, transport));
+        }
+        Assert.Throws<ArgumentException>(() =>
+            new ToyopucDeviceClient("::ffff:127.0.0.1", 1025, transport, Profile));
+    }
+
+    [Fact]
+    public async Task Factory_RejectsIPv6LiteralBeforeOpeningTransport()
+    {
+        var options = new ToyopucConnectionOptions(
+            "::1",
+            1025,
+            ToyopucTransportMode.Tcp,
+            Profile,
+            ToyopucRoute.Direct);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            ToyopucDeviceClientFactory.OpenAndConnectAsync(options));
+    }
+
+    [Fact]
+    public async Task Factory_ReturnsOrdinaryClientWithImmutableSelectedRoute()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var accepted = listener.AcceptTcpClientAsync();
+        var routeSource = new[] { (0x12, 2) };
+        var options = new ToyopucConnectionOptions(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            Profile,
+            ToyopucRoute.Relay(routeSource));
+
+        await using var client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options);
+        using var server = await accepted;
+        routeSource[0] = (0x34, 4);
+
+        Assert.IsType<ToyopucDeviceClient>(client);
+        Assert.True(client.UsesRelay);
+        Assert.Equal([(0x12, 2)], client.RelayHops);
+    }
+
+    [Fact]
+    public async Task HostnameResolution_UsesIPv4ForTcpAndUdp()
+    {
+        using (var listener = new TcpListener(IPAddress.Loopback, 0))
+        {
+            listener.Start();
+            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            var acceptTask = listener.AcceptTcpClientAsync();
+            using var client = new ToyopucClient(
+                "localhost",
+                port,
+                ToyopucTransportMode.Tcp,
+                timeout: TimeSpan.FromSeconds(2));
+
+            client.Open();
+            using var accepted = await acceptTask;
+            Assert.Equal(AddressFamily.InterNetwork, accepted.Client.RemoteEndPoint!.AddressFamily);
+        }
+
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var udpPort = ((IPEndPoint)server.Client.LocalEndPoint!).Port;
+        var serverTask = Task.Run(async () =>
+        {
+            var request = await server.ReceiveAsync();
+            Assert.Equal(AddressFamily.InterNetwork, request.RemoteEndPoint.AddressFamily);
+            await server.SendAsync(BuildResponse(0x1C, [0x34, 0x12]), request.RemoteEndPoint);
+        });
+        using var udpClient = new ToyopucClient(
+            "localhost",
+            udpPort,
+            ToyopucTransportMode.Udp,
+            timeout: TimeSpan.FromSeconds(2));
+
+        Assert.Equal([0x1234], udpClient.ReadWords(0, 1));
+        await serverTask;
+    }
+
+    [Theory]
+    [InlineData(ToyopucTransportMode.Tcp)]
+    [InlineData(ToyopucTransportMode.Udp)]
+    public void HostnameResolutionFailure_UsesLibraryErrorAndLeavesClientClosed(ToyopucTransportMode transport)
+    {
+        using var client = new ToyopucClient("ipv4-resolution-test.invalid", 1025, transport);
+
+        Assert.Throws<ToyopucTransportError>(client.Open);
+        Assert.False(client.IsOpen);
     }
 
     [Fact]
     public void RelayRoute_RequiresStrictValidatedHops()
     {
-        var route = ToyopucRoute.Relay("P1-L2:N2,P3-L4:N10");
+        var source = new[] { (0x12, 2), (0x34, 10) };
+        var route = ToyopucRoute.Relay(source);
+        source[0] = (0x55, 55);
         Assert.Equal([(0x12, 2), (0x34, 10)], route.RelayHops);
 
         Assert.Throws<ArgumentException>(() => ToyopucRoute.Relay(" "));
@@ -110,12 +268,9 @@ public sealed class OverhaulContractTests
             typeof(ToyopucDeviceClient).GetMethods(BindingFlags.Instance | BindingFlags.Public),
             static method => method.GetParameters().Any(parameter => parameter.Name == "atomicTransfer"));
 
-        var queuedPublicMembers = typeof(QueuedToyopucDeviceClient)
-            .GetMembers(BindingFlags.Instance | BindingFlags.Public)
-            .Select(static member => member.Name)
-            .ToHashSet(StringComparer.Ordinal);
-        Assert.DoesNotContain("ExecuteAsync", queuedPublicMembers);
-        Assert.DoesNotContain("InnerClient", queuedPublicMembers);
+        Assert.DoesNotContain(
+            typeof(ToyopucClient).Assembly.GetExportedTypes(),
+            static type => type.Name == "QueuedToyopucDeviceClient");
 
         Assert.DoesNotContain(
             typeof(ToyopucClient).Assembly.GetExportedTypes(),
@@ -128,15 +283,10 @@ public sealed class OverhaulContractTests
         var queuedExtensionMethods = typeof(ToyopucDeviceClientExtensions)
             .GetMethods(BindingFlags.Static | BindingFlags.Public)
             .Where(static method =>
-                method.GetParameters().FirstOrDefault()?.ParameterType == typeof(QueuedToyopucDeviceClient))
+                method.GetParameters().FirstOrDefault()?.ParameterType.Name.Contains("Queued", StringComparison.Ordinal) == true)
             .Select(static method => method.Name)
             .ToHashSet(StringComparer.Ordinal);
-        Assert.Contains("ReadOneAsync", queuedExtensionMethods);
-        Assert.Contains("ReadManyAsync", queuedExtensionMethods);
-        Assert.Contains("ReadDevicesAsync", queuedExtensionMethods);
-        Assert.Contains("WriteAsync", queuedExtensionMethods);
-        Assert.Contains("ReadFrOneAsync", queuedExtensionMethods);
-        Assert.Contains("CommitFrBlockAsync", queuedExtensionMethods);
+        Assert.Empty(queuedExtensionMethods);
     }
 
     [Theory]
@@ -180,7 +330,7 @@ public sealed class OverhaulContractTests
     [InlineData(true)]
     [InlineData(1.5)]
     [InlineData("1")]
-    public async Task AsyncAndQueuedFrWorkAreaWrite_RejectValuesBeforeTransport(object value)
+    public async Task AsyncFrWorkAreaWrite_RejectsValuesBeforeTransportForDirectAndRelayRoutes(object value)
     {
         await using var directClient = new ToyopucDeviceClient(
             "127.0.0.1",
@@ -193,19 +343,15 @@ public sealed class OverhaulContractTests
         await Assert.ThrowsAnyAsync<ArgumentException>(() => directClient.RelayWriteFrWorkAreaAsync("P1-L2:N2", "FR000000", value));
         Assert.False(directClient.IsOpen);
 
-        await using var queuedDirect = new QueuedToyopucDeviceClient(directClient, ToyopucRoute.Direct);
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => queuedDirect.WriteFrWorkAreaAsync("FR000000", value));
-        Assert.False(queuedDirect.IsOpen);
-
         await using var relayClient = new ToyopucDeviceClient(
             "127.0.0.1",
             1,
             ToyopucTransportMode.Tcp,
             Profile,
-            timeout: TimeSpan.FromMilliseconds(10));
-        await using var queuedRelay = new QueuedToyopucDeviceClient(relayClient, ToyopucRoute.Relay("P1-L2:N2"));
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => queuedRelay.WriteFrWorkAreaAsync("FR000000", value));
-        Assert.False(queuedRelay.IsOpen);
+            timeout: TimeSpan.FromMilliseconds(10),
+            route: ToyopucRoute.Relay("P1-L2:N2"));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => relayClient.WriteFrWorkAreaAsync("FR000000", value));
+        Assert.False(relayClient.IsOpen);
     }
 
     [Fact]
@@ -249,7 +395,8 @@ public sealed class OverhaulContractTests
             localPort: localPort);
 
         first.Open();
-        Assert.Throws<SocketException>(second.Open);
+        var error = Assert.Throws<ToyopucTransportError>(second.Open);
+        Assert.IsType<SocketException>(error.InnerException);
         Assert.Equal(localPort, first.LocalPort);
         Assert.False(second.IsOpen);
     }
@@ -348,7 +495,7 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
-    public async Task CancelingDuringRetryDelay_PreventsAnotherReadRequest()
+    public async Task ReadPlcNg_DoesNotRetryAfterAnyRequestBytesWereSent()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -363,15 +510,7 @@ public sealed class OverhaulContractTests
             Interlocked.Increment(ref requestCount);
             await stream.WriteAsync(BuildErrorResponse(0x1C, 0x73));
 
-            using var waitForRetry = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
-            try
-            {
-                using var retry = await listener.AcceptTcpClientAsync(waitForRetry.Token);
-                Interlocked.Increment(ref requestCount);
-            }
-            catch (OperationCanceledException)
-            {
-            }
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
         });
 
         await using var client = new ToyopucClient(
@@ -381,17 +520,11 @@ public sealed class OverhaulContractTests
             timeout: TimeSpan.FromSeconds(3),
             retries: 1,
             retryDelay: TimeSpan.FromSeconds(2));
-        using var cancellation = new CancellationTokenSource();
-
-        var read = client.ReadWordsAsync(0x2000, 1, cancellation.Token);
-        Assert.True(SpinWait.SpinUntil(() => client.LastRx is not null, TimeSpan.FromSeconds(2)));
-        cancellation.Cancel();
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await read);
+        await Assert.ThrowsAsync<ToyopucPlcError>(
+            async () => await client.ReadWordsAsync(0x2000, 1));
         await serverTask;
         Assert.Equal(1, Volatile.Read(ref requestCount));
-        Assert.False(client.IsOpen);
-        Assert.Throws<InvalidOperationException>(() => client.ReadWords(0x2000, 1));
+        Assert.Equal(1UL, client.TrafficStats.RequestCount);
     }
 
     [Fact]
@@ -429,7 +562,7 @@ public sealed class OverhaulContractTests
             retries: 1,
             retryDelay: TimeSpan.Zero);
 
-        Assert.Throws<ToyopucError>(() => client.SendRaw(0x7F, []));
+        Assert.Throws<ToyopucPlcError>(() => client.SendRaw(0x7F, []));
         await serverTask;
         Assert.Equal(1, Volatile.Read(ref requestCount));
         Assert.Equal(1UL, client.TrafficStats.RequestCount);
@@ -468,7 +601,7 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
-    public async Task RelayRead_RetriesRetryableOuterResponseAndReturnsInnerValue()
+    public async Task RelayRead_DoesNotRetryAfterPlcNgResponse()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -477,32 +610,12 @@ public sealed class OverhaulContractTests
 
         var serverTask = Task.Run(async () =>
         {
-            using (var first = await listener.AcceptTcpClientAsync())
-            {
-                await using var stream = first.GetStream();
-                _ = await ReadFrameAsync(stream);
-                Interlocked.Increment(ref requestCount);
-                await stream.WriteAsync(BuildErrorResponse(0x60, 0x73));
-            }
-
-            using var second = await listener.AcceptTcpClientAsync();
-            await using var secondStream = second.GetStream();
-            _ = await ReadFrameAsync(secondStream);
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
             Interlocked.Increment(ref requestCount);
-            await secondStream.WriteAsync(
-                BuildResponse(
-                    0x60,
-                    [
-                        0x12,
-                        0x02,
-                        0x00,
-                        0x06,
-                        0x03,
-                        0x00,
-                        0x1C,
-                        0x34,
-                        0x12,
-                    ]));
+            await stream.WriteAsync(BuildErrorResponse(0x60, 0x73));
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
         });
 
         using var client = new ToyopucClient(
@@ -513,16 +626,17 @@ public sealed class OverhaulContractTests
             retries: 1,
             retryDelay: TimeSpan.Zero);
 
-        Assert.Equal([0x1234], client.RelayReadWords("P1-L2:N2", 0x2000, 1));
+        Assert.Throws<ToyopucPlcError>(
+            () => client.RelayReadWords("P1-L2:N2", 0x2000, 1));
         await serverTask;
-        Assert.Equal(2, Volatile.Read(ref requestCount));
-        Assert.Equal(2UL, client.TrafficStats.RequestCount);
+        Assert.Equal(1, Volatile.Read(ref requestCount));
+        Assert.Equal(1UL, client.TrafficStats.RequestCount);
         Assert.True(client.TrafficStats.TxBytes > 0);
         Assert.True(client.TrafficStats.RxBytes > 0);
     }
 
     [Fact]
-    public async Task ClockRead_RetriesRetryableResponse()
+    public async Task ClockRead_DoesNotRetryAfterPlcNgResponse()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -531,19 +645,12 @@ public sealed class OverhaulContractTests
 
         var serverTask = Task.Run(async () =>
         {
-            using (var first = await listener.AcceptTcpClientAsync())
-            {
-                await using var stream = first.GetStream();
-                _ = await ReadFrameAsync(stream);
-                Interlocked.Increment(ref requestCount);
-                await stream.WriteAsync(BuildErrorResponse(0x32, 0x73));
-            }
-
-            using var second = await listener.AcceptTcpClientAsync();
-            await using var secondStream = second.GetStream();
-            _ = await ReadFrameAsync(secondStream);
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
             Interlocked.Increment(ref requestCount);
-            await secondStream.WriteAsync(BuildResponse(0x32, [0x70, 0x00, 0x56, 0x34, 0x12, 0x11, 0x07, 0x26, 0x06]));
+            await stream.WriteAsync(BuildErrorResponse(0x32, 0x73));
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
         });
 
         using var client = new ToyopucClient(
@@ -555,17 +662,16 @@ public sealed class OverhaulContractTests
             retryDelay: TimeSpan.Zero);
         client.EnableMaintainerTrace(4);
 
-        var clock = client.ReadClock();
+        Assert.Throws<ToyopucPlcError>(client.ReadClock);
         await serverTask;
 
-        Assert.Equal(new ClockData(56, 34, 12, 11, 7, 26, 6), clock);
-        Assert.Equal(2, Volatile.Read(ref requestCount));
+        Assert.Equal(1, Volatile.Read(ref requestCount));
         Assert.True(client.CaptureTraceFrames);
-        Assert.Equal(2, client.TraceFrames.Count);
+        Assert.Single(client.TraceFrames);
     }
 
     [Fact]
-    public async Task FrRead_RetriesRetryableResponse()
+    public async Task FrRead_DoesNotRetryAfterPlcNgResponse()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -574,19 +680,12 @@ public sealed class OverhaulContractTests
 
         var serverTask = Task.Run(async () =>
         {
-            using (var first = await listener.AcceptTcpClientAsync())
-            {
-                await using var stream = first.GetStream();
-                _ = await ReadFrameAsync(stream);
-                Interlocked.Increment(ref requestCount);
-                await stream.WriteAsync(BuildErrorResponse(0xC2, 0x73));
-            }
-
-            using var second = await listener.AcceptTcpClientAsync();
-            await using var secondStream = second.GetStream();
-            _ = await ReadFrameAsync(secondStream);
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
             Interlocked.Increment(ref requestCount);
-            await secondStream.WriteAsync(BuildResponse(0xC2, [0x34, 0x12]));
+            await stream.WriteAsync(BuildErrorResponse(0xC2, 0x73));
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
         });
 
         using var client = new ToyopucClient(
@@ -597,9 +696,9 @@ public sealed class OverhaulContractTests
             retries: 1,
             retryDelay: TimeSpan.Zero);
 
-        Assert.Equal([0x1234], client.ReadFrWords(0, 1));
+        Assert.Throws<ToyopucPlcError>(() => client.ReadFrWords(0, 1));
         await serverTask;
-        Assert.Equal(2, Volatile.Read(ref requestCount));
+        Assert.Equal(1, Volatile.Read(ref requestCount));
     }
 
     [Theory]
@@ -645,7 +744,7 @@ public sealed class OverhaulContractTests
             retries: 1,
             retryDelay: TimeSpan.Zero);
 
-        var error = Assert.Throws<ToyopucError>(() =>
+        var error = Assert.Throws<ToyopucPlcError>(() =>
         {
             switch (operation)
             {
@@ -708,6 +807,142 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    public async Task ReadAggregate_SplitsOnlyWhenRequiredAndReturnsCallerOrder()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var requestCommands = new List<byte>();
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            var first = await ReadFrameAsync(stream);
+            requestCommands.Add(first[4]);
+            var firstData = Enumerable.Range(0, 0x0200)
+                .SelectMany(static value => new[] { (byte)(value & 0xFF), (byte)(value >> 8) })
+                .ToArray();
+            await stream.WriteAsync(BuildResponse(0x94, firstData));
+
+            var second = await ReadFrameAsync(stream);
+            requestCommands.Add(second[4]);
+            await stream.WriteAsync(BuildResponse(0x94, [0x34, 0x12]));
+        });
+
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            Profile,
+            timeout: TimeSpan.FromSeconds(3));
+
+        var values = client.ReadMany("P1-D0000", 0x0201);
+        await serverTask;
+        Assert.Equal(0x0201, values.Length);
+        Assert.Equal(0, values[0]);
+        Assert.Equal(0x01FF, values[0x01FF]);
+        Assert.Equal(0x1234, values[0x0200]);
+        Assert.Equal(new byte[] { 0x94, 0x94 }, requestCommands);
+    }
+
+    [Fact]
+    public async Task ReadAggregate_HoldsOneFifoTurnAcrossEverySplitRequest()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        using var firstRequestReceived = new ManualResetEventSlim();
+        using var releaseFirst = new ManualResetEventSlim();
+        var requestCommands = new List<byte>();
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            var first = await ReadFrameAsync(stream);
+            requestCommands.Add(first[4]);
+            firstRequestReceived.Set();
+            releaseFirst.Wait();
+            await stream.WriteAsync(BuildResponse(0x94, [0x11, 0x11]));
+
+            var second = await ReadFrameAsync(stream);
+            requestCommands.Add(second[4]);
+            await stream.WriteAsync(BuildResponse(0xC2, [0x22, 0x22]));
+
+            var queued = await ReadFrameAsync(stream);
+            requestCommands.Add(queued[4]);
+            await stream.WriteAsync(BuildResponse(0x1C, [0x33, 0x33]));
+        });
+
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            timeout: TimeSpan.FromSeconds(3));
+        var aggregate = client.ReadManyAsync("U07FFF", 2);
+        Assert.True(firstRequestReceived.Wait(TimeSpan.FromSeconds(2)));
+        var queued = client.ReadWordsAsync(0, 1);
+        releaseFirst.Set();
+
+        Assert.Equal(new object[] { 0x1111, 0x2222 }, await aggregate);
+        Assert.Equal(new[] { 0x3333 }, await queued);
+        await serverTask;
+        Assert.Equal(new byte[] { 0x94, 0xC2, 0x1C }, requestCommands);
+    }
+
+    [Fact]
+    public async Task ReadAggregate_DoesNotExposePartialResultsWhenALaterSplitFails()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            await stream.WriteAsync(BuildResponse(0x94, [0x11, 0x11]));
+            _ = await ReadFrameAsync(stream);
+            await stream.WriteAsync(BuildErrorResponse(0xC2, 0x73));
+        });
+
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            timeout: TimeSpan.FromSeconds(3));
+
+        Assert.Throws<ToyopucPlcError>(() => client.ReadMany("U07FFF", 2));
+        await serverTask;
+        Assert.Equal(2UL, client.TrafficStats.RequestCount);
+    }
+
+    [Fact]
+    public void ReadAggregate_PreflightsEveryPlannedEntryBeforeTransport()
+    {
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            Profile);
+        var valid = client.ResolveDevice("B0100");
+        var invalidLaterEntry = valid with
+        {
+            Text = "BROKEN-LATER-ENTRY",
+            BasicAddress = null,
+        };
+
+        Assert.Throws<ArgumentException>(() =>
+            client.ReadDevices(new object[] { valid, invalidLaterEntry }));
+        Assert.False(client.IsOpen);
+        Assert.Equal(0UL, client.TrafficStats.RequestCount);
+    }
+
+    [Fact]
     public void GenericAndProtocolWrites_RejectMaskingAndCoercionBeforeTransport()
     {
         using var client = new ToyopucDeviceClient(
@@ -718,8 +953,12 @@ public sealed class OverhaulContractTests
 
         Assert.Equal("bit", client.ResolveDevice("P1-M0000").Unit);
         Assert.Equal("word", client.ResolveDevice("P1-D0000").Unit);
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-M0000", 0));
+        Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-M0000", 1));
         Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-M0000", 2));
         Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-M0000", "1"));
+        Assert.ThrowsAny<ArgumentException>(() => client.RelayWrite("P1-L2:N2", "P1-M0000", 1));
+        Assert.ThrowsAny<ArgumentException>(() => client.WriteMany(new Dictionary<object, object> { ["P1-M0000"] = 1 }));
         Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-D0000", -1));
         Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-D0000", 65536));
         Assert.ThrowsAny<ArgumentException>(() => client.Write("P1-D0000", true));
@@ -728,6 +967,170 @@ public sealed class OverhaulContractTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildWordWrite(0, [-1]));
         Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildByteWrite(0, [256]));
         Assert.False(client.IsOpen);
+    }
+
+    [Fact]
+    public async Task GenericBitWrite_AcceptsBooleanValue()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            var request = await ReadFrameAsync(server.GetStream());
+            Assert.Equal(0x99, request[4]);
+            Assert.Equal(1, request[^1]);
+            await server.GetStream().WriteAsync(BuildResponse(0x99, []));
+        });
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            timeout: TimeSpan.FromSeconds(2));
+
+        client.Write("P1-M0000", true);
+
+        await serverTask;
+        listener.Stop();
+    }
+
+    [Fact]
+    public void FixedExtendedSegments_RejectAddressesThatWouldAliasAnotherDevice()
+    {
+        foreach (var device in new[] { "EX0800", "EX080W", "EX080L" })
+        {
+            Assert.Throws<ArgumentException>(() =>
+                ToyopucDeviceResolver.ResolveDevice(device, ToyopucPlcProfiles.Nano10GxCompatible.Name));
+        }
+    }
+
+    [Fact]
+    public void WireWidthValidators_RejectValuesInsteadOfMaskingThem()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildExtWordRead(256, 0, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            ToyopucProtocol.BuildExtMultiRead([], [(256, 0)], []));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildFrRegister(256));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucAddress.EncodeExNoByteU32(256, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucAddress.EncodeExNoBitU32(-1, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.PackU16LittleEndian(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.PackU16LittleEndian(65536));
+    }
+
+    [Fact]
+    public void LowLevelFloatWrites_RejectNonFiniteValuesBeforeTransport()
+    {
+        using var client = new ToyopucClient("127.0.0.1", 1, ToyopucTransportMode.Tcp);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.WriteFloat32(0, float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            client.WriteFloat32s(0, [1.0f, float.PositiveInfinity]));
+        Assert.False(client.IsOpen);
+    }
+
+    [Fact]
+    public void WriteMany_RejectsDifferentTextForTheSameWireAddressBeforeTransport()
+    {
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name);
+        var values = new[]
+        {
+            new KeyValuePair<object, object>("P1-D0", 1),
+            new KeyValuePair<object, object>("P1-D0000", 2),
+        };
+
+        Assert.Throws<ToyopucProtocolError>(() => client.WriteMany(values));
+        Assert.False(client.IsOpen);
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(6)]
+    public async Task WordRead_RequiresExactResponseLength(int returnedBytes)
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            await stream.WriteAsync(BuildResponse(0x1C, new byte[returnedBytes]));
+        });
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2));
+
+        Assert.Throws<ToyopucProtocolError>(() => client.ReadWords(0, 2));
+        await serverTask;
+        listener.Stop();
+    }
+
+    [Fact]
+    public async Task GracefulEof_DoesNotRetryAndDistinguishesReadFromWriteOutcome()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = Task.Run(async () =>
+        {
+            using (var read = await listener.AcceptTcpClientAsync())
+            {
+                _ = await ReadFrameAsync(read.GetStream());
+            }
+
+            using var write = await listener.AcceptTcpClientAsync();
+            _ = await ReadFrameAsync(write.GetStream());
+        });
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2),
+            retries: 1,
+            retryDelay: TimeSpan.Zero);
+
+        Assert.Throws<ToyopucTransportError>(() => client.ReadWords(0, 1));
+        var writeError = Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+            () => client.WriteWords(0, [1]));
+        Assert.Equal(ToyopucOutcomeUnknownReason.Transport, writeError.Reason);
+        Assert.Equal(2UL, client.TrafficStats.RequestCount);
+        await serverTask;
+        listener.Stop();
+    }
+
+    [Fact]
+    public async Task FixedPortUdpSession_IsTaintedByMalformedStateChangingResponseBody()
+    {
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var endpoint = (IPEndPoint)server.Client.LocalEndPoint!;
+        using var reservation = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var localPort = ((IPEndPoint)reservation.Client.LocalEndPoint!).Port;
+        reservation.Dispose();
+        var serverTask = Task.Run(async () =>
+        {
+            var request = await server.ReceiveAsync();
+            await server.SendAsync(BuildResponse(0x32, [0x01, 0x00]), request.RemoteEndPoint);
+        });
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Udp,
+            localPort: localPort,
+            timeout: TimeSpan.FromSeconds(2));
+
+        Assert.Throws<ToyopucOperationOutcomeUnknownException>(client.StopScan);
+        Assert.Throws<InvalidOperationException>(client.Open);
+        Assert.False(client.IsOpen);
+        await serverTask;
     }
 
     [Fact]
@@ -817,12 +1220,212 @@ public sealed class OverhaulContractTests
         using var cancellation = new CancellationTokenSource();
         var second = client.QueueAction(static () => { }, cancellation.Token);
         cancellation.Cancel();
+        var thirdRan = false;
+        var third = client.QueueAction(() => thirdRan = true);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await second);
         Assert.Equal(0, client.CloseCalls);
 
         release.Set();
         await first;
+        await third;
+        Assert.True(thirdRan);
+    }
+
+    [Fact]
+    public async Task OrdinaryClient_AdmitsOperationsInFifoOrderAcrossFailureAndSupportsReentrancy()
+    {
+        using var client = new TrackingClient();
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var order = new List<int>();
+
+        var first = client.QueueAction(
+            () =>
+            {
+                entered.Set();
+                release.Wait();
+                order.Add(1);
+            });
+        Assert.True(entered.Wait(TimeSpan.FromSeconds(2)));
+        var second = client.QueueAction(
+            () =>
+            {
+                order.Add(2);
+                throw new ToyopucProtocolError("expected test failure");
+            });
+        var third = client.QueueAction(() => order.Add(3));
+
+        release.Set();
+        await first;
+        await Assert.ThrowsAsync<ToyopucProtocolError>(async () => await second);
+        await third;
+        Assert.Equal([1, 2, 3], order);
+
+        order.Clear();
+        await client.QueueNestedAsync(order);
+        Assert.Equal([1, 2, 3], order);
+    }
+
+    [Fact]
+    public async Task SeparateOrdinaryClients_ProgressIndependently()
+    {
+        using var firstClient = new TrackingClient();
+        using var secondClient = new TrackingClient();
+        using var firstEntered = new ManualResetEventSlim();
+        using var secondEntered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+
+        var first = firstClient.QueueAction(() => { firstEntered.Set(); release.Wait(); });
+        var second = secondClient.QueueAction(() => { secondEntered.Set(); release.Wait(); });
+
+        Assert.True(firstEntered.Wait(TimeSpan.FromSeconds(2)));
+        Assert.True(secondEntered.Wait(TimeSpan.FromSeconds(2)));
+        release.Set();
+        await Task.WhenAll(first, second);
+    }
+
+    [Fact]
+    public async Task QueuedWrite_SnapshotsValuesAtAdmission()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        using var firstRequestReceived = new ManualResetEventSlim();
+        using var releaseFirst = new ManualResetEventSlim();
+        byte[]? writeRequest = null;
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            firstRequestReceived.Set();
+            releaseFirst.Wait();
+            await stream.WriteAsync(BuildResponse(0x1C, [0x34, 0x12]));
+            writeRequest = await ReadFrameAsync(stream);
+            await stream.WriteAsync(BuildResponse(0x1D, []));
+        });
+
+        await using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(3));
+        var first = client.ReadWordsAsync(0, 1);
+        Assert.True(firstRequestReceived.Wait(TimeSpan.FromSeconds(2)));
+        var values = new List<int> { 0x1111 };
+        var write = client.WriteWordsAsync(0x2000, values);
+        values[0] = 0x2222;
+
+        releaseFirst.Set();
+        Assert.Equal(new[] { 0x1234 }, await first);
+        await write;
+        await serverTask;
+        Assert.Equal(ToyopucProtocol.BuildWordWrite(0x2000, [0x1111]), writeRequest);
+    }
+
+    [Fact]
+    public async Task SynchronousCall_CannotOverlapActiveAsyncTransaction()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        using var firstRequestReceived = new ManualResetEventSlim();
+        using var inspectSecondSend = new ManualResetEventSlim();
+        using var inspected = new ManualResetEventSlim();
+        using var releaseFirst = new ManualResetEventSlim();
+        var secondSentBeforeRelease = false;
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            firstRequestReceived.Set();
+            inspectSecondSend.Wait();
+            await Task.Delay(100);
+            secondSentBeforeRelease = stream.DataAvailable;
+            inspected.Set();
+            releaseFirst.Wait();
+            await stream.WriteAsync(BuildResponse(0x1C, [0x11, 0x11]));
+            _ = await ReadFrameAsync(stream);
+            await stream.WriteAsync(BuildResponse(0x1C, [0x22, 0x22]));
+        });
+
+        await using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(3));
+        var asyncRead = client.ReadWordsAsync(0, 1);
+        Assert.True(firstRequestReceived.Wait(TimeSpan.FromSeconds(2)));
+        var syncRead = Task.Run(() => client.ReadWords(1, 1));
+        inspectSecondSend.Set();
+        Assert.True(inspected.Wait(TimeSpan.FromSeconds(2)));
+        Assert.False(secondSentBeforeRelease);
+
+        releaseFirst.Set();
+        Assert.Equal(new[] { 0x1111 }, await asyncRead);
+        Assert.Equal(new[] { 0x2222 }, await syncRead);
+        await serverTask;
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CloseOrDispose_RejectsActiveAndQueuedGenerationWithoutSecondSend(bool dispose)
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        using var requestReceived = new ManualResetEventSlim();
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            requestReceived.Set();
+            var buffer = new byte[1];
+            try
+            {
+                _ = await stream.ReadAsync(buffer);
+            }
+            catch (IOException)
+            {
+                // The client deliberately retires this transport generation.
+            }
+        });
+
+        await using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(3));
+        var active = client.ReadWordsAsync(0, 1);
+        Assert.True(requestReceived.Wait(TimeSpan.FromSeconds(2)));
+        var queued = client.ReadWordsAsync(1, 1);
+
+        if (dispose)
+            client.Dispose();
+        else
+            client.Close();
+
+        var activeError = await Record.ExceptionAsync(async () => await active);
+        var queuedError = await Record.ExceptionAsync(async () => await queued);
+        if (dispose)
+        {
+            Assert.IsType<ObjectDisposedException>(activeError);
+            Assert.IsType<ObjectDisposedException>(queuedError);
+        }
+        else
+        {
+            Assert.IsType<ToyopucConnectionClosedException>(activeError);
+            Assert.IsType<ToyopucConnectionClosedException>(queuedError);
+        }
+        Assert.Equal(1UL, client.TrafficStats.RequestCount);
+        await serverTask;
     }
 
     [Fact]
@@ -854,9 +1457,11 @@ public sealed class OverhaulContractTests
         Assert.True(requestReceived.Wait(TimeSpan.FromSeconds(2)));
         cancellation.Cancel();
 
-        await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(async () => await write);
+        var cancellationError = await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
+            async () => await write);
+        Assert.Equal(ToyopucOutcomeUnknownReason.Cancellation, cancellationError.Reason);
         Assert.False(client.IsOpen);
-        Assert.Throws<InvalidOperationException>(() => client.ReadWords(0x2000, 1));
+        Assert.Throws<ToyopucNotConnectedException>(() => client.ReadWords(0x2000, 1));
         await serverTask;
 
         var reconnectServer = Task.Run(async () =>
@@ -896,12 +1501,58 @@ public sealed class OverhaulContractTests
             ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromMilliseconds(50));
 
-        Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+        var syncError = Assert.Throws<ToyopucOperationOutcomeUnknownException>(
             () => client.WriteWords(0x2000, [0x1234]));
+        Assert.Equal(ToyopucOutcomeUnknownReason.Timeout, syncError.Reason);
         Assert.False(client.IsOpen);
 
-        await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
+        var asyncError = await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
             async () => await client.WriteWordsAsync(0x2000, [0x5678]));
+        Assert.Equal(ToyopucOutcomeUnknownReason.Timeout, asyncError.Reason);
+        Assert.False(client.IsOpen);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task TcpTrickleCannotRestartTheSingleTransactionDeadline()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var response = BuildResponse(0x1C, [0x34, 0x12]);
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            try
+            {
+                foreach (var value in response)
+                {
+                    await stream.WriteAsync(new[] { value });
+                    await Task.Delay(TimeSpan.FromMilliseconds(60));
+                }
+            }
+            catch (IOException)
+            {
+                // Deadline retirement closes the stream while the test peer is still trickling.
+            }
+            catch (SocketException)
+            {
+            }
+        });
+
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromMilliseconds(120));
+        var stopwatch = Stopwatch.StartNew();
+        Assert.Throws<ToyopucTimeoutError>(() => client.ReadWords(0x2000, 1));
+        stopwatch.Stop();
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromMilliseconds(300), $"Elapsed: {stopwatch.Elapsed}");
         Assert.False(client.IsOpen);
         await serverTask;
     }
@@ -934,10 +1585,78 @@ public sealed class OverhaulContractTests
             ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromSeconds(2));
 
-        Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+        var malformedError = Assert.Throws<ToyopucOperationOutcomeUnknownException>(
             () => client.WriteWords(0x2000, [0x1234]));
+        Assert.Equal(ToyopucOutcomeUnknownReason.MalformedResponse, malformedError.Reason);
         var readError = Assert.Throws<ToyopucProtocolError>(() => client.ReadWords(0x2000, 1));
         Assert.IsNotType<ToyopucOperationOutcomeUnknownException>(readError);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task StateChangingTrailingResponseData_IsMalformedUnknownOutcome()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            await stream.WriteAsync(BuildResponse(0x1D, [0x00]));
+        });
+
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2));
+        var error = Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+            () => client.WriteWords(0x2000, [0x1234]));
+
+        Assert.Equal(ToyopucOutcomeUnknownReason.MalformedResponse, error.Reason);
+        Assert.False(client.IsOpen);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task ClosingAnActiveWriteReportsOutcomeUnknownWithClosedReason()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        using var requestReceived = new ManualResetEventSlim();
+
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            requestReceived.Set();
+            var probe = new byte[1];
+            try
+            {
+                _ = await stream.ReadAsync(probe);
+            }
+            catch (IOException)
+            {
+            }
+        });
+
+        await using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(3));
+        var write = client.WriteWordsAsync(0x2000, [0x1234]);
+        Assert.True(requestReceived.Wait(TimeSpan.FromSeconds(2)));
+        client.Close();
+
+        var error = await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
+            async () => await write);
+        Assert.Equal(ToyopucOutcomeUnknownReason.Closed, error.Reason);
+        Assert.False(client.IsOpen);
         await serverTask;
     }
 
@@ -1106,6 +1825,15 @@ public sealed class OverhaulContractTests
 
         public Task QueueAction(Action action, CancellationToken cancellationToken = default) =>
             RunAsync(action, cancellationToken);
+
+        public Task QueueNestedAsync(List<int> order) =>
+            ExecuteExclusiveAsync(
+                async token =>
+                {
+                    order.Add(1);
+                    await RunAsync(() => order.Add(2), token);
+                    order.Add(3);
+                });
 
         public override void Close()
         {

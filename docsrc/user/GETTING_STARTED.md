@@ -1,5 +1,7 @@
 # Getting started
 
+Use the .NET 8, 9, or 10 SDK. These are the target frameworks built and tested by the package and CI.
+
 Install the package:
 
 ```powershell
@@ -23,6 +25,8 @@ var value = await client.ReadTypedAsync("P1-D0000", "U");
 Console.WriteLine(value);
 ```
 
+The factory returns the ordinary `ToyopucDeviceClient`. That client already owns the one required FIFO queue; no queued wrapper is needed. The selected route is retained for the client lifetime, so the same high-level methods work for direct and relay sessions.
+
 TCP and UDP are never inferred. For UDP, `LocalPort = 0` asks the operating system to allocate an ephemeral local port:
 
 ```csharp
@@ -43,6 +47,6 @@ Relay sessions require one or more validated hops. Direct is also explicit:
 var route = ToyopucRoute.Relay("P1-L2:N4,P1-L2:N2");
 ```
 
-The communication timeout defaults to three seconds per attempt. `Retries` defaults to zero. Reads may be retried only when a positive retry count is explicitly configured; state-changing operations are not automatically resent after an uncertain result.
+The communication timeout defaults to three seconds for one admitted transaction, including lazy connection, send, receive, and response decoding. `Retries` defaults to zero. A positive retry count applies only while failure is proven to have occurred before any request could have been sent. Once sending may have started, neither reads nor state-changing operations are automatically resent.
 
 Use only addresses and writes that are safe for the connected PLC. Shared setup, device ranges, and troubleshooting are maintained on the PLC Comm documentation site.

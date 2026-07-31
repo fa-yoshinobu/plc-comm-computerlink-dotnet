@@ -34,7 +34,8 @@ public class ToyopucProtocolError : ToyopucError
     }
 }
 
-public class ToyopucTimeoutError : ToyopucProtocolError
+/// <summary>Indicates that the configured connect or transaction deadline expired.</summary>
+public class ToyopucTimeoutError : ToyopucError
 {
     public ToyopucTimeoutError()
     {
@@ -51,13 +52,68 @@ public class ToyopucTimeoutError : ToyopucProtocolError
     }
 }
 
+/// <summary>Indicates a transport I/O failure distinct from timeout and protocol decoding.</summary>
+public sealed class ToyopucTransportError : ToyopucError
+{
+    public ToyopucTransportError(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+}
+
+/// <summary>Indicates that an operation requires an explicit reconnect before it can run.</summary>
+public sealed class ToyopucNotConnectedException : InvalidOperationException
+{
+    public ToyopucNotConnectedException(string message)
+        : base(message)
+    {
+    }
+}
+
+/// <summary>Indicates that the PLC returned a syntactically valid NG response.</summary>
+public sealed class ToyopucPlcError : ToyopucError
+{
+    public ToyopucPlcError(string message)
+        : base(message)
+    {
+    }
+}
+
+/// <summary>
+/// Indicates that <see cref="ToyopucClient.Close"/> retired the transport generation
+/// that owned an active or queued operation.
+/// </summary>
+public sealed class ToyopucConnectionClosedException : InvalidOperationException
+{
+    public ToyopucConnectionClosedException()
+        : base("The TOYOPUC connection was closed before the operation completed.")
+    {
+    }
+}
+
+/// <summary>Machine-readable reason why a state-changing operation has an unknown outcome.</summary>
+public enum ToyopucOutcomeUnknownReason
+{
+    Timeout,
+    Cancellation,
+    Closed,
+    Transport,
+    MalformedResponse,
+}
+
 /// <summary>
 /// Indicates that cancellation or transport loss occurred after a state-changing request may have been sent.
 /// </summary>
 public sealed class ToyopucOperationOutcomeUnknownException : ToyopucError
 {
-    public ToyopucOperationOutcomeUnknownException(string message, Exception innerException)
+    public ToyopucOperationOutcomeUnknownException(
+        ToyopucOutcomeUnknownReason reason,
+        string message,
+        Exception innerException)
         : base(message, innerException)
     {
+        Reason = reason;
     }
+
+    public ToyopucOutcomeUnknownReason Reason { get; }
 }

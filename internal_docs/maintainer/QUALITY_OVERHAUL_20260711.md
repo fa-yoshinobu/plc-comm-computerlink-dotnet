@@ -2,13 +2,13 @@
 
 ## Goal
 
-The public contract is explicit, profile-bound, single-request by default, safe under retry and cancellation, and consistent with the approved ComputerLink Python contract. Compatibility aliases do not remain public when they preserve ambiguous or unsafe behavior.
+The public contract is explicit, profile-bound, FIFO-serialized per client, safe under retry and cancellation, and consistent with the approved cross-library contract. Explicit read aggregates may use a validated multi-request plan; writes never acquire hidden multi-request behavior. Compatibility aliases do not remain public when they preserve ambiguous or unsafe behavior.
 
 Branch: `quality/2026-07-overhaul`
 
 Verification baseline after implementation: `run_ci.bat` builds all projects without warnings, validates the generated API reference, runs tests on .NET 8/9/10, verifies formatting, and publishes the self-contained HighLevelSample.
 
-Latest evidence: .NET 8 `234`, .NET 9 `247`, and .NET 10 `234` tests passed; the generated reference is current, build warnings are zero, formatting passed, the self-contained sample published, and NuGet/symbol packages were created by the post-Claude complete release gate on 2026-07-13. Both GitHub `build-test` jobs for cancellation fix `5f9de5b` passed, and `CLAUDE-CL-20260713-02` independently returned zero findings.
+Latest local evidence (2026-08-01): .NET 8 `274`, .NET 9 `287`, and .NET 10 `274` tests passed; the solution build had zero warnings, formatting and generated API checks passed, the self-contained HighLevelSample published, the NuGet package-content check passed with all three target frameworks, and an extracted worktree source archive rebuilt and passed the same three test matrices. No live PLC communication was performed or required for these deterministic transport/state-machine contracts.
 
 The checklists below are evidence states, not intentions. Claude batch `CLAUDE-CL-20260712-01` completed and all findings were dispositioned. D-080, D-081, D-083, and D-084-A passed the recorded live checks; D-084-B remains explicitly unverified under its approved release disposition.
 
@@ -74,34 +74,34 @@ Acceptance criteria: constructor/factory/options reject missing or unknown trans
 - [x] Documentation and generated API reference agree.
 - [x] Final acceptance verified.
 
-## D-068 — Three-second communication timeout
+## D-068 — Three-second absolute transaction deadline
 
-Scope: TCP/UDP connection, send, and receive attempts. Target: omitted timeout is three seconds; zero and negative values are invalid.
+Scope: TCP/UDP lazy connection, send, receive, relay unwrapping, command-specific validation, and response decoding. Target: omitted timeout is three seconds; zero and negative values are invalid; FIFO queue waiting is excluded and one absolute monotonic deadline covers every included phase and permitted pre-send retry.
 
 Breaking impact: `TimeSpan.Zero` no longer means “use the default” and timeout is immutable after construction.
 
-Acceptance criteria: default and explicit positive values work; invalid values fail before transport; each retry attempt owns its timeout.
+Acceptance criteria: default and explicit positive values work; invalid values fail before transport; queue waiting consumes no deadline; lazy connection and complete command-specific decoding share one absolute deadline; a retry does not reset it.
 
 - [x] Implementation completed.
 - [x] Constructor/default, token-omitted timeout, final-session disposal, late-response isolation, and new-session tests pass.
 - [x] All automated checks passed.
-- [x] Codex self-review completed for validation, per-attempt timeout, session disposal, and stale-response prevention.
+- [x] Codex self-review completed for validation, absolute deadline propagation, session disposal, and stale-response prevention.
 - [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
-- [x] Live/release disposition recorded (no live PLC required; timeout default, validation, per-attempt cancellation, session disposal, and late-response isolation use controlled local fixtures).
+- [x] Live/release disposition recorded (no live PLC required; deadline phase coverage, cancellation, session disposal, and late-response isolation use controlled local fixtures).
 - [x] Documentation/API reference agree.
 - [x] Final acceptance verified.
 
-## D-069 — Safe retry contract
+## D-069 — Safe pre-send-only retry contract
 
-Scope: all direct/relay operations. Target: `Retries=0` by default; connection failures before request send may retry; explicitly retryable reads may retry; state-changing or raw requests do not retry after send.
+Scope: all direct/relay read, write, raw, FR, clock, and scan operations. Target: `Retries=0` by default; a configured retry is permitted only when failure is proven to precede any send possibility. No operation, including a read, retries after sending may have started or after any PLC response.
 
 Breaking impact: negative retry values are rejected and unsafe blanket retry is removed.
 
-Acceptance criteria: distinguish pre-send, post-send, and retryable PLC response states; verify reads, writes, FR, clock, scan, relay, and raw paths at retry counts 0/1.
+Acceptance criteria: distinguish pre-send from send-possible state; verify at most one send for timeout, EOF, malformed/mismatched response, and PLC error across reads, writes, FR, clock, scan, relay, and raw paths at retry counts 0/1.
 
-- [x] Implementation complete in every path; direct and relay reads use the explicit retryable path while state-changing and raw paths do not retry after send.
-- [x] Direct/relay/FR/clock retryable reads and raw/write/FR commit/FR write/clock write/scan/relay scan post-send no-retry tests pass at retry counts `0/1` as applicable.
+- [x] Implementation complete in every path; the retry budget is consulted only while no send could have occurred.
+- [x] Direct/relay/read/raw/write/FR/clock/scan post-send no-retry tests pass at retry counts `0/1` as applicable.
 - [x] Current static/build/test/package checks passed.
 - [x] Codex self-review completed for retry state, request-sent boundaries, direct/relay routing, and state-changing operations.
 - [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
@@ -185,11 +185,11 @@ Acceptance criteria: canonical derivation, profile-specific routes, no public ov
 
 ## D-074 — Direct or relay route is required
 
-Scope: connection options, factory, and queued client. Target: `ToyopucRoute.Direct` or `ToyopucRoute.Relay(hops)` is a required construction argument.
+Scope: connection options, factory, and ordinary client. Target: `ToyopucRoute.Direct` or `ToyopucRoute.Relay(hops)` is a required construction argument.
 
 Breaking impact: null/omitted relay hops no longer imply direct.
 
-Acceptance criteria: direct, one/multiple relay hops, null/empty/invalid hops, and route preservation in queued operations.
+Acceptance criteria: direct, one/multiple relay hops, null/empty/invalid hops, and route preservation in ordinary FIFO operations.
 
 - [x] Implementation completed.
 - [x] Required constructor shape and strict route tests added; existing relay wire tests pass.
@@ -197,7 +197,7 @@ Acceptance criteria: direct, one/multiple relay hops, null/empty/invalid hops, a
 - [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
 - [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
 - [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
-- [x] Live/release disposition recorded (no live PLC required for the required-route API decision; direct/relay type construction, hop validation, queued preservation, and zero-send rejection are deterministic, while configured relay hardware remains separately unverified under D-084).
+- [x] Live/release disposition recorded (no live PLC required for the required-route API decision; direct/relay type construction, hop validation, ordinary-client preservation, and zero-send rejection are deterministic, while configured relay hardware remains separately unverified under D-084).
 - [x] Documentation/API reference agree.
 - [x] Final acceptance verified.
 
@@ -237,23 +237,30 @@ Acceptance criteria: every type, bit syntax, missing/empty/unknown type, width, 
 - [x] Documentation/API reference agree.
 - [x] Final acceptance verified.
 
-## D-077 — Separate one-value and many-value reads
+## D-077 — Separate scalar reads and validated read aggregates
 
-Scope: direct/relay/FR/word sync and async APIs. Target: `ReadOne` returns one value; `ReadMany(device,count)` requires count and always returns an array; `ReadDevices` is sparse; all are single-request only.
+Scope: direct/relay/FR/word sync and async APIs.
+
+Target contract: `ReadOne` returns one value; `ReadMany(device,count)` requires count and always returns an array; `ReadDevices` is sparse. An explicit read aggregate is fully planned and validated before transport, preserves caller-declared entry order, and owns one indivisible client FIFO turn. It uses one request when representable and splits only when protocol capacity, address-block, or route constraints require it. Split reads are not PLC-atomic and can observe different scan instants. A later failure raises an error without returning partial results. Writes remain one-request-only and reject a multi-request plan before transport.
 
 Breaking impact: `Read(device,count=1)` and count-dependent result types are removed publicly.
 
-Acceptance criteria: one, many count 1/boundary/invalid/crossing, direct/relay/FR/bit/word, no transport on rejection.
+Acceptance criteria:
 
-- [x] Implementation completed.
-- [x] Single-request, boundary-before-transport, return-shape, and public-surface tests pass.
-- [x] All automated checks passed.
-- [x] Codex self-review completed against the final diff, public surface, validation order, tests, documentation, and the approved cross-language contract.
-- [x] Claude review completed (`CLAUDE-CL-20260712-01`; result recorded).
-- [x] Claude findings dispositioned (`CLAUDE-CL-20260712-01`).
-- [x] Live/release disposition recorded (no live PLC required; scalar/array shape, strict count, one-request enforcement, and no-transport rejection use mock/frame evidence).
-- [x] Documentation/API reference agree.
-- [x] Final acceptance verified.
+1. Scalar and aggregate return shapes are stable for count one and larger counts.
+2. Every request in a direct or relay aggregate is constructible before the first send.
+3. Capacity and route/block boundary cases split only where one request is impossible and preserve caller order.
+4. No unrelated operation can interleave between split requests on the same client.
+5. A later split failure exposes no partial result.
+6. A write requiring more than one request fails with zero transport activity.
+
+- [x] Implementation completed in this repository.
+- [x] Tests added or updated for every acceptance criterion.
+- [x] Relevant static checks, .NET 8/9/10 tests, examples, and package/build checks passed for the final source state.
+- [x] Codex self-review completed against the approved contract and cross-language consistency requirements.
+- [x] Required live-PLC checks passed, or each unavailable check has an explicit release disposition. No live PLC check is required because planning, request order, FIFO exclusion, error suppression, and send counts are deterministic local transport behavior.
+- [x] Documentation, migration notes, changelog, and generated API reference agree with the implementation.
+- [x] Final acceptance criteria verified and the item marked complete.
 
 ## D-078 — Dword/float are always one request
 
@@ -460,6 +467,24 @@ Acceptance criteria:
       collection request.
 - [x] No live PLC communication was performed for this closure.
 
+## Codex delta self-review — 2026-08-01
+
+Scope: the actual overhaul diff, including public API, FIFO admission and generation retirement, absolute deadlines, retry boundaries, direct/relay response decoding, aggregate planning, capacity validation, examples, generated documentation, packaging, and source-archive behavior.
+
+Finding dispositions:
+
+1. **Accepted and corrected:** command-specific direct and relay response validation/decoding could occur after the inner send/receive lease and deadline ended. Decoding, relay unwrapping, exact response-length checks, and state-changing validation now execute inside the transport core before success is published.
+2. **Accepted and corrected:** the previous `ReadMany`/`ReadDevices` implementation and maintainer record still enforced the superseded single-request-only read contract. Explicit direct/relay read aggregates now preflight their complete plan, split only where one request is impossible, preserve caller order in one FIFO turn, disclose non-atomic scan timing, and suppress partial results. Multi-request writes still fail before transport.
+3. **Accepted and corrected:** direct state-changing responses with a matching command but trailing payload were accepted. Fixed-empty success responses now require zero data bytes and malformed post-send replies produce outcome-unknown with reason `MalformedResponse`.
+4. **Accepted and corrected:** worktree source-archive validation overlaid modified files but retained files deleted by the overhaul, causing the extracted archive to expose the removed queued wrapper. Worktree validation now removes deleted tracked files before the extracted build/test gate.
+5. **Accepted and corrected:** `GOTCHAS.md` still said every cross-boundary range must be split explicitly by the application, contradicting the approved explicit-read-aggregate contract. It now distinguishes single-request APIs from validated non-atomic `ReadMany`/`ReadDevices` aggregation and states that writes are never split automatically.
+6. **Accepted and corrected:** `USAGE_GUIDE.md` and the high-level sample still described aggregate reads as one request or as snapshots. They now distinguish single-request methods from non-atomic aggregate results and avoid snapshot terminology for values that can come from multiple PLC requests.
+7. **Duplicate:** native socket/error leakage, close/dispose generation retirement, cancellation outcome reasons, IPv4-only endpoints, input snapshotting, and fixed-port UDP taint were already covered by the current diff and deterministic regressions; no separate change was needed.
+8. **Rejected with rationale:** preserving the queued compatibility wrapper or the old read single-request restriction would contradict the approved ordinary-client FIFO and explicit-read-aggregate contracts.
+9. **Deferred:** none. Live PLC work is not required for these deterministic protocol framing, local transport, scheduling, validation-order, packaging, and documentation criteria.
+
+Final evidence: `run_ci.bat` passed build/API/test/format/sample publication; .NET 8 `274`, .NET 9 `287`, and .NET 10 `274` tests passed; NuGet package contents passed (`12` files, all target frameworks); extracted source archive build/tests passed (`95` files, `13` sample files, `16` test files, `14` validation-tool files); and `git diff --check` passed.
+
 ## Claude review batch `CLAUDE-CL-20260712-01`
 
 - [x] Review package prepared and explicit user authorization obtained for this batch.
@@ -546,3 +571,32 @@ and tests passed on net8 (`240`), net9 (`253`), and net10 (`240`). `dotnet forma
 three TFMs also passed. Self-review found mixed LF/CRLF markers in changed C# files; the finding was
 accepted, normalized with `dotnet format`, and the complete gate was rerun successfully. REL-010 is
 complete; publication remains separately gated by explicit user authorization.
+
+## Accepted self-review findings — public operation classification and packed consumer
+
+The generated API previously showed mostly bare high-level method signatures, so a consumer could
+not reliably distinguish one-request methods from the explicit bit-in-word read-modify-write
+sequence. XML documentation now classifies every public high-level helper and states that
+`WriteBitInWordAsync` holds one local FIFO turn but remains two requests and is not PLC-atomic.
+
+The earlier NuGet inspection proved file contents but not usability from the packed artifact. The
+package gate now restores and runs an isolated net8.0 project whose only package source is the
+newly generated local NuGet package. The consumer gate passed for `PlcComm.Toyopuc` on 2026-08-01.
+
+The final rerun found that the previous worktree option could still omit
+uncommitted and newly created files because `git archive` only read `HEAD`.
+This was accepted and corrected by constructing the review archive from every
+non-ignored current-worktree file while honoring deletions and the source
+artifact exclusions. The extracted current-worktree solution build and all
+three target-framework test runs then passed.
+
+The cross-ecosystem artifact review also found that the negative NuGet guard
+did not name every repository-only category required by the approved contract.
+The accepted correction now rejects CI, cache/build, source, maintainer,
+release-output, and credential-like paths/files. The hardened 12-file NuGet
+consumer gate passed.
+
+The hardened source-archive rerun then found two stale references to the old
+`snapshot` sample variable after the aggregate-read terminology correction.
+This accepted sample-only finding was corrected to restore from `readResult`;
+the extracted solution must compile before the artifact decision can close.

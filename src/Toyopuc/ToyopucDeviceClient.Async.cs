@@ -151,57 +151,83 @@ public partial class ToyopucDeviceClient
 
     public Task<object> RelayReadOneAsync(object hops, object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadOne(hops, device), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadOne(hopsSnapshot, deviceSnapshot), cancellationToken);
     }
 
     public Task RelayWriteAsync(object hops, object device, object value, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWrite(hops, device, value), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valueSnapshot = SnapshotDeviceValue(value);
+        return RunStateChangingAsync(() => RelayWrite(hopsSnapshot, deviceSnapshot, valueSnapshot), cancellationToken);
     }
 
     public Task<object[]> RelayReadWordsAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadWords(hops, device, count), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadWords(hopsSnapshot, deviceSnapshot, count), cancellationToken);
     }
 
     public Task RelayWriteWordsAsync(object hops, object device, object value, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteWords(hops, device, value), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valueSnapshot = SnapshotDeviceValue(value);
+        return RunStateChangingAsync(() => RelayWriteWords(hopsSnapshot, deviceSnapshot, valueSnapshot), cancellationToken);
     }
 
     public Task<object[]> RelayReadManyAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadMany(hops, device, count), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadMany(hopsSnapshot, deviceSnapshot, count), cancellationToken);
     }
 
     public Task<object[]> RelayReadDevicesAsync(object hops, IEnumerable<object> devices, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadDevices(hops, devices), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var devicesSnapshot = ResolveDevices(devices).Cast<object>().ToArray();
+        return RunAsync(() => RelayReadDevices(hopsSnapshot, devicesSnapshot), cancellationToken);
     }
 
     public Task RelayWriteManyAsync(object hops, IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteMany(hops, items), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var itemsSnapshot = SnapshotWriteItems(items);
+        return RunStateChangingAsync(() => RelayWriteMany(hopsSnapshot, itemsSnapshot), cancellationToken);
     }
 
     public Task<object> ReadFrOneAsync(object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadFrOne(device), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadFrOne(RelayHops!, snapshot), cancellationToken)
+            : RunAsync(() => ReadFrOne(snapshot), cancellationToken);
     }
 
     public Task<object[]> ReadFrAsync(object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadFr(device, count), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadFr(RelayHops!, snapshot, count), cancellationToken)
+            : RunAsync(() => ReadFr(snapshot, count), cancellationToken);
     }
 
     public Task<object> RelayReadFrOneAsync(object hops, object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadFrOne(hops, device), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadFrOne(hopsSnapshot, deviceSnapshot), cancellationToken);
     }
 
     public Task<object[]> RelayReadFrAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadFr(hops, device, count), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadFr(hopsSnapshot, deviceSnapshot, count), cancellationToken);
     }
 
     public Task WriteFrWorkAreaAsync(
@@ -209,7 +235,11 @@ public partial class ToyopucDeviceClient
         object value,
         CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteFrWorkArea(device, value), cancellationToken);
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valueSnapshot = SnapshotDeviceValue(value);
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayWriteFrWorkArea(RelayHops!, deviceSnapshot, valueSnapshot), cancellationToken)
+            : RunStateChangingAsync(() => WriteFrWorkArea(deviceSnapshot, valueSnapshot), cancellationToken);
     }
 
     public Task RelayWriteFrWorkAreaAsync(
@@ -218,14 +248,20 @@ public partial class ToyopucDeviceClient
         object value,
         CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteFrWorkArea(hops, device, value), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valueSnapshot = SnapshotDeviceValue(value);
+        return RunStateChangingAsync(() => RelayWriteFrWorkArea(hopsSnapshot, deviceSnapshot, valueSnapshot), cancellationToken);
     }
 
     public Task CommitFrBlockAsync(
         object device,
         CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => CommitFrBlock(device), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayCommitFrBlock(RelayHops!, snapshot), cancellationToken)
+            : RunStateChangingAsync(() => CommitFrBlock(snapshot), cancellationToken);
     }
 
     public Task RelayCommitFrBlockAsync(
@@ -233,112 +269,249 @@ public partial class ToyopucDeviceClient
         object device,
         CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayCommitFrBlock(hops, device), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunStateChangingAsync(() => RelayCommitFrBlock(hopsSnapshot, deviceSnapshot), cancellationToken);
     }
 
     public Task<object> ReadOneAsync(object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadOne(device), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadOne(RelayHops!, snapshot), cancellationToken)
+            : RunAsync(() => ReadOne(snapshot), cancellationToken);
     }
 
     public Task WriteAsync(object device, object value, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => Write(device, value), cancellationToken);
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valueSnapshot = SnapshotDeviceValue(value);
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayWrite(RelayHops!, deviceSnapshot, valueSnapshot), cancellationToken)
+            : RunStateChangingAsync(() => Write(deviceSnapshot, valueSnapshot), cancellationToken);
     }
 
     public Task<object[]> ReadManyAsync(object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadMany(device, count), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadMany(RelayHops!, snapshot, count), cancellationToken)
+            : RunAsync(() => ReadMany(snapshot, count), cancellationToken);
     }
 
     public Task<object[]> ReadDevicesAsync(IEnumerable<object> devices, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadDevices(devices), cancellationToken);
+        var snapshot = ResolveDevices(devices).Cast<object>().ToArray();
+        return UsesRelay
+            ? RunAsync(() => RelayReadDevices(RelayHops!, snapshot), cancellationToken)
+            : RunAsync(() => ReadDevices(snapshot), cancellationToken);
     }
 
     public Task WriteManyAsync(IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteMany(items), cancellationToken);
+        var snapshot = SnapshotWriteItems(items);
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayWriteMany(RelayHops!, snapshot), cancellationToken)
+            : RunStateChangingAsync(() => WriteMany(snapshot), cancellationToken);
     }
 
     public Task<uint> ReadDWordAsync(object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadDWord(device), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadDWord(RelayHops!, snapshot), cancellationToken)
+            : RunAsync(() => ReadDWord(snapshot), cancellationToken);
     }
 
     public Task WriteDWordAsync(object device, uint value, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteDWord(device, value), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayWriteDWord(RelayHops!, snapshot, value), cancellationToken)
+            : RunStateChangingAsync(() => WriteDWord(snapshot, value), cancellationToken);
     }
 
     public Task<uint[]> ReadDWordsAsync(object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadDWords(device, count), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadDWords(RelayHops!, snapshot, count), cancellationToken)
+            : RunAsync(() => ReadDWords(snapshot, count), cancellationToken);
     }
 
     public Task WriteDWordsAsync(object device, IEnumerable<uint> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteDWords(device, values), cancellationToken);
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valuesSnapshot = values.ToArray();
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayWriteDWords(RelayHops!, deviceSnapshot, valuesSnapshot), cancellationToken)
+            : RunStateChangingAsync(() => WriteDWords(deviceSnapshot, valuesSnapshot), cancellationToken);
     }
 
     public Task<float> ReadFloat32Async(object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadFloat32(device), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadFloat32(RelayHops!, snapshot), cancellationToken)
+            : RunAsync(() => ReadFloat32(snapshot), cancellationToken);
     }
 
     public Task WriteFloat32Async(object device, float value, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteFloat32(device, value), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayWriteFloat32(RelayHops!, snapshot, value), cancellationToken)
+            : RunStateChangingAsync(() => WriteFloat32(snapshot, value), cancellationToken);
     }
 
     public Task<float[]> ReadFloat32sAsync(object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadFloat32s(device, count), cancellationToken);
+        var snapshot = ResolveDeviceObject(device);
+        return UsesRelay
+            ? RunAsync(() => RelayReadFloat32s(RelayHops!, snapshot, count), cancellationToken)
+            : RunAsync(() => ReadFloat32s(snapshot, count), cancellationToken);
     }
 
     public Task WriteFloat32sAsync(object device, IEnumerable<float> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteFloat32s(device, values), cancellationToken);
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valuesSnapshot = values.ToArray();
+        return UsesRelay
+            ? RunStateChangingAsync(() => RelayWriteFloat32s(RelayHops!, deviceSnapshot, valuesSnapshot), cancellationToken)
+            : RunStateChangingAsync(() => WriteFloat32s(deviceSnapshot, valuesSnapshot), cancellationToken);
     }
 
     public Task<uint> RelayReadDWordAsync(object hops, object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadDWord(hops, device), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadDWord(hopsSnapshot, deviceSnapshot), cancellationToken);
     }
 
     public Task RelayWriteDWordAsync(object hops, object device, uint value, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteDWord(hops, device, value), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunStateChangingAsync(() => RelayWriteDWord(hopsSnapshot, deviceSnapshot, value), cancellationToken);
     }
 
     public Task<uint[]> RelayReadDWordsAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadDWords(hops, device, count), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadDWords(hopsSnapshot, deviceSnapshot, count), cancellationToken);
     }
 
     public Task RelayWriteDWordsAsync(object hops, object device, IEnumerable<uint> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteDWords(hops, device, values), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valuesSnapshot = values.ToArray();
+        return RunStateChangingAsync(() => RelayWriteDWords(hopsSnapshot, deviceSnapshot, valuesSnapshot), cancellationToken);
     }
 
     public Task<float> RelayReadFloat32Async(object hops, object device, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadFloat32(hops, device), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadFloat32(hopsSnapshot, deviceSnapshot), cancellationToken);
     }
 
     public Task RelayWriteFloat32Async(object hops, object device, float value, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteFloat32(hops, device, value), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunStateChangingAsync(() => RelayWriteFloat32(hopsSnapshot, deviceSnapshot, value), cancellationToken);
     }
 
     public Task<float[]> RelayReadFloat32sAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadFloat32s(hops, device, count), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        return RunAsync(() => RelayReadFloat32s(hopsSnapshot, deviceSnapshot, count), cancellationToken);
     }
 
     public Task RelayWriteFloat32sAsync(object hops, object device, IEnumerable<float> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteFloat32s(hops, device, values), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var deviceSnapshot = ResolveDeviceObject(device);
+        var valuesSnapshot = values.ToArray();
+        return RunStateChangingAsync(() => RelayWriteFloat32s(hopsSnapshot, deviceSnapshot, valuesSnapshot), cancellationToken);
+    }
+
+    /// <summary>Reads the PLC clock through the route selected for this client.</summary>
+    public new Task<ClockData> ReadClockAsync(CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunAsync(() => RelayReadClock(RelayHops!), cancellationToken)
+            : RunAsync(ReadClock, cancellationToken);
+
+    /// <summary>Writes the PLC clock through the route selected for this client.</summary>
+    public new Task WriteClockAsync(DateTime value, int yearBase, CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunStateChangingAsync(() => RelayWriteClock(RelayHops!, value, yearBase), cancellationToken)
+            : RunStateChangingAsync(() => WriteClock(value, yearBase), cancellationToken);
+
+    /// <summary>Resumes PLC scan through the route selected for this client.</summary>
+    public new Task ResumeScanAsync(CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunStateChangingAsync(() => RelayResumeScan(RelayHops!), cancellationToken)
+            : RunStateChangingAsync(ResumeScan, cancellationToken);
+
+    /// <summary>Stops PLC scan through the route selected for this client.</summary>
+    public new Task StopScanAsync(CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunStateChangingAsync(() => RelayStopScan(RelayHops!), cancellationToken)
+            : RunStateChangingAsync(StopScan, cancellationToken);
+
+    /// <summary>Releases PLC scan stop through the route selected for this client.</summary>
+    public new Task ReleaseScanStopAsync(CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunStateChangingAsync(() => RelayReleaseScanStop(RelayHops!), cancellationToken)
+            : RunStateChangingAsync(ReleaseScanStop, cancellationToken);
+
+    /// <summary>Reads PLC CPU status through the route selected for this client.</summary>
+    public new Task<CpuStatusData> ReadCpuStatusAsync(CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunAsync(() => RelayReadCpuStatus(RelayHops!), cancellationToken)
+            : RunAsync(ReadCpuStatus, cancellationToken);
+
+    /// <summary>Reads raw A0 CPU status through the route selected for this client.</summary>
+    public new Task<byte[]> ReadCpuStatusA0RawAsync(CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunAsync(() => RelayReadCpuStatusA0Raw(RelayHops!), cancellationToken)
+            : RunAsync(ReadCpuStatusA0Raw, cancellationToken);
+
+    /// <summary>Reads parsed A0 CPU status through the route selected for this client.</summary>
+    public new Task<CpuStatusData> ReadCpuStatusA0Async(CancellationToken cancellationToken = default)
+        => UsesRelay
+            ? RunAsync(() => RelayReadCpuStatusA0(RelayHops!), cancellationToken)
+            : RunAsync(ReadCpuStatusA0, cancellationToken);
+
+    private static object SnapshotDeviceValue(object value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        if (value is string)
+            return value;
+        if (value is byte[] bytes)
+            return bytes.ToArray();
+        return value is System.Collections.IEnumerable sequence
+            ? MaterializeSequence(sequence)
+            : value;
+    }
+
+    private KeyValuePair<object, object>[] SnapshotWriteItems(
+        IEnumerable<KeyValuePair<object, object>> items)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        var snapshot = new List<KeyValuePair<object, object>>();
+        foreach (var item in items)
+        {
+            var device = ResolveDeviceObject(item.Key);
+            var value = SnapshotDeviceValue(item.Value);
+            _ = NormalizeDeviceValue(device, value);
+            snapshot.Add(new KeyValuePair<object, object>(device, value));
+        }
+        return snapshot.ToArray();
     }
 
     private int[] ReadResolvedWordValues(ResolvedDevice resolved, int wordCount)
@@ -354,8 +527,10 @@ public partial class ToyopucDeviceClient
         }
 
         var devices = ResolveSequentialDevices(resolved, wordCount);
-        RequireSingleReadRequest(devices, splitPc10BlockBoundaries: true, nameof(ReadDWords));
-        var values = ReadRuns(devices, splitPc10BlockBoundaries: true);
+        RequireSingleEntryAtomicReadRequest(devices, splitPc10BlockBoundaries: true, nameof(ReadDWords));
+        var plan = GetRunPlan(devices, splitPc10BlockBoundaries: true);
+        PreflightReadPlan(devices, plan);
+        var values = ReadRuns(devices, plan);
         var words = new int[values.Length];
         for (var i = 0; i < values.Length; i++)
         {
@@ -378,8 +553,11 @@ public partial class ToyopucDeviceClient
         }
 
         var devices = ResolveSequentialDevices(resolved, wordCount);
-        RequireSingleReadRequest(devices, splitPc10BlockBoundaries: true, nameof(RelayReadDWords));
-        var values = RelayReadRuns(hops, devices, splitPc10BlockBoundaries: true);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        RequireSingleEntryAtomicReadRequest(devices, splitPc10BlockBoundaries: true, nameof(RelayReadDWords));
+        var plan = GetRunPlan(devices, splitPc10BlockBoundaries: true);
+        PreflightReadPlan(hopsSnapshot, devices, plan);
+        var values = RelayReadRuns(hopsSnapshot, devices, plan);
         var words = new int[values.Length];
         for (var i = 0; i < values.Length; i++)
         {

@@ -7,7 +7,9 @@ public sealed class ToyopucRoute
 {
     private ToyopucRoute(IReadOnlyList<(int LinkNo, int StationNo)>? relayHops)
     {
-        RelayHops = relayHops;
+        RelayHops = relayHops is null
+            ? null
+            : Array.AsReadOnly(relayHops.ToArray());
     }
 
     /// <summary>Gets the explicit direct route.</summary>

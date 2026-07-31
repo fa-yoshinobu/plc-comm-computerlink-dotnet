@@ -27,7 +27,7 @@ Console.CancelKeyPress += (_, eventArgs) =>
     shutdown.Cancel();
 };
 
-QueuedToyopucDeviceClient? client = null;
+ToyopucDeviceClient? client = null;
 var backoff = initialBackoff;
 var connectedOnce = false;
 
@@ -108,7 +108,7 @@ static bool IsRetryable(Exception ex)
     return ex is ToyopucError && ex.Message == "Socket error";
 }
 
-static async Task DisposeClientAsync(QueuedToyopucDeviceClient? client)
+static async Task DisposeClientAsync(ToyopucDeviceClient? client)
 {
     if (client is not null)
     {

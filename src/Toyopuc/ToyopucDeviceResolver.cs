@@ -55,6 +55,22 @@ public static class ToyopucDeviceResolver
             ["GM"] = (0x07, 0x2000),
         };
 
+    private static readonly IReadOnlyDictionary<string, int> ExtBitMaxIndex = new Dictionary<string, int>
+    {
+        ["EP"] = 0x0FFF,
+        ["EK"] = 0x0FFF,
+        ["EV"] = 0x0FFF,
+        ["ET"] = 0x07FF,
+        ["EC"] = 0x07FF,
+        ["EL"] = 0x1FFF,
+        ["EX"] = 0x07FF,
+        ["EY"] = 0x07FF,
+        ["EM"] = 0x1FFF,
+        ["GX"] = 0xFFFF,
+        ["GY"] = 0xFFFF,
+        ["GM"] = 0xFFFF,
+    };
+
     public static ResolvedDevice ResolveDevice(string device, string profile)
     {
         if (string.IsNullOrWhiteSpace(profile))
@@ -405,6 +421,19 @@ public static class ToyopucDeviceResolver
 
     private static void ValidateProfileAccess(ParsedAddress parsedAddress, string? prefix, string? profile, string device)
     {
+        if (ExtBitMaxIndex.TryGetValue(parsedAddress.Area, out var maxBitIndex))
+        {
+            var maxIndex = parsedAddress.Unit == "bit" && !parsedAddress.Packed
+                ? maxBitIndex
+                : maxBitIndex >> 4;
+            if (parsedAddress.Index > maxIndex)
+            {
+                throw new ArgumentException(
+                    $"{parsedAddress.Area} address exceeds its fixed wire segment: {device} (max 0x{maxIndex:X}).",
+                    nameof(device));
+            }
+        }
+
         var profileName = profile ?? "toyopuc:generic";
         var descriptor = ToyopucDeviceCatalog.GetAreaDescriptor(parsedAddress.Area, profile);
         if (parsedAddress.Packed && !descriptor.SupportsPackedWord)

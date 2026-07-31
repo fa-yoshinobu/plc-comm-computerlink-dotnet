@@ -5,7 +5,35 @@ namespace PlcComm.Toyopuc;
 
 public partial class ToyopucClient
 {
-    private readonly SemaphoreSlim _asyncGate = new(1, 1);
+    private readonly object _operationSync = new();
+    private readonly LinkedList<OperationWaiter> _operationWaiters = new();
+    private readonly AsyncLocal<OperationContext?> _operationContext = new();
+    private OperationGeneration _operationGeneration = new();
+    private bool _operationActive;
+
+    private sealed class OperationGeneration
+    {
+        internal CancellationTokenSource Cancellation { get; } = new();
+        internal bool Disposed { get; set; }
+        internal bool IsRetired => Cancellation.IsCancellationRequested;
+
+        internal Exception CreateFailure(object client)
+            => Disposed
+                ? new ObjectDisposedException(client.GetType().FullName)
+                : new ToyopucConnectionClosedException();
+    }
+
+    private sealed class OperationWaiter(OperationGeneration generation)
+    {
+        internal OperationGeneration Generation { get; } = generation;
+        internal TaskCompletionSource<OperationLease> Completion { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal LinkedListNode<OperationWaiter>? Node { get; set; }
+        internal CancellationTokenRegistration CancellationRegistration { get; set; }
+    }
+
+    private readonly record struct OperationLease(OperationGeneration Generation, bool OwnsTurn);
+    private sealed record OperationContext(ToyopucClient Client, OperationGeneration Generation);
 
     public uint ReadDWord(int address)
     {
@@ -62,14 +90,17 @@ public partial class ToyopucClient
         return RunAsync(Open, cancellationToken);
     }
 
-    public virtual Task CloseAsync(CancellationToken cancellationToken = default)
-    {
-        return RunAsync(Close, cancellationToken);
-    }
-
-    public virtual ValueTask DisposeAsync()
+    /// <summary>Closes the connection and rejects active and queued operations from its transport generation.</summary>
+    public virtual Task CloseAsync()
     {
         Close();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Asynchronously completes terminal disposal of the client.</summary>
+    public virtual ValueTask DisposeAsync()
+    {
+        Dispose();
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }
@@ -83,7 +114,9 @@ public partial class ToyopucClient
 
     internal Task<ResponseFrame> SendRawAsync(int cmd, byte[] data, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => SendRaw(cmd, data), cancellationToken);
+        ArgumentNullException.ThrowIfNull(data);
+        var snapshot = data.ToArray();
+        return RunStateChangingAsync(() => SendRaw(cmd, snapshot), cancellationToken);
     }
 
     public Task<int[]> ReadWordsAsync(int address, int count, CancellationToken cancellationToken = default)
@@ -93,7 +126,8 @@ public partial class ToyopucClient
 
     public Task WriteWordsAsync(int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteWords(address, values), cancellationToken);
+        var snapshot = values.ToArray();
+        return RunStateChangingAsync(() => WriteWords(address, snapshot), cancellationToken);
     }
 
     public Task<byte[]> ReadBytesAsync(int address, int count, CancellationToken cancellationToken = default)
@@ -103,7 +137,8 @@ public partial class ToyopucClient
 
     public Task WriteBytesAsync(int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteBytes(address, values), cancellationToken);
+        var snapshot = values.ToArray();
+        return RunStateChangingAsync(() => WriteBytes(address, snapshot), cancellationToken);
     }
 
     public Task<bool> ReadBitAsync(int address, CancellationToken cancellationToken = default)
@@ -133,7 +168,8 @@ public partial class ToyopucClient
 
     public Task WriteDWordsAsync(int address, IEnumerable<uint> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteDWords(address, values), cancellationToken);
+        var snapshot = values.ToArray();
+        return RunStateChangingAsync(() => WriteDWords(address, snapshot), cancellationToken);
     }
 
     public Task<float> ReadFloat32Async(int address, CancellationToken cancellationToken = default)
@@ -153,27 +189,32 @@ public partial class ToyopucClient
 
     public Task WriteFloat32sAsync(int address, IEnumerable<float> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteFloat32s(address, values), cancellationToken);
+        var snapshot = values.ToArray();
+        return RunStateChangingAsync(() => WriteFloat32s(address, snapshot), cancellationToken);
     }
 
     public Task<int[]> ReadWordsMultiAsync(IEnumerable<int> addresses, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadWordsMulti(addresses), cancellationToken);
+        var snapshot = addresses.ToArray();
+        return RunAsync(() => ReadWordsMulti(snapshot), cancellationToken);
     }
 
     public Task WriteWordsMultiAsync(IEnumerable<(int Address, int Value)> pairs, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteWordsMulti(pairs), cancellationToken);
+        var snapshot = pairs.ToArray();
+        return RunStateChangingAsync(() => WriteWordsMulti(snapshot), cancellationToken);
     }
 
     public Task<byte[]> ReadBytesMultiAsync(IEnumerable<int> addresses, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadBytesMulti(addresses), cancellationToken);
+        var snapshot = addresses.ToArray();
+        return RunAsync(() => ReadBytesMulti(snapshot), cancellationToken);
     }
 
     public Task WriteBytesMultiAsync(IEnumerable<(int Address, int Value)> pairs, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteBytesMulti(pairs), cancellationToken);
+        var snapshot = pairs.ToArray();
+        return RunStateChangingAsync(() => WriteBytesMulti(snapshot), cancellationToken);
     }
 
     public Task<int[]> ReadExtWordsAsync(int number, int address, int count, CancellationToken cancellationToken = default)
@@ -183,7 +224,8 @@ public partial class ToyopucClient
 
     public Task WriteExtWordsAsync(int number, int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteExtWords(number, address, values), cancellationToken);
+        var snapshot = values.ToArray();
+        return RunStateChangingAsync(() => WriteExtWords(number, address, snapshot), cancellationToken);
     }
 
     public Task<byte[]> ReadExtBytesAsync(int number, int address, int count, CancellationToken cancellationToken = default)
@@ -193,7 +235,8 @@ public partial class ToyopucClient
 
     public Task WriteExtBytesAsync(int number, int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteExtBytes(number, address, values), cancellationToken);
+        var snapshot = values.ToArray();
+        return RunStateChangingAsync(() => WriteExtBytes(number, address, snapshot), cancellationToken);
     }
 
     public Task<byte[]> ReadExtMultiAsync(
@@ -202,7 +245,10 @@ public partial class ToyopucClient
         IEnumerable<(int No, int Address)> wordPoints,
         CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => ReadExtMulti(bitPoints, bytePoints, wordPoints), cancellationToken);
+        var bitSnapshot = bitPoints.ToArray();
+        var byteSnapshot = bytePoints.ToArray();
+        var wordSnapshot = wordPoints.ToArray();
+        return RunAsync(() => ReadExtMulti(bitSnapshot, byteSnapshot, wordSnapshot), cancellationToken);
     }
 
     public Task WriteExtMultiAsync(
@@ -211,7 +257,10 @@ public partial class ToyopucClient
         IEnumerable<(int No, int Address, int Value)> wordPoints,
         CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteExtMulti(bitPoints, bytePoints, wordPoints), cancellationToken);
+        var bitSnapshot = bitPoints.ToArray();
+        var byteSnapshot = bytePoints.ToArray();
+        var wordSnapshot = wordPoints.ToArray();
+        return RunStateChangingAsync(() => WriteExtMulti(bitSnapshot, byteSnapshot, wordSnapshot), cancellationToken);
     }
 
     public Task<byte[]> Pc10BlockReadAsync(int address32, int count, CancellationToken cancellationToken = default)
@@ -221,17 +270,23 @@ public partial class ToyopucClient
 
     public Task Pc10BlockWriteAsync(int address32, byte[] dataBytes, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => Pc10BlockWrite(address32, dataBytes), cancellationToken);
+        ArgumentNullException.ThrowIfNull(dataBytes);
+        var snapshot = dataBytes.ToArray();
+        return RunStateChangingAsync(() => Pc10BlockWrite(address32, snapshot), cancellationToken);
     }
 
     public Task<byte[]> Pc10MultiReadAsync(byte[] payload, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => Pc10MultiRead(payload), cancellationToken);
+        ArgumentNullException.ThrowIfNull(payload);
+        var snapshot = payload.ToArray();
+        return RunAsync(() => Pc10MultiRead(snapshot), cancellationToken);
     }
 
     public Task Pc10MultiWriteAsync(byte[] payload, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => Pc10MultiWrite(payload), cancellationToken);
+        ArgumentNullException.ThrowIfNull(payload);
+        var snapshot = payload.ToArray();
+        return RunStateChangingAsync(() => Pc10MultiWrite(snapshot), cancellationToken);
     }
 
     public Task<int[]> ReadFrWordsAsync(int index, int count, CancellationToken cancellationToken = default)
@@ -241,7 +296,8 @@ public partial class ToyopucClient
 
     public Task WriteFrWorkAreaAsync(int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => WriteFrWorkArea(index, values), cancellationToken);
+        var snapshot = values.ToArray();
+        return RunStateChangingAsync(() => WriteFrWorkArea(index, snapshot), cancellationToken);
     }
 
     public Task CommitFrBlockAsync(
@@ -253,7 +309,9 @@ public partial class ToyopucClient
 
     internal Task<ResponseFrame> RelayCommandAsync(int linkNo, int stationNo, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayCommand(linkNo, stationNo, innerPayload), cancellationToken);
+        ArgumentNullException.ThrowIfNull(innerPayload);
+        var payloadSnapshot = innerPayload.ToArray();
+        return RunStateChangingAsync(() => RelayCommand(linkNo, stationNo, payloadSnapshot), cancellationToken);
     }
 
     internal Task<ResponseFrame> RelayNestedAsync(
@@ -261,72 +319,94 @@ public partial class ToyopucClient
         byte[] innerPayload,
         CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayNested(hops, innerPayload), cancellationToken);
+        var hopsSnapshot = hops.ToArray();
+        ArgumentNullException.ThrowIfNull(innerPayload);
+        var payloadSnapshot = innerPayload.ToArray();
+        return RunStateChangingAsync(() => RelayNested(hopsSnapshot, payloadSnapshot), cancellationToken);
     }
 
     internal Task<ResponseFrame> SendViaRelayAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => SendViaRelay(hops, innerPayload), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        ArgumentNullException.ThrowIfNull(innerPayload);
+        var payloadSnapshot = innerPayload.ToArray();
+        return RunStateChangingAsync(() => SendViaRelay(hopsSnapshot, payloadSnapshot), cancellationToken);
     }
 
     internal Task<ResponseFrame> SendViaRelayReadAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => SendViaRelayRead(hops, innerPayload), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        ArgumentNullException.ThrowIfNull(innerPayload);
+        var payloadSnapshot = innerPayload.ToArray();
+        return RunAsync(() => SendViaRelayRead(hopsSnapshot, payloadSnapshot), cancellationToken);
     }
 
     public Task<int[]> RelayReadWordsAsync(object hops, int address, int count, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadWords(hops, address, count), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunAsync(() => RelayReadWords(hopsSnapshot, address, count), cancellationToken);
     }
 
     public Task RelayWriteWordsAsync(object hops, int address, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteWords(hops, address, values), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var valuesSnapshot = values.ToArray();
+        return RunStateChangingAsync(() => RelayWriteWords(hopsSnapshot, address, valuesSnapshot), cancellationToken);
     }
 
     public Task<ClockData> RelayReadClockAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadClock(hops), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunAsync(() => RelayReadClock(snapshot), cancellationToken);
     }
 
     public Task RelayWriteClockAsync(object hops, DateTime value, int yearBase, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteClock(hops, value, yearBase), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunStateChangingAsync(() => RelayWriteClock(snapshot, value, yearBase), cancellationToken);
     }
 
     public Task RelayResumeScanAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayResumeScan(hops), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunStateChangingAsync(() => RelayResumeScan(snapshot), cancellationToken);
     }
 
     public Task RelayStopScanAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayStopScan(hops), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunStateChangingAsync(() => RelayStopScan(snapshot), cancellationToken);
     }
 
     public Task RelayReleaseScanStopAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayReleaseScanStop(hops), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunStateChangingAsync(() => RelayReleaseScanStop(snapshot), cancellationToken);
     }
 
     public Task<CpuStatusData> RelayReadCpuStatusAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadCpuStatus(hops), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunAsync(() => RelayReadCpuStatus(snapshot), cancellationToken);
     }
 
     public Task<byte[]> RelayReadCpuStatusA0RawAsync(object hops, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadCpuStatusA0Raw(hops), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunAsync(() => RelayReadCpuStatusA0Raw(snapshot), cancellationToken);
     }
 
     public Task<CpuStatusData> RelayReadCpuStatusA0Async(object hops, CancellationToken cancellationToken = default)
     {
-        return RunAsync(() => RelayReadCpuStatusA0(hops), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunAsync(() => RelayReadCpuStatusA0(snapshot), cancellationToken);
     }
 
     public Task RelayWriteFrWorkAreaAsync(object hops, int index, IEnumerable<int> values, CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayWriteFrWorkArea(hops, index, values), cancellationToken);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        var valuesSnapshot = values.ToArray();
+        return RunStateChangingAsync(() => RelayWriteFrWorkArea(hopsSnapshot, index, valuesSnapshot), cancellationToken);
     }
 
     public Task RelayCommitFrBlockAsync(
@@ -334,7 +414,8 @@ public partial class ToyopucClient
         int index,
         CancellationToken cancellationToken = default)
     {
-        return RunStateChangingAsync(() => RelayCommitFrBlock(hops, index), cancellationToken);
+        var snapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return RunStateChangingAsync(() => RelayCommitFrBlock(snapshot, index), cancellationToken);
     }
 
     public Task<ClockData> ReadClockAsync(CancellationToken cancellationToken = default)
@@ -397,29 +478,231 @@ public partial class ToyopucClient
         return RunAsyncCore(action, outcomeUnknownAfterSend: true, cancellationToken);
     }
 
+    private ValueTask<OperationLease> EnterOperationAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        var nested = _operationContext.Value;
+        if (nested is not null && ReferenceEquals(nested.Client, this))
+        {
+            if (nested.Generation.IsRetired)
+                throw nested.Generation.CreateFailure(this);
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(new OperationLease(nested.Generation, OwnsTurn: false));
+        }
+
+        lock (_operationSync)
+        {
+            ThrowIfDisposed();
+            cancellationToken.ThrowIfCancellationRequested();
+            var generation = _operationGeneration;
+            if (!_operationActive)
+            {
+                _operationActive = true;
+                return ValueTask.FromResult(new OperationLease(generation, OwnsTurn: true));
+            }
+
+            var waiter = new OperationWaiter(generation);
+            waiter.Node = _operationWaiters.AddLast(waiter);
+            if (cancellationToken.CanBeCanceled)
+            {
+                waiter.CancellationRegistration = cancellationToken.UnsafeRegister(
+                    static state =>
+                    {
+                        var (client, queued, token) = ((ToyopucClient, OperationWaiter, CancellationToken))state!;
+                        lock (client._operationSync)
+                        {
+                            if (queued.Node is null)
+                                return;
+                            client._operationWaiters.Remove(queued.Node);
+                            queued.Node = null;
+                            queued.Completion.TrySetCanceled(token);
+                        }
+                    },
+                    (this, waiter, cancellationToken));
+            }
+            return new ValueTask<OperationLease>(waiter.Completion.Task);
+        }
+    }
+
+    private void ExitOperation(OperationLease lease)
+    {
+        if (!lease.OwnsTurn)
+            return;
+
+        OperationWaiter? next = null;
+        lock (_operationSync)
+        {
+            if (_operationWaiters.First is { } first)
+            {
+                next = first.Value;
+                _operationWaiters.RemoveFirst();
+                next.Node = null;
+            }
+            else
+            {
+                _operationActive = false;
+            }
+        }
+
+        if (next is not null)
+        {
+            next.CancellationRegistration.Dispose();
+            next.Completion.TrySetResult(new OperationLease(next.Generation, OwnsTurn: true));
+        }
+    }
+
+    private void RetireOperationGeneration(bool disposed)
+    {
+        OperationGeneration retired;
+        OperationWaiter[] rejected;
+        lock (_operationSync)
+        {
+            retired = _operationGeneration;
+            retired.Disposed |= disposed;
+            _operationGeneration = new OperationGeneration();
+            rejected = _operationWaiters
+                .Where(waiter => ReferenceEquals(waiter.Generation, retired))
+                .ToArray();
+            foreach (var waiter in rejected)
+            {
+                if (waiter.Node is not null)
+                {
+                    _operationWaiters.Remove(waiter.Node);
+                    waiter.Node = null;
+                }
+            }
+        }
+
+        retired.Cancellation.Cancel();
+        foreach (var waiter in rejected)
+        {
+            waiter.CancellationRegistration.Dispose();
+            waiter.Completion.TrySetException(retired.CreateFailure(this));
+        }
+    }
+
+    internal async Task<T> ExecuteExclusiveAsync<T>(
+        Func<CancellationToken, Task<T>> operation,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
+        var priorContext = _operationContext.Value;
+        if (lease.OwnsTurn)
+            _operationContext.Value = new OperationContext(this, lease.Generation);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            lease.Generation.Cancellation.Token);
+        try
+        {
+            var result = await operation(linked.Token).ConfigureAwait(false);
+            if (lease.Generation.IsRetired)
+                throw lease.Generation.CreateFailure(this);
+            return result;
+        }
+        catch (ToyopucOperationOutcomeUnknownException)
+        {
+            throw;
+        }
+        catch when (lease.Generation.IsRetired)
+        {
+            throw lease.Generation.CreateFailure(this);
+        }
+        finally
+        {
+            if (lease.OwnsTurn)
+                _operationContext.Value = priorContext;
+            ExitOperation(lease);
+        }
+    }
+
+    internal async Task ExecuteExclusiveAsync(
+        Func<CancellationToken, Task> operation,
+        CancellationToken cancellationToken = default)
+    {
+        await ExecuteExclusiveAsync(
+            async token =>
+            {
+                await operation(token).ConfigureAwait(false);
+                return true;
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private protected T ExecuteSynchronousExclusive<T>(Func<T> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        var lease = EnterOperationAsync(CancellationToken.None).GetAwaiter().GetResult();
+        var priorContext = _operationContext.Value;
+        var priorCancellation = _operationCancellation.Value;
+        if (lease.OwnsTurn)
+            _operationContext.Value = new OperationContext(this, lease.Generation);
+        _operationCancellation.Value = priorCancellation.CanBeCanceled
+            ? priorCancellation
+            : lease.Generation.Cancellation.Token;
+        try
+        {
+            var result = operation();
+            if (lease.Generation.IsRetired)
+                throw lease.Generation.CreateFailure(this);
+            return result;
+        }
+        catch (ToyopucOperationOutcomeUnknownException)
+        {
+            throw;
+        }
+        catch when (lease.Generation.IsRetired)
+        {
+            throw lease.Generation.CreateFailure(this);
+        }
+        finally
+        {
+            _operationCancellation.Value = priorCancellation;
+            if (lease.OwnsTurn)
+                _operationContext.Value = priorContext;
+            ExitOperation(lease);
+        }
+    }
+
+    private protected void ExecuteSynchronousExclusive(Action operation)
+    {
+        ExecuteSynchronousExclusive(
+            () =>
+            {
+                operation();
+                return true;
+            });
+    }
+
     private async Task RunAsyncCore(
         Action action,
         bool outcomeUnknownAfterSend,
         CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await _asyncGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(action);
+        var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
+        var priorContext = _operationContext.Value;
+        if (lease.OwnsTurn)
+            _operationContext.Value = new OperationContext(this, lease.Generation);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            lease.Generation.Cancellation.Token);
         try
         {
             await Task.Run(
                 () =>
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    linked.Token.ThrowIfCancellationRequested();
                     _requestMayHaveBeenSent = false;
-                    _operationCancellation.Value = cancellationToken;
-                    using var cancellationRegistration = cancellationToken.Register(
+                    _operationCancellation.Value = linked.Token;
+                    using var cancellationRegistration = linked.Token.Register(
                         static state => ((ToyopucClient)state!).CancelActiveOperation(),
                         this);
                     try
                     {
                         action();
                     }
-                    catch (Exception exception) when (cancellationToken.IsCancellationRequested)
+                    catch (Exception exception) when (linked.IsCancellationRequested)
                     {
                         CancelActiveOperation();
                         if (exception is ToyopucOperationOutcomeUnknownException)
@@ -429,20 +712,35 @@ public partial class ToyopucClient
                         if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
                         {
                             throw new ToyopucOperationOutcomeUnknownException(
+                                lease.Generation.IsRetired
+                                    ? ToyopucOutcomeUnknownReason.Closed
+                                    : ToyopucOutcomeUnknownReason.Cancellation,
                                 "The operation was canceled after its request may have been sent; the PLC state is unknown.",
                                 exception);
                         }
-                        throw new OperationCanceledException(cancellationToken);
+                        throw new OperationCanceledException(linked.Token);
                     }
                     finally
                     {
                         _operationCancellation.Value = default;
                     }
                 }).ConfigureAwait(false);
+            if (lease.Generation.IsRetired)
+                throw lease.Generation.CreateFailure(this);
+        }
+        catch (ToyopucOperationOutcomeUnknownException)
+        {
+            throw;
+        }
+        catch when (lease.Generation.IsRetired)
+        {
+            throw lease.Generation.CreateFailure(this);
         }
         finally
         {
-            _asyncGate.Release();
+            if (lease.OwnsTurn)
+                _operationContext.Value = priorContext;
+            ExitOperation(lease);
         }
     }
 
@@ -451,24 +749,30 @@ public partial class ToyopucClient
         bool outcomeUnknownAfterSend,
         CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await _asyncGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(action);
+        var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
+        var priorContext = _operationContext.Value;
+        if (lease.OwnsTurn)
+            _operationContext.Value = new OperationContext(this, lease.Generation);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            lease.Generation.Cancellation.Token);
         try
         {
-            return await Task.Run(
+            var result = await Task.Run(
                 () =>
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    linked.Token.ThrowIfCancellationRequested();
                     _requestMayHaveBeenSent = false;
-                    _operationCancellation.Value = cancellationToken;
-                    using var cancellationRegistration = cancellationToken.Register(
+                    _operationCancellation.Value = linked.Token;
+                    using var cancellationRegistration = linked.Token.Register(
                         static state => ((ToyopucClient)state!).CancelActiveOperation(),
                         this);
                     try
                     {
                         return action();
                     }
-                    catch (Exception exception) when (cancellationToken.IsCancellationRequested)
+                    catch (Exception exception) when (linked.IsCancellationRequested)
                     {
                         CancelActiveOperation();
                         if (exception is ToyopucOperationOutcomeUnknownException)
@@ -478,20 +782,36 @@ public partial class ToyopucClient
                         if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
                         {
                             throw new ToyopucOperationOutcomeUnknownException(
+                                lease.Generation.IsRetired
+                                    ? ToyopucOutcomeUnknownReason.Closed
+                                    : ToyopucOutcomeUnknownReason.Cancellation,
                                 "The operation was canceled after its request may have been sent; the PLC state is unknown.",
                                 exception);
                         }
-                        throw new OperationCanceledException(cancellationToken);
+                        throw new OperationCanceledException(linked.Token);
                     }
                     finally
                     {
                         _operationCancellation.Value = default;
                     }
                 }).ConfigureAwait(false);
+            if (lease.Generation.IsRetired)
+                throw lease.Generation.CreateFailure(this);
+            return result;
+        }
+        catch (ToyopucOperationOutcomeUnknownException)
+        {
+            throw;
+        }
+        catch when (lease.Generation.IsRetired)
+        {
+            throw lease.Generation.CreateFailure(this);
         }
         finally
         {
-            _asyncGate.Release();
+            if (lease.OwnsTurn)
+                _operationContext.Value = priorContext;
+            ExitOperation(lease);
         }
     }
 
@@ -543,6 +863,11 @@ public partial class ToyopucClient
         var words = new int[items.Length * 2];
         for (var i = 0; i < items.Length; i++)
         {
+            if (!float.IsFinite(items[i]))
+            {
+                throw new ArgumentOutOfRangeException(nameof(values), "Float32 values must be finite.");
+            }
+
             var bits = unchecked((uint)BitConverter.SingleToInt32Bits(items[i]));
             words[i * 2] = (int)(bits & 0xFFFF);
             words[(i * 2) + 1] = (int)((bits >> 16) & 0xFFFF);

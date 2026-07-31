@@ -71,9 +71,9 @@ finally
 
 Console.WriteLine();
 Console.WriteLine("2. ReadManyAsync / WriteManyAsync");
-// Read compatible device strings as one protocol request.
-var snapshot = await client.ReadDevicesAsync(["P1-D0100", "P1-D0101"]);
-Console.WriteLine($"snapshot = [{string.Join(", ", snapshot.Select(FormatValue))}]");
+// Read a validated aggregate; larger or cross-boundary plans may use multiple requests.
+var readResult = await client.ReadDevicesAsync(["P1-D0100", "P1-D0101"]);
+Console.WriteLine($"read result = [{string.Join(", ", readResult.Select(FormatValue))}]");
 // Write compatible device strings as one protocol request.
 try
 {
@@ -88,8 +88,8 @@ finally
 {
     await client.WriteManyAsync(
     [
-        new KeyValuePair<object, object>("P1-D0100", snapshot[0]),
-        new KeyValuePair<object, object>("P1-D0101", snapshot[1]),
+        new KeyValuePair<object, object>("P1-D0100", readResult[0]),
+        new KeyValuePair<object, object>("P1-D0101", readResult[1]),
     ]);
 }
 
@@ -153,11 +153,11 @@ finally
 Console.WriteLine();
 Console.WriteLine("6. PollAsync");
 var pollCount = 0;
-// PollAsync repeatedly yields named snapshots until the loop is stopped or cancelled.
-await foreach (var pollSnapshot in client.PollAsync(["P1-D0100:U"], TimeSpan.FromMilliseconds(500)))
+// PollAsync repeatedly yields named read results until the loop is stopped or cancelled.
+await foreach (var pollResult in client.PollAsync(["P1-D0100:U"], TimeSpan.FromMilliseconds(500)))
 {
     pollCount++;
-    Console.WriteLine($"poll[{pollCount}] = {string.Join(", ", pollSnapshot.Select(kv => $"{kv.Key}={FormatValue(kv.Value)}"))}");
+    Console.WriteLine($"poll[{pollCount}] = {string.Join(", ", pollResult.Select(kv => $"{kv.Key}={FormatValue(kv.Value)}"))}");
     if (pollCount >= 2)
     {
         break;

@@ -37,10 +37,6 @@ jobs:
         with:
           ref: refs/tags/${{ steps.version.outputs.tag }}
 
-      - name: Check GitHub source archive contents
-        shell: pwsh
-        run: ./scripts/check_source_archive.ps1
-
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
@@ -48,6 +44,10 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+
+      - name: Check GitHub source archive build and tests
+        shell: pwsh
+        run: ./scripts/check_source_archive.ps1
 
       - name: Restore
         run: dotnet restore PlcComm.Toyopuc.sln

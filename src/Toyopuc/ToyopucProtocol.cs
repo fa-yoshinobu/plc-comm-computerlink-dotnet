@@ -33,6 +33,16 @@ public static class ToyopucProtocol
         }
     }
 
+    private static byte RequireWireByte(string label, int value)
+    {
+        if (value is < byte.MinValue or > byte.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(label, $"{label} must be in the range 0..255.");
+        }
+
+        return (byte)value;
+    }
+
     private static void RequirePc10BlockRange(int address32, int byteCount)
     {
         var offset = address32 & 0xFFFF;
@@ -160,7 +170,7 @@ public static class ToyopucProtocol
     public static byte[] PackU16LittleEndian(int value)
     {
         var buffer = new byte[2];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer, unchecked((ushort)value));
+        WriteU16(buffer, 0, value);
         return buffer;
     }
 
@@ -460,7 +470,7 @@ public static class ToyopucProtocol
     {
         count = RequireCount("CMD=94 ext-word-read", count, ContinuousWordMax);
         var frame = CreateCommandFrame(0x94, 5);
-        frame[5] = (byte)(number & 0xFF);
+        frame[5] = RequireWireByte(nameof(number), number);
         WriteU16(frame, 6, address);
         WriteU16(frame, 8, count);
         return frame;
@@ -471,7 +481,7 @@ public static class ToyopucProtocol
         var words = values.ToArray();
         RequireCount("CMD=95 ext-word-write", words.Length, ContinuousWordMax);
         var frame = CreateCommandFrame(0x95, 3 + (words.Length * 2));
-        frame[5] = (byte)(number & 0xFF);
+        frame[5] = RequireWireByte(nameof(number), number);
         WriteU16(frame, 6, address);
         for (var i = 0; i < words.Length; i++)
         {
@@ -485,7 +495,7 @@ public static class ToyopucProtocol
     {
         count = RequireCount("CMD=96 ext-byte-read", count, ContinuousByteMax);
         var frame = CreateCommandFrame(0x96, 5);
-        frame[5] = (byte)(number & 0xFF);
+        frame[5] = RequireWireByte(nameof(number), number);
         WriteU16(frame, 6, address);
         WriteU16(frame, 8, count);
         return frame;
@@ -496,7 +506,7 @@ public static class ToyopucProtocol
         var bytes = MaterializeByteValues(values);
         RequireCount("CMD=97 ext-byte-write", bytes.Length, ContinuousByteMax);
         var frame = CreateCommandFrame(0x97, 3 + bytes.Length);
-        frame[5] = (byte)(number & 0xFF);
+        frame[5] = RequireWireByte(nameof(number), number);
         WriteU16(frame, 6, address);
         if (bytes.Length > 0)
         {
@@ -530,14 +540,14 @@ public static class ToyopucProtocol
 
         foreach (var (number, address) in bytes)
         {
-            frame[offset++] = (byte)(number & 0xFF);
+            frame[offset++] = RequireWireByte(nameof(bytePoints), number);
             WriteU16(frame, offset, address);
             offset += 2;
         }
 
         foreach (var (number, address) in words)
         {
-            frame[offset++] = (byte)(number & 0xFF);
+            frame[offset++] = RequireWireByte(nameof(wordPoints), number);
             WriteU16(frame, offset, address);
             offset += 2;
         }
@@ -574,7 +584,7 @@ public static class ToyopucProtocol
         {
             if (value is < byte.MinValue or > byte.MaxValue)
                 throw new ArgumentOutOfRangeException(nameof(bytePoints), "Byte values must be in the range 0..255.");
-            frame[offset++] = (byte)(number & 0xFF);
+            frame[offset++] = RequireWireByte(nameof(bytePoints), number);
             WriteU16(frame, offset, address);
             offset += 2;
             frame[offset++] = (byte)value;
@@ -582,7 +592,7 @@ public static class ToyopucProtocol
 
         foreach (var (number, address, value) in words)
         {
-            frame[offset++] = (byte)(number & 0xFF);
+            frame[offset++] = RequireWireByte(nameof(wordPoints), number);
             WriteU16(frame, offset, address);
             offset += 2;
             WriteU16(frame, offset, value);
@@ -633,7 +643,7 @@ public static class ToyopucProtocol
     public static byte[] BuildFrRegister(int exNo)
     {
         var frame = CreateCommandFrame(0xCA, 1);
-        frame[5] = (byte)(exNo & 0xFF);
+        frame[5] = RequireWireByte(nameof(exNo), exNo);
         return frame;
     }
 

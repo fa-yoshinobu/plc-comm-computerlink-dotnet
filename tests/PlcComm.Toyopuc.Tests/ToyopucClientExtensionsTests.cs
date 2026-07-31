@@ -22,7 +22,7 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
-    public async Task OpenAndConnectAsync_ReturnsQueuedClientWithRelayConfiguration()
+    public async Task OpenAndConnectAsync_ReturnsOrdinaryClientWithRelayConfiguration()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -46,6 +46,40 @@ public sealed class ToyopucClientExtensionsTests
         Assert.Equal("toyopuc:pc10g:pc10", client.PlcProfile);
         Assert.Single(client.RelayHops!);
         Assert.Equal((0x12, 2), client.RelayHops![0]);
+    }
+
+    [Fact]
+    public async Task OrdinaryHighLevelMethod_UsesClientRelayRoute()
+    {
+        await using var server = new ScriptedToyopucServer(frame =>
+        {
+            Assert.Equal(0x60, frame[4]);
+            return BuildResponse(
+                0x60,
+                [
+                    0x12,
+                    0x02,
+                    0x00,
+                    0x06,
+                    0x03,
+                    0x00,
+                    0x1C,
+                    0x34,
+                    0x12,
+                ]);
+        });
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            route: ToyopucRoute.Relay("P1-L2:N2"));
+
+        var value = await client.ReadOneAsync("B0100");
+
+        Assert.Equal(0x1234, value);
+        Assert.Single(server.ReceivedFrames);
     }
 
     [Fact]

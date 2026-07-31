@@ -5,6 +5,29 @@ namespace PlcComm.Toyopuc.Tests;
 public sealed class CanonicalProfilesTests
 {
     [Fact]
+    public void ProfileBoundDevice_MustExactlyMatchClientBeforeTransportStateChanges()
+    {
+        const string clientProfile = "toyopuc:plus:standard";
+        const string deviceProfile = "toyopuc:generic";
+        var device = ToyopucDeviceResolver.ResolveDevice("P1-D0100", deviceProfile);
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            clientProfile)
+        {
+            CaptureTraceFrames = true,
+        };
+
+        var error = Assert.Throws<ArgumentException>(() => client.ReadOne(device));
+
+        Assert.Contains(deviceProfile, error.Message, StringComparison.Ordinal);
+        Assert.Contains(clientProfile, error.Message, StringComparison.Ordinal);
+        Assert.Equal(default, client.TrafficStats);
+        Assert.Empty(client.TraceFrames);
+    }
+
+    [Fact]
     public void EmbeddedToyopucProfiles_MatchCanonicalFixture()
     {
         var fixturePath = Path.Combine(AppContext.BaseDirectory, "fixtures", "toyopuc_profiles.json");

@@ -133,6 +133,22 @@ public static class ToyopucAddress
             ["GM"] = (0x07, 0x1000, 0x2000),
         };
 
+    private static readonly IReadOnlyDictionary<string, int> ExtBitMaxIndex = new Dictionary<string, int>
+    {
+        ["EP"] = 0x0FFF,
+        ["EK"] = 0x0FFF,
+        ["EV"] = 0x0FFF,
+        ["ET"] = 0x07FF,
+        ["EC"] = 0x07FF,
+        ["EL"] = 0x1FFF,
+        ["EX"] = 0x07FF,
+        ["EY"] = 0x07FF,
+        ["EM"] = 0x1FFF,
+        ["GX"] = 0xFFFF,
+        ["GY"] = 0xFFFF,
+        ["GM"] = 0xFFFF,
+    };
+
     private static readonly string[] KnownAreaCandidates = BuildKnownAreaCandidates();
 
     private static readonly IReadOnlyDictionary<string, Segment[]> ProgramBitSegments =
@@ -525,12 +541,20 @@ public static class ToyopucAddress
 
     public static int EncodeExNoBitU32(int exNo, int bitAddress)
     {
-        return ((exNo & 0xFF) << 19) | (bitAddress & 0x7FFFF);
+        if (exNo is < 0 or > 0xFF)
+            throw new ArgumentOutOfRangeException(nameof(exNo), "Extended No must be in the range 0..255.");
+        if (bitAddress is < 0 or > 0x7FFFF)
+            throw new ArgumentOutOfRangeException(nameof(bitAddress), "Bit address must be in the range 0..0x7FFFF.");
+        return (exNo << 19) | bitAddress;
     }
 
     public static int EncodeExNoByteU32(int exNo, int byteAddress)
     {
-        return ((exNo & 0xFF) << 16) | (byteAddress & 0xFFFF);
+        if (exNo is < 0 or > 0xFF)
+            throw new ArgumentOutOfRangeException(nameof(exNo), "Extended No must be in the range 0..255.");
+        if (byteAddress is < 0 or > 0xFFFF)
+            throw new ArgumentOutOfRangeException(nameof(byteAddress), "Byte address must be in the range 0..0xFFFF.");
+        return (exNo << 16) | byteAddress;
     }
 
     public static (int LowWord, int HighWord) SplitU32Words(int value)
@@ -563,6 +587,22 @@ public static class ToyopucAddress
         var address = index;
         if (ExtAreaMap.TryGetValue(normalizedArea, out var areaMap))
         {
+            if (ExtBitMaxIndex.TryGetValue(normalizedArea, out var maxBitIndex))
+            {
+                var maxIndex = unit switch
+                {
+                    "word" => maxBitIndex >> 4,
+                    "byte" => maxBitIndex >> 3,
+                    _ => throw new ArgumentException($"Unsupported unit for extended No mapping: {unit}", nameof(unit)),
+                };
+                if (index is < 0 || index > maxIndex)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(index),
+                        $"{normalizedArea} {unit} index out of fixed wire segment (0x0-0x{maxIndex:X}).");
+                }
+            }
+
             number = areaMap.No;
             address = unit switch
             {

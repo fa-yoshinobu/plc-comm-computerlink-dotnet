@@ -136,6 +136,13 @@ public sealed class ExampleEntryPointTests
     [Fact]
     public void MaintainerDocs_UseCurrentExampleProjectNames()
     {
+        if (SourceArchiveOmits(
+            @"internal_docs\maintainer\RELEASE_PROCESS.md",
+            @"internal_docs\maintainer\TESTING_GUIDE.md"))
+        {
+            return;
+        }
+
         var combined = string.Join(
             Environment.NewLine,
             ReadRepoFile(@"internal_docs\maintainer\RELEASE_PROCESS.md"),
@@ -168,6 +175,11 @@ public sealed class ExampleEntryPointTests
     [Fact]
     public void MaintainerDocs_UseCurrentLibraryAndPackageNames()
     {
+        if (SourceArchiveOmits(@"internal_docs\maintainer\TESTING_GUIDE.md"))
+        {
+            return;
+        }
+
         var combined = string.Join(
             Environment.NewLine,
             ReadRepoFile(@"internal_docs\maintainer\TESTING_GUIDE.md"));
@@ -183,6 +195,11 @@ public sealed class ExampleEntryPointTests
     [Fact]
     public void ReleaseCheckScript_RunsCiWithoutLocalDocsBuild()
     {
+        if (SourceArchiveOmits("release_check.bat"))
+        {
+            return;
+        }
+
         var text = ReadRepoFile("release_check.bat");
 
         Assert.Contains("call run_ci.bat", text, StringComparison.Ordinal);
@@ -201,5 +218,12 @@ public sealed class ExampleEntryPointTests
             .Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries);
 
         return Path.Combine([RepoRoot, .. segments]);
+    }
+
+    private static bool SourceArchiveOmits(params string[] relativePaths)
+    {
+        var gitPath = Path.Combine(RepoRoot, ".git");
+        var isRepositoryCheckout = Directory.Exists(gitPath) || File.Exists(gitPath);
+        return !isRepositoryCheckout && relativePaths.Any(path => !File.Exists(ResolveRepoPath(path)));
     }
 }

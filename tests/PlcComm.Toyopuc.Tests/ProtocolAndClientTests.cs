@@ -34,6 +34,70 @@ public class ProtocolAndClientTests
     }
 
     [Fact]
+    public void ProtocolBuilders_AcceptExactCapacityAndRejectCapacityPlusOne()
+    {
+        _ = ToyopucProtocol.BuildWordRead(0, 0x0200);
+        _ = ToyopucProtocol.BuildWordWrite(0, Enumerable.Repeat(0, 0x0200));
+        _ = ToyopucProtocol.BuildByteRead(0, 0x0400);
+        _ = ToyopucProtocol.BuildByteWrite(0, Enumerable.Repeat(0, 0x0400));
+        _ = ToyopucProtocol.BuildMultiWordRead(Enumerable.Range(0, 0x0080));
+        _ = ToyopucProtocol.BuildMultiByteRead(Enumerable.Range(0, 0x0080));
+        _ = ToyopucProtocol.BuildExtWordRead(0, 0, 0x0200);
+        _ = ToyopucProtocol.BuildExtByteRead(0, 0, 0x0400);
+        _ = ToyopucProtocol.BuildExtMultiRead(
+            Enumerable.Range(0, 0x00B0).Select(i => (No: 0, Bit: i & 7, Address: i >> 3)),
+            Array.Empty<(int No, int Address)>(),
+            Array.Empty<(int No, int Address)>());
+        _ = ToyopucProtocol.BuildExtMultiWrite(
+            Enumerable.Range(0, 0x0080).Select(i => (No: 0, Bit: i & 7, Address: i >> 3, Value: 0)),
+            Array.Empty<(int No, int Address, int Value)>(),
+            Array.Empty<(int No, int Address, int Value)>());
+        _ = ToyopucProtocol.BuildPc10BlockRead(0, 0x03F0);
+        _ = ToyopucProtocol.BuildPc10BlockWrite(0, new byte[0x03F0]);
+        _ = ToyopucProtocol.BuildPc10MultiRead(new byte[0x0200]);
+        _ = ToyopucProtocol.BuildPc10MultiWrite(new byte[0x0200]);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildWordWrite(0, Enumerable.Repeat(0, 0x0201)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildByteRead(0, 0x0401));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildMultiByteRead(Enumerable.Range(0, 0x0081)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildExtWordRead(0, 0, 0x0201));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildExtByteRead(0, 0, 0x0401));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildExtMultiRead(
+            Enumerable.Range(0, 0x00B1).Select(i => (No: 0, Bit: i & 7, Address: i >> 3)),
+            Array.Empty<(int No, int Address)>(),
+            Array.Empty<(int No, int Address)>()));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildPc10BlockWrite(0, new byte[0x03F1]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucProtocol.BuildPc10MultiWrite(new byte[0x0201]));
+    }
+
+    [Fact]
+    public void PublicClientCapacityOverflowHasNoTransportOrObservableStateChange()
+    {
+        using var client = new ToyopucClient("127.0.0.1", 1, ToyopucTransportMode.Tcp)
+        {
+            CaptureTraceFrames = true,
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.ReadWords(0, 0x0201));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.WriteWords(0, Enumerable.Repeat(0, 0x0201)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.ReadBytes(0, 0x0401));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.WriteBytes(0, Enumerable.Repeat(0, 0x0401)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.ReadWordsMulti(Enumerable.Range(0, 0x0081)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.ReadBytesMulti(Enumerable.Range(0, 0x0081)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.ReadExtWords(0, 0, 0x0201));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.ReadExtBytes(0, 0, 0x0401));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.Pc10BlockRead(0, 0x03F1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.Pc10MultiRead(new byte[0x0201]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.RelayReadWords("P1-L2:N2", 0, 0x0201));
+
+        Assert.False(client.IsOpen);
+        Assert.Null(client.LastTx);
+        Assert.Null(client.LastRx);
+        Assert.Empty(client.TraceFrames);
+        Assert.Equal(new ToyopucTrafficStats(0, 0, 0), client.TrafficStats);
+    }
+
+    [Fact]
     public void BuildScanResumeFrame_MatchesExpectedBytes()
     {
         var frame = ToyopucProtocol.BuildScanResume();
@@ -217,7 +281,7 @@ public class ProtocolAndClientTests
         });
 
         using var client = new ToyopucClient("127.0.0.1", port, transport: ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
-        Assert.Throws<ToyopucProtocolError>(client.StopScan);
+        Assert.Throws<ToyopucOperationOutcomeUnknownException>(client.StopScan);
 
         await serverTask;
     }
@@ -429,11 +493,22 @@ public class ProtocolAndClientTests
     }
 
     [Fact]
-    public void HighLevelClient_RejectsUpperUBoundaryBeforeTransport()
+    public async Task HighLevelClient_SplitsUpperUBoundaryReadInCallerOrder()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        var requests = new List<byte[]>();
+        var serverTask = Task.Run(async () =>
+        {
+            using var serverClient = await listener.AcceptTcpClientAsync();
+            await using var stream = serverClient.GetStream();
+            requests.Add(await ReadFrameAsync(stream));
+            await stream.WriteAsync(BuildResponse(0x94, new byte[] { 0x11, 0x11 }));
+            requests.Add(await ReadFrameAsync(stream));
+            await stream.WriteAsync(BuildResponse(0xC2, new byte[] { 0x22, 0x22 }));
+        });
 
         using var client = new ToyopucDeviceClient(
             "127.0.0.1",
@@ -445,9 +520,10 @@ public class ProtocolAndClientTests
         {
             CaptureTraceFrames = true,
         };
-        Assert.Throws<ToyopucProtocolError>(() => client.ReadMany("U07FFF", 2));
-        Assert.False(client.IsOpen);
-        Assert.Empty(client.TraceFrames);
+        Assert.Equal(new object[] { 0x1111, 0x2222 }, client.ReadMany("U07FFF", 2));
+        await serverTask;
+        Assert.Equal(2, requests.Count);
+        Assert.Equal(2, client.TraceFrames.Count);
     }
 
     [Fact]
@@ -693,11 +769,22 @@ public class ProtocolAndClientTests
     }
 
     [Fact]
-    public void HighLevelClient_RejectsFrBlockBoundaryBeforeTransport()
+    public async Task HighLevelClient_SplitsFrBlockBoundaryReadInCallerOrder()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        var requests = new List<byte[]>();
+        var serverTask = Task.Run(async () =>
+        {
+            using var serverClient = await listener.AcceptTcpClientAsync();
+            await using var stream = serverClient.GetStream();
+            requests.Add(await ReadFrameAsync(stream));
+            await stream.WriteAsync(BuildResponse(0xC2, new byte[] { 0x33, 0x33 }));
+            requests.Add(await ReadFrameAsync(stream));
+            await stream.WriteAsync(BuildResponse(0xC2, new byte[] { 0x44, 0x44 }));
+        });
 
         using var client = new ToyopucDeviceClient(
             "127.0.0.1",
@@ -709,9 +796,10 @@ public class ProtocolAndClientTests
         {
             CaptureTraceFrames = true,
         };
-        Assert.Throws<ToyopucProtocolError>(() => client.ReadFr("FR007FFF", 2));
-        Assert.False(client.IsOpen);
-        Assert.Empty(client.TraceFrames);
+        Assert.Equal(new object[] { 0x3333, 0x4444 }, client.ReadFr("FR007FFF", 2));
+        await serverTask;
+        Assert.Equal(2, requests.Count);
+        Assert.Equal(2, client.TraceFrames.Count);
     }
 
     [Fact]

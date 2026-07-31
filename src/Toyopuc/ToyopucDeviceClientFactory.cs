@@ -1,7 +1,7 @@
 namespace PlcComm.Toyopuc;
 
 /// <summary>
-/// Factory helpers for creating connected queued TOYOPUC clients.
+/// Factory helpers for creating connected TOYOPUC clients.
 /// </summary>
 /// <remarks>
 /// This factory is the preferred application entry point when you want explicit profile,
@@ -10,26 +10,27 @@ namespace PlcComm.Toyopuc;
 public static class ToyopucDeviceClientFactory
 {
     /// <summary>
-    /// Creates, configures, and opens a queued TOYOPUC client.
+    /// Creates, configures, and opens a TOYOPUC client.
     /// </summary>
     /// <param name="options">Explicit connection options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A connected queued client.</returns>
+    /// <returns>A connected client whose ordinary async operations use one FIFO queue.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
-    /// <exception cref="ArgumentException">The host name is empty or whitespace.</exception>
+    /// <exception cref="ArgumentException">
+    /// The host is empty, whitespace, or an IPv6 literal. Connections are IPv4-only.
+    /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
     /// A configured port, local port, timeout, retry count, or retry delay is invalid.
     /// </exception>
     /// <remarks>
-    /// The returned queued client keeps the required direct or relay route for every operation.
+    /// The returned client keeps the required direct or relay route for every ordinary high-level operation.
     /// </remarks>
-    public static async Task<QueuedToyopucDeviceClient> OpenAndConnectAsync(
+    public static async Task<ToyopucDeviceClient> OpenAndConnectAsync(
         ToyopucConnectionOptions options,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
-        if (string.IsNullOrWhiteSpace(options.Host))
-            throw new ArgumentException("Host must not be empty.", nameof(options));
+        var normalizedHost = ToyopucAddressFamilyValidation.NormalizeIPv4Host(options.Host, nameof(options));
         if (options.Port is < 1 or > 65535)
             throw new ArgumentOutOfRangeException(nameof(options), "Port must be in the range 1-65535.");
         if (options.LocalPort is < 0 or > 65535)
@@ -38,16 +39,12 @@ public static class ToyopucDeviceClientFactory
             throw new ArgumentOutOfRangeException(nameof(options), "Transport must be explicitly Tcp or Udp.");
         if (options.Transport == ToyopucTransportMode.Tcp && options.LocalPort != 0)
             throw new ArgumentException("LocalPort can only be specified for UDP.", nameof(options));
-        if (options.Timeout is { } timeout && timeout <= TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(options), "Timeout must be greater than zero.");
-        if (options.Timeout is { } boundedTimeout && boundedTimeout.TotalMilliseconds > int.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(options), $"Timeout must not exceed {int.MaxValue} milliseconds.");
+        if (options.Timeout is { } timeout)
+            ToyopucTimerValidation.RequirePositive(timeout, nameof(options), "Timeout");
         if (options.Retries < 0)
             throw new ArgumentOutOfRangeException(nameof(options), "Retries must be zero or greater.");
-        if (options.RetryDelay is { } retryDelay && retryDelay < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(options), "RetryDelay must be zero or greater.");
-        if (options.RetryDelay is { } boundedRetryDelay && boundedRetryDelay.TotalMilliseconds > int.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(options), $"RetryDelay must not exceed {int.MaxValue} milliseconds.");
+        if (options.RetryDelay is { } retryDelay)
+            ToyopucTimerValidation.RequireNonNegative(retryDelay, nameof(options), "RetryDelay");
 
         if (string.IsNullOrWhiteSpace(options.PlcProfile))
             throw new ArgumentException("PlcProfile is required.", nameof(options));
@@ -56,17 +53,25 @@ public static class ToyopucDeviceClientFactory
         var normalizedProfile = ToyopucPlcProfiles.NormalizeName(options.PlcProfile);
 
         var inner = new ToyopucDeviceClient(
-            options.Host,
+            normalizedHost,
             options.Port,
             options.Transport,
             normalizedProfile,
             options.LocalPort,
             options.EffectiveTimeout,
             options.Retries,
-            options.EffectiveRetryDelay);
+            options.EffectiveRetryDelay,
+            options.Route);
 
-        var queued = new QueuedToyopucDeviceClient(inner, options.Route);
-        await queued.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return queued;
+        try
+        {
+            await inner.OpenAsync(cancellationToken).ConfigureAwait(false);
+            return inner;
+        }
+        catch
+        {
+            await inner.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 }

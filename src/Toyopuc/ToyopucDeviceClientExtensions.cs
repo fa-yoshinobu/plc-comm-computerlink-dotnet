@@ -3,187 +3,110 @@ using System.Runtime.CompilerServices;
 
 namespace PlcComm.Toyopuc;
 
+/// <summary>
+/// High-level typed, named, polling, and contiguous-range operations for
+/// <see cref="ToyopucDeviceClient"/>.
+/// </summary>
+/// <remarks>
+/// Typed and contiguous-range methods issue exactly one protocol request.
+/// <see cref="ReadNamedAsync"/> and each <see cref="PollAsync"/> cycle accept
+/// exactly one named address and therefore issue one request. Only
+/// <see cref="WriteBitInWordAsync"/> is a multi-request helper: it performs an
+/// explicit read followed by a write while holding one local client FIFO turn.
+/// </remarks>
 public static class ToyopucDeviceClientExtensions
 {
-    public static Task<object> ReadOneAsync(this QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayReadOneAsync(client.RelayHops!, device, ct)
-                : inner.ReadOneAsync(device, ct),
-            ct);
-
-    public static Task<object[]> ReadManyAsync(this QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayReadManyAsync(client.RelayHops!, device, count, ct)
-                : inner.ReadManyAsync(device, count, ct),
-            ct);
-
-    public static Task<object[]> ReadDevicesAsync(this QueuedToyopucDeviceClient client, IEnumerable<object> devices, CancellationToken ct = default)
-    {
-        var materialized = devices as IList<object> ?? devices.ToList();
-        return client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayReadDevicesAsync(client.RelayHops!, materialized, ct)
-                : inner.ReadDevicesAsync(materialized, ct),
-            ct);
-    }
-
-    public static Task WriteAsync(this QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayWriteAsync(client.RelayHops!, device, value, ct)
-                : inner.WriteAsync(device, value, ct),
-            ct);
-
-    public static Task WriteManyAsync(
-        this QueuedToyopucDeviceClient client,
-        IEnumerable<KeyValuePair<object, object>> items,
-        CancellationToken ct = default)
-    {
-        var materialized = items as IList<KeyValuePair<object, object>> ?? items.ToList();
-        return client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayWriteManyAsync(client.RelayHops!, materialized, ct)
-                : inner.WriteManyAsync(materialized, ct),
-            ct);
-    }
-
-    public static Task<object> ReadFrOneAsync(this QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayReadFrOneAsync(client.RelayHops!, device, ct)
-                : inner.ReadFrOneAsync(device, ct),
-            ct);
-
-    public static Task<object[]> ReadFrAsync(this QueuedToyopucDeviceClient client, object device, int count, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayReadFrAsync(client.RelayHops!, device, count, ct)
-                : inner.ReadFrAsync(device, count, ct),
-            ct);
-
-    public static Task WriteFrWorkAreaAsync(this QueuedToyopucDeviceClient client, object device, object value, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayWriteFrWorkAreaAsync(client.RelayHops!, device, value, ct)
-                : inner.WriteFrWorkAreaAsync(device, value, ct),
-            ct);
-
-    public static Task CommitFrBlockAsync(this QueuedToyopucDeviceClient client, object device, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayCommitFrBlockAsync(client.RelayHops!, device, ct)
-                : inner.CommitFrBlockAsync(device, ct),
-            ct);
-
-    public static Task<ClockData> ReadClockAsync(this QueuedToyopucDeviceClient client, CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayReadClockAsync(client.RelayHops!, ct)
-                : inner.ReadClockAsync(ct),
-            ct);
-
-    public static Task WriteClockAsync(
-        this QueuedToyopucDeviceClient client,
-        DateTime value,
-        int yearBase,
-        CancellationToken ct = default)
-        => client.ExecuteAsync(
-            inner => client.UsesRelay
-                ? inner.RelayWriteClockAsync(client.RelayHops!, value, yearBase, ct)
-                : inner.WriteClockAsync(value, yearBase, ct),
-            ct);
-
+    /// <summary>Reads one typed value using exactly one protocol request.</summary>
     public static Task<object> ReadTypedAsync(this ToyopucDeviceClient client, string device, string dtype, CancellationToken ct = default)
-        => ReadTypedCoreAsync(client, relayHops: null, device, dtype, ct);
+        => client.ExecuteExclusiveAsync(token => ReadTypedCoreAsync(client, client.RelayHops, device, dtype, token), ct);
 
-    public static Task<object> ReadTypedAsync(this QueuedToyopucDeviceClient client, string device, string dtype, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => ReadTypedCoreAsync(inner, client.RelayHops, device, dtype, ct), ct);
-
+    /// <summary>Writes one typed value using exactly one protocol request.</summary>
     public static Task WriteTypedAsync(this ToyopucDeviceClient client, string device, string dtype, object value, CancellationToken ct = default)
-        => WriteTypedCoreAsync(client, relayHops: null, device, dtype, value, ct);
+        => client.ExecuteExclusiveAsync(token => WriteTypedCoreAsync(client, client.RelayHops, device, dtype, value, token), ct);
 
-    public static Task WriteTypedAsync(this QueuedToyopucDeviceClient client, string device, string dtype, object value, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => WriteTypedCoreAsync(inner, client.RelayHops, device, dtype, value, ct), ct);
-
+    /// <summary>Sets or clears one bit in a word by an explicit read-modify-write sequence.</summary>
+    /// <remarks>
+    /// The read and write occupy one FIFO turn on this client, so its other
+    /// operations cannot interleave. They remain two PLC requests and are not
+    /// PLC-atomic: another client, PLC logic, or external writer can change the
+    /// word between them. Applications that require atomic coordination must
+    /// implement it in the PLC contract.
+    /// </remarks>
     public static Task WriteBitInWordAsync(this ToyopucDeviceClient client, string device, int bitIndex, bool value, CancellationToken ct = default)
-        => WriteBitInWordCoreAsync(client, relayHops: null, device, bitIndex, value, ct);
+        => client.ExecuteExclusiveAsync(token => WriteBitInWordCoreAsync(client, client.RelayHops, device, bitIndex, value, token), ct);
 
-    public static Task WriteBitInWordAsync(this QueuedToyopucDeviceClient client, string device, int bitIndex, bool value, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => WriteBitInWordCoreAsync(inner, client.RelayHops, device, bitIndex, value, ct), ct);
-
+    /// <summary>Reads exactly one named address using one protocol request.</summary>
+    /// <remarks>Multiple named addresses are rejected before transport; split reads must be explicit.</remarks>
     public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(this ToyopucDeviceClient client, IEnumerable<string> addresses, CancellationToken ct = default)
-        => ReadNamedCoreAsync(client, relayHops: null, addresses, ct);
-
-    public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(this QueuedToyopucDeviceClient client, IEnumerable<string> addresses, CancellationToken ct = default)
     {
-        var addrList = addresses as IList<string> ?? addresses.ToList();
-        return client.ExecuteAsync(inner => ReadNamedCoreAsync(inner, client.RelayHops, addrList, ct), ct);
+        var addrList = addresses.ToArray();
+        return client.ExecuteExclusiveAsync(token => ReadNamedCoreAsync(client, client.RelayHops, addrList, token), ct);
     }
 
+    /// <summary>Repeatedly reads exactly one named address, one request per cycle.</summary>
+    /// <remarks>Each cycle is independent; no atomicity is implied across polling cycles.</remarks>
     public static async IAsyncEnumerable<IReadOnlyDictionary<string, object>> PollAsync(
         this ToyopucDeviceClient client,
         IEnumerable<string> addresses,
         TimeSpan interval,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var addrList = addresses as IList<string> ?? addresses.ToList();
+        interval = ToyopucTimerValidation.RequirePositive(interval, nameof(interval), "Polling interval");
+        var addrList = addresses.ToArray();
         ValidateNamedAddresses(addrList);
         while (!ct.IsCancellationRequested)
         {
-            yield return await ReadNamedCoreAsync(client, relayHops: null, addrList, ct).ConfigureAwait(false);
+            yield return await client.ExecuteExclusiveAsync(
+                token => ReadNamedCoreAsync(client, client.RelayHops, addrList, token),
+                ct).ConfigureAwait(false);
             await Task.Delay(interval, ct).ConfigureAwait(false);
         }
     }
 
-    public static async IAsyncEnumerable<IReadOnlyDictionary<string, object>> PollAsync(
-        this QueuedToyopucDeviceClient client,
-        IEnumerable<string> addresses,
-        TimeSpan interval,
-        [EnumeratorCancellation] CancellationToken ct = default)
-    {
-        var addrList = addresses as IList<string> ?? addresses.ToList();
-        ValidateNamedAddresses(addrList);
-        while (!ct.IsCancellationRequested)
-        {
-            var snapshot = await client.ExecuteAsync(inner => ReadNamedCoreAsync(inner, client.RelayHops, addrList, ct), ct).ConfigureAwait(false);
-            yield return snapshot;
-            await Task.Delay(interval, ct).ConfigureAwait(false);
-        }
-    }
-
+    /// <summary>Reads a contiguous word range using exactly one protocol request.</summary>
     public static async Task<ushort[]> ReadWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
     {
-        return await ReadWordsSingleRequestCoreAsync(client, relayHops: null, device, count, ct).ConfigureAwait(false);
+        return await client.ExecuteExclusiveAsync(
+            token => ReadWordsSingleRequestCoreAsync(client, client.RelayHops, device, count, token),
+            ct).ConfigureAwait(false);
     }
 
-    public static Task<ushort[]> ReadWordsAsync(this QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => ReadWordsSingleRequestCoreAsync(inner, client.RelayHops, device, count, ct), ct);
-
+    /// <summary>Reads a contiguous double-word range using exactly one protocol request.</summary>
     public static Task<uint[]> ReadDWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => ReadDWordsSingleRequestCoreAsync(client, relayHops: null, device, count, ct);
+        => client.ExecuteExclusiveAsync(
+            token => ReadDWordsSingleRequestCoreAsync(client, client.RelayHops, device, count, token),
+            ct);
 
-    public static Task<uint[]> ReadDWordsAsync(this QueuedToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => ReadDWordsSingleRequestCoreAsync(inner, client.RelayHops, device, count, ct), ct);
-
+    /// <summary>Writes a contiguous word range using exactly one protocol request.</summary>
     public static Task WriteWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
-        => WriteWordsSingleRequestCoreAsync(client, relayHops: null, device, values, ct);
+    {
+        var snapshot = values.ToArray();
+        return client.ExecuteExclusiveAsync(
+            token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
+            ct);
+    }
 
-    public static Task WriteWordsAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => WriteWordsSingleRequestCoreAsync(inner, client.RelayHops, device, values, ct), ct);
-
+    /// <summary>Writes a contiguous double-word range using exactly one protocol request.</summary>
     public static Task WriteDWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
-        => WriteWordsSingleRequestCoreAsync(client, relayHops: null, device, ExpandDWords(values), ct);
-
-    public static Task WriteDWordsAsync(this QueuedToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
-        => client.ExecuteAsync(inner => WriteWordsSingleRequestCoreAsync(inner, client.RelayHops, device, ExpandDWords(values), ct), ct);
+    {
+        var snapshot = ExpandDWords(values.ToArray());
+        return client.ExecuteExclusiveAsync(
+            token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
+            ct);
+    }
 
     internal static Task<ushort[]> ReadWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => ReadWordsSingleRequestCoreAsync(client, relayHops: null, device, count, ct);
+        => client.ExecuteExclusiveAsync(
+            token => ReadWordsSingleRequestCoreAsync(client, client.RelayHops, device, count, token),
+            ct);
 
     internal static Task WriteWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
-        => WriteWordsSingleRequestCoreAsync(client, relayHops: null, device, values, ct);
+    {
+        var snapshot = values.ToArray();
+        return client.ExecuteExclusiveAsync(
+            token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
+            ct);
+    }
 
     private static async Task<object> ReadTypedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, string dtype, CancellationToken ct)
     {
