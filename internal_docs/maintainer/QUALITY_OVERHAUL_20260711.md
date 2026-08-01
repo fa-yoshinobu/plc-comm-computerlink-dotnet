@@ -8,7 +8,7 @@ Branch: `quality/2026-07-overhaul`
 
 Verification baseline after implementation: `run_ci.bat` builds all projects without warnings, validates the generated API reference, runs tests on .NET 8/9/10, verifies formatting, and publishes the self-contained HighLevelSample.
 
-Latest local evidence (2026-08-01): .NET 8 `274`, .NET 9 `287`, and .NET 10 `274` tests passed; the solution build had zero warnings, formatting and generated API checks passed, the self-contained HighLevelSample published, the NuGet package-content check passed with all three target frameworks, and an extracted worktree source archive rebuilt and passed the same three test matrices. No live PLC communication was performed or required for these deterministic transport/state-machine contracts.
+Latest local evidence (2026-08-01): .NET 8 `276`, .NET 9 `289`, and .NET 10 `276` tests passed; the solution build had zero warnings, formatting and generated API checks passed, all five net10.0 samples built, the NuGet package-content check passed with all three target frameworks, and an extracted worktree source archive rebuilt and passed the same three test matrices. No live PLC communication was performed or required for these deterministic transport/state-machine contracts.
 
 The checklists below are evidence states, not intentions. Claude batch `CLAUDE-CL-20260712-01` completed and all findings were dispositioned. D-080, D-081, D-083, and D-084-A passed the recorded live checks; D-084-B remains explicitly unverified under its approved release disposition.
 
@@ -483,7 +483,7 @@ Finding dispositions:
 8. **Rejected with rationale:** preserving the queued compatibility wrapper or the old read single-request restriction would contradict the approved ordinary-client FIFO and explicit-read-aggregate contracts.
 9. **Deferred:** none. Live PLC work is not required for these deterministic protocol framing, local transport, scheduling, validation-order, packaging, and documentation criteria.
 
-Final evidence: `run_ci.bat` passed build/API/test/format/sample publication; .NET 8 `274`, .NET 9 `287`, and .NET 10 `274` tests passed; NuGet package contents passed (`12` files, all target frameworks); extracted source archive build/tests passed (`95` files, `13` sample files, `16` test files, `14` validation-tool files); and `git diff --check` passed.
+Final evidence: the current worktree passed build/API/test/format/sample/package validation; .NET 8 `276`, .NET 9 `289`, and .NET 10 `276` tests passed; NuGet package contents passed (`12` files, all target frameworks); extracted source archive build/tests passed (`101` files, `13` sample files, `16` test files, `14` validation-tool files); and `git diff --check` passed before this evidence-only update.
 
 ## Claude review batch `CLAUDE-CL-20260712-01`
 
@@ -600,3 +600,127 @@ The hardened source-archive rerun then found two stale references to the old
 `snapshot` sample variable after the aggregate-read terminology correction.
 This accepted sample-only finding was corrected to restore from `readResult`;
 the extracted solution must compile before the artifact decision can close.
+
+## GOAL-CROSS-OS-CI-001 — bounded Linux network-contract smoke
+
+Implementation scope: the Computerlink .NET test project and CI only. The existing Windows job
+remains the authoritative full solution, package, source-archive, formatting, documentation, and
+multi-target gate.
+
+Target contract: one Linux job uses `net10.0` as the representative framework and runs only tests
+explicitly marked `LinuxNetworkContractSmoke`. Its loopback/fake coverage exercises successful
+fragmented receive, connection refusal, bounded request timeout, cancellation while waiting,
+close/dispose retirement of active and queued work, reconnect after retirement, late-response
+rejection, and fixed-endpoint UDP stale-session protection. It performs no PLC communication and
+does not repeat the complete Windows gate.
+
+Acceptance criteria:
+
+1. CI has exactly one bounded Linux network-contract smoke job and retains the Windows full gate unchanged as the authoritative gate.
+2. The Linux job builds only the test project and its library dependency for the representative `net10.0` framework, then selects only the explicit smoke trait.
+3. The selected tests use loopback sockets or in-process fakes and cover the applicable lifecycle cases listed in the target contract.
+4. No sample matrix, package/content gate, source-archive gate, generated-document gate, formatting gate, or live PLC check is duplicated in the Linux job.
+5. A failed selected contract test or missing test-result artifact fails the Linux job.
+
+- [x] Implementation completed in this repository.
+- [x] Tests added or updated for every locally applicable acceptance criterion.
+- [ ] Relevant static checks and the bounded Linux smoke passed; execution was intentionally not performed during this change set.
+- [x] Codex self-review completed against the approved contract and confirmed that the Linux job is filtered and bounded rather than a second full gate.
+- [x] Live PLC checks are not required because every selected property is a deterministic socket/lifecycle contract exercised on loopback or an in-process fake.
+- [x] Documentation and changelog agree with the implementation.
+- [ ] Final acceptance criteria verified by an executed CI run and the item marked complete.
+
+## GOAL-DOCUMENTED-API-DIFF-001 — immutable baseline and classified public API delta
+
+Implementation scope: maintainer metadata under `internal_docs/maintainer/api-diff`, the
+cross-platform PowerShell gate, its policy fixtures, Windows CI, and release gates.
+
+Current state: **classification complete**. The three candidate assemblies were compared with the
+verified stable package and produced 216 exact per-TFM records: 120 removals of prior documented
+contract and 96 approved additions. These are 72 distinct changes with identical signatures on all
+three TFMs. `classifications.json` contains every exact record and no prefix or guessed rule.
+
+Target contract: CI downloads the immutable `PlcComm.Toyopuc` prior stable package identified in
+`baseline.json`, verifies its recorded SHA-256 digest before extraction, and independently compares
+the `net8.0`, `net9.0`, and `net10.0` assembly surfaces. The normalized surface includes exported
+types, base types, interfaces, public declared constructors, methods, properties, events, fields,
+enum values, visibility, virtual/final state, parameter direction/optionality/default values,
+return/parameter types, and generic constraints.
+
+The corresponding prior stable source is fixed to tag `v3.2.1` commit
+`e7f199233b815fe745f8525657e837cdbe46dc31`. Documented versus undocumented is derived only from
+that commit's README, five standard/generated user pages, and complete `examples/` source set;
+candidate documentation cannot retroactively make the prior contract documented. Every actual
+difference must match exactly one classification with the same TFM, change, symbol,
+`before_signature`, and `after_signature`. Prefixes, prefix lists, guessed signatures, stale items,
+and incomplete classification state fail.
+
+Compatibility impact: this is a maintainer/CI enforcement contract, not a runtime package API.
+The recorded baseline version identifies the immutable comparison artifact and is intentionally
+not presented as the current release number in user documentation.
+
+Acceptance criteria:
+
+1. Baseline metadata records package identity, digest, all three TFM asset paths, immutable source tag/commit, README, all five standard/generated pages, the examples tree, and next-major release policy.
+2. The source tag must resolve to the recorded full commit; shallow or mismatched checkout fails before documentation classification.
+3. All three TFM surfaces are exported and compared independently; a missing baseline or candidate TFM assembly fails.
+4. Every actual difference is represented by exact TFM, change, symbol, before signature, and after signature values. Signature/visibility/default/constraint changes appear as exact removed and added records.
+5. Prior documentation evidence is computed from the immutable prior source commit. A removed documented symbol cannot be classified `undocumented-public`, and a removed undocumented symbol cannot be classified `documented-contract`.
+6. Every actual record matches exactly one classification. Prefix/prefix-list rules, unclassified differences, duplicate exact items, stale items, and candidate-signature drift fail.
+7. Policy fixtures cover all four categories, all three TFMs, incomplete state, prefix rejection, candidate-signature drift, unclassified failure, and next-major enforcement.
+8. Every breaking classification records `next-major` with minimum release major `4`; release workflow and local release check reject an earlier major.
+
+- [x] Implementation and all 216 exact per-TFM classifications completed.
+- [x] Policy fixture code added for every classification category, all three TFMs, exact-signature drift, prefix rejection, incomplete state, and release-major enforcement.
+- [x] API export, fixture execution, immutable package/digest verification, source-tag verification, documentation evidence generation, and candidate comparison passed.
+- [x] Three-TFM build/tests, generated API freshness, all five sample builds, package consumer, format, and extracted worktree source-archive validation passed.
+- [x] Codex self-review completed against the generated actual API delta, every exact classification, public source changes, documentation, package surface, and detector limitations.
+- [x] Live PLC checks are not required because assembly metadata comparison has no PLC or transport behavior.
+- [x] Maintainer documentation and changelog agree with the implementation; user pages do not display the baseline as a current package version.
+- [x] The release-major gate correctly rejected current version `3.2.1` and accepted the required major target `4.0.0`.
+- [ ] Update the actual release version to major `4` or later and record final release acceptance.
+
+Verification evidence (2026-08-01): the stable package downloaded independently through NuGet v3
+and v2 had identical SHA-256
+`34AB3ACFB7942F69BAC65D46DA559DCD37CEB66551FC104D583B63D130A98622`.
+The exact API gate passed all 216 records with no unclassified or stale entry. Release policy
+rejected `3.2.1` because the documented breaks require major `4`, while its deterministic `4.0.0`
+check passed. No version was changed and no package was published.
+
+Self-review disposition:
+
+- Accepted and corrected: loading all assemblies through PowerShell would bind them to PowerShell's runtime and could not safely inspect later TFMs. A small exporter is built for each TFM, and baseline/candidate assemblies are loaded in separate matching `dotnet` processes before JSON classification.
+- Accepted and corrected: comparing only `net8.0` could miss conditional public-surface drift. Baseline and candidate `net8.0`, `net9.0`, and `net10.0` assemblies now produce independent records.
+- Accepted and corrected: `Expand-Archive` is extension-sensitive and may reject a NuGet `.nupkg` path. The gate uses `System.IO.Compression.ZipFile` so the immutable package is extracted by archive format rather than filename extension.
+- Accepted and corrected: type/member prefix rules could silently approve a later overload or signature. Prefix and prefix-list properties are now forbidden, and both unclassified actual records and stale classification records fail.
+- Accepted and corrected: candidate documentation paths cannot prove whether the prior stable API was documented. Evidence now comes only from the package-corresponding immutable source commit's README, standard/generated pages, and examples.
+- Accepted and corrected: the original hand-written rules guessed the candidate surface without generating it. Those rules were removed; the executed comparison now pins all 216 exact per-TFM records.
+- Accepted and corrected: a prose-only breaking-version note was insufficient. Classification fields, baseline/minimum majors, release workflow input, and local release check are machine validated.
+
+## GOAL-DOTNET-SAMPLE-TFM-001 — repository user examples target .NET 10
+
+Implementation scope: the five projects under `examples/`, their prerequisite guidance, CI sample
+build behavior, and release notes. Projects under `tools/validation/` are explicitly outside this
+sample policy.
+
+Target contract: every Computerlink .NET user example targets `net10.0` and documents the .NET 10
+SDK prerequisite. The package library and test project remain multi-targeted for
+`net8.0;net9.0;net10.0`; the four maintainer validation projects remain `net9.0` and are not
+silently treated as user samples. This sample-only retarget is not described as a package API
+break.
+
+Acceptance criteria:
+
+1. All five `examples/**/*.csproj` projects have exactly `TargetFramework` `net10.0`.
+2. `src/Toyopuc/PlcComm.Toyopuc.csproj` and `tests/PlcComm.Toyopuc.Tests/PlcComm.Toyopuc.Tests.csproj` retain `net8.0;net9.0;net10.0`.
+3. All four `tools/validation/**/*.csproj` projects retain `net9.0` and are excluded explicitly from the user-sample policy.
+4. Getting Started, the examples index, and the changelog state the .NET 10 sample prerequisite and distinguish it from package target support.
+5. Existing sample-build CI continues discovering only `examples/**/*.csproj`, so it validates all five retargeted user examples without adopting maintainer tools.
+
+- [x] Implementation completed for all five user example projects.
+- [x] Target-framework acceptance conditions are represented directly in project files and existing sample discovery boundaries.
+- [x] Sample restore/build and full relevant checks passed for all five net10.0 projects.
+- [x] Codex self-review confirmed the library/tests remain multi-targeted and all four validation tools remain `net9.0`.
+- [x] Live PLC checks are not required for a compile target/prerequisite change.
+- [x] User prerequisite guidance and changelog agree with the project files.
+- [x] Final sample acceptance criteria verified by the executed worktree and extracted source-archive gates.

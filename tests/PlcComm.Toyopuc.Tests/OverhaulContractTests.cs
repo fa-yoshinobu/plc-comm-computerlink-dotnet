@@ -202,6 +202,26 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
+    public void LoopbackConnectFailure_UsesStructuredErrorAndLeavesClientClosed()
+    {
+        using var reservation = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        reservation.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+        var port = ((IPEndPoint)reservation.LocalEndPoint!).Port;
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromMilliseconds(250));
+
+        Exception connectError = Record.Exception(client.Open);
+        Assert.True(
+            connectError is ToyopucTransportError or ToyopucTimeoutError,
+            $"Expected connection refusal or a bounded connect timeout, got {connectError.GetType().FullName}.");
+        Assert.False(client.IsOpen);
+    }
+
+    [Fact]
     public void RelayRoute_RequiresStrictValidatedHops()
     {
         var source = new[] { (0x12, 2), (0x34, 10) };
@@ -1075,6 +1095,7 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
     public async Task GracefulEof_DoesNotRetryAndDistinguishesReadFromWriteOutcome()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -1180,6 +1201,7 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
     public void FixedPortUdpSession_CannotBeReusedAfterUncertainTimeout()
     {
         using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
@@ -1203,6 +1225,7 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
     public async Task CancelingQueuedLowLevelOperation_DoesNotCloseRunningOperation()
     {
         using var client = new TrackingClient();
@@ -1372,6 +1395,7 @@ public sealed class OverhaulContractTests
     }
 
     [Theory]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task CloseOrDispose_RejectsActiveAndQueuedGenerationWithoutSecondSend(bool dispose)
@@ -1514,6 +1538,38 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
+    public async Task TcpFragmentedResponse_IsReassembledWithinOneTransaction()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var response = BuildResponse(0x1C, [0x34, 0x12]);
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            foreach (var fragment in response.Chunk(2))
+            {
+                await stream.WriteAsync(fragment);
+                await Task.Delay(TimeSpan.FromMilliseconds(5));
+            }
+        });
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2));
+
+        var words = await client.ReadWordsAsync(0x2000, 1);
+        Assert.Equal([0x1234], words);
+        await serverTask;
+        listener.Stop();
+    }
+
+    [Fact]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
     public async Task TcpTrickleCannotRestartTheSingleTransactionDeadline()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -1678,6 +1734,7 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    [Trait("Category", "LinuxNetworkContractSmoke")]
     public async Task AsyncTimeoutWithoutToken_DiscardsLateResponseAndUsesNewSession()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);

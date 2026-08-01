@@ -4,6 +4,8 @@
 
 This directory contains small runnable programs for first reads and high-level API exploration. Maintainer validation tools live under `tools/validation/`.
 
+All five user examples target `net10.0` and require the .NET 10 SDK. This sample prerequisite does not change the library package, which continues to target .NET 8, 9, and 10. Projects under `tools/validation/` are maintainer tools and are not part of this sample target-framework policy.
+
 Use only test addresses that are safe for your PLC program before you run any write example.
 
 ## How to run

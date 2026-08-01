@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Check release workflows do not auto-publish
         shell: pwsh
@@ -34,8 +36,29 @@ jobs:
       - name: Restore
         run: dotnet restore PlcComm.Toyopuc.sln
 
+      - name: Restore TFM-matched API exporter
+        run: dotnet restore tools/api-diff/PlcComm.Toyopuc.ApiSurfaceExporter/PlcComm.Toyopuc.ApiSurfaceExporter.csproj
+
       - name: Build
         run: dotnet build PlcComm.Toyopuc.sln -c Release --no-restore
+
+      - name: Build TFM-matched API exporter
+        run: dotnet build tools/api-diff/PlcComm.Toyopuc.ApiSurfaceExporter/PlcComm.Toyopuc.ApiSurfaceExporter.csproj -c Release --no-restore
+
+      - name: Check documented public API diff
+        shell: pwsh
+        run: |
+          ./scripts/test_documented_api_diff.ps1
+          ./scripts/check_documented_api_diff.ps1 -CandidateAssemblyRoot src/Toyopuc/bin/Release -ReviewOutput build/documented-api-diff-review.json
+
+      - name: Upload API diff review when classification is incomplete
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: documented-api-diff-review
+          path: build/documented-api-diff-review.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Test
         run: dotnet test PlcComm.Toyopuc.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
@@ -53,4 +76,36 @@ jobs:
           name: test-results
           path: "**/test-results.trx"
           if-no-files-found: ignore
+          retention-days: 7
+
+  linux-network-contract-smoke:
+    name: Linux bounded network-contract smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup representative .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run loopback lifecycle contract smoke
+        run: >-
+          dotnet test tests/PlcComm.Toyopuc.Tests/PlcComm.Toyopuc.Tests.csproj
+          -c Release
+          -f net10.0
+          --filter "Category=LinuxNetworkContractSmoke"
+          --logger "trx;LogFileName=linux-network-contract-smoke.trx"
+
+      - name: Upload smoke results
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-network-contract-smoke-results
+          path: "**/linux-network-contract-smoke.trx"
+          if-no-files-found: error
           retention-days: 7
