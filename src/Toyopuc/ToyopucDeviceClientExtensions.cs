@@ -22,7 +22,10 @@ public static class ToyopucDeviceClientExtensions
 
     /// <summary>Writes one typed value using exactly one protocol request.</summary>
     public static Task WriteTypedAsync(this ToyopucDeviceClient client, string device, string dtype, object value, CancellationToken ct = default)
-        => client.ExecuteExclusiveAsync(token => WriteTypedCoreAsync(client, client.RelayHops, device, dtype, value, token), ct);
+        => client.ExecuteExclusiveAsync(
+            token => WriteTypedCoreAsync(client, client.RelayHops, device, dtype, value, token),
+            ct,
+            outcomeUnknownAfterSend: true);
 
     /// <summary>Sets or clears one bit in a word by an explicit read-modify-write sequence.</summary>
     /// <remarks>
@@ -83,7 +86,8 @@ public static class ToyopucDeviceClientExtensions
         var snapshot = values.ToArray();
         return client.ExecuteExclusiveAsync(
             token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
-            ct);
+            ct,
+            outcomeUnknownAfterSend: true);
     }
 
     /// <summary>Writes a contiguous double-word range using exactly one protocol request.</summary>
@@ -92,7 +96,8 @@ public static class ToyopucDeviceClientExtensions
         var snapshot = ExpandDWords(values.ToArray());
         return client.ExecuteExclusiveAsync(
             token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
-            ct);
+            ct,
+            outcomeUnknownAfterSend: true);
     }
 
     internal static Task<ushort[]> ReadWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
@@ -105,7 +110,8 @@ public static class ToyopucDeviceClientExtensions
         var snapshot = values.ToArray();
         return client.ExecuteExclusiveAsync(
             token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
-            ct);
+            ct,
+            outcomeUnknownAfterSend: true);
     }
 
     private static async Task<object> ReadTypedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, string dtype, CancellationToken ct)
@@ -211,6 +217,7 @@ public static class ToyopucDeviceClientExtensions
     {
         if (bitIndex is < 0 or > 15)
             throw new ArgumentOutOfRangeException(nameof(bitIndex), "bitIndex must be 0-15.");
+        ToyopucDeviceClient.RequireGenericWriteDevice(client.ResolveDevice(device));
         ushort current = (await ReadWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0];
         int raw = value ? current | (1 << bitIndex) : current & ~(1 << bitIndex);
         await WriteWordsSingleRequestCoreAsync(client, relayHops, device, [(ushort)(raw & 0xFFFF)], ct).ConfigureAwait(false);
@@ -274,6 +281,7 @@ public static class ToyopucDeviceClientExtensions
             throw new ToyopucProtocolError("values must not be empty");
 
         var devices = BuildSequentialWordDevices(client, device, values.Count);
+        ToyopucDeviceClient.RequireGenericWriteDevice(devices[0]);
         var group = GetBatchGroupKey(devices[0]);
         if (group is null || !AllDevicesInGroup(devices, group))
             throw new ToyopucProtocolError("Single-request word write cannot cross incompatible protocol groups.");
@@ -318,31 +326,25 @@ public static class ToyopucDeviceClientExtensions
                 if (TryGetConsecutiveStart(devices, static device => device.BasicAddress, 1, out var basicStart))
                 {
                     var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildWordRead(basicStart, devices.Count), ct).ConfigureAwait(false);
-                    EnsureRelayCommand(response, 0x1C, "Unexpected CMD in relay word-read response");
                     return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
                 }
                 var multiBasic = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildMultiWordRead(CollectBasicAddresses(devices)), ct).ConfigureAwait(false);
-                EnsureRelayCommand(multiBasic, 0x22, "Unexpected CMD in relay multi-word-read response");
                 return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(multiBasic.Data));
             case "ext-word":
                 if (TryGetUniformNumber(devices, out var number) && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var extStart))
                 {
                     var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildExtWordRead(number, extStart, devices.Count), ct).ConfigureAwait(false);
-                    EnsureRelayCommand(response, 0x94, "Unexpected CMD in relay ext word-read response");
                     return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
                 }
                 var multiExt = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildExtMultiRead(Array.Empty<(int No, int Bit, int Address)>(), Array.Empty<(int No, int Address)>(), CollectNoAddresses(devices)), ct).ConfigureAwait(false);
-                EnsureRelayCommand(multiExt, 0x98, "Unexpected CMD in relay ext multi-read response");
                 return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(multiExt.Data));
             case "pc10-word":
                 if (TryGetConsecutivePc10BlockStart(devices, 2, out var pc10Start))
                 {
                     var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildPc10BlockRead(pc10Start, devices.Count * 2), ct).ConfigureAwait(false);
-                    EnsureRelayCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
                     return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
                 }
                 var multiPc10 = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiWordReadPayload(CollectAddress32Values(devices))), ct).ConfigureAwait(false);
-                EnsureRelayCommand(multiPc10, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
                 return ToUShortArray(ParsePc10MultiWordData(multiPc10.Data, devices.Count));
             default:
                 throw new ToyopucProtocolError($"Single-request word access does not support group '{group}'.");
@@ -389,32 +391,26 @@ public static class ToyopucDeviceClientExtensions
             case "basic-word":
                 if (TryGetConsecutiveStart(devices, static device => device.BasicAddress, 1, out var basicStart))
                 {
-                    var response = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildWordWrite(basicStart, ToIntArray(values)), ct).ConfigureAwait(false);
-                    EnsureRelayCommand(response, 0x1D, "Unexpected CMD in relay word-write response");
+                    _ = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildWordWrite(basicStart, ToIntArray(values)), ct).ConfigureAwait(false);
                     return;
                 }
-                var multiBasic = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildMultiWordWrite(CollectBasicAddressValues(devices, values)), ct).ConfigureAwait(false);
-                EnsureRelayCommand(multiBasic, 0x23, "Unexpected CMD in relay multi-word-write response");
+                _ = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildMultiWordWrite(CollectBasicAddressValues(devices, values)), ct).ConfigureAwait(false);
                 return;
             case "ext-word":
                 if (TryGetUniformNumber(devices, out var number) && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var extStart))
                 {
-                    var response = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildExtWordWrite(number, extStart, ToIntArray(values)), ct).ConfigureAwait(false);
-                    EnsureRelayCommand(response, 0x95, "Unexpected CMD in relay ext word-write response");
+                    _ = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildExtWordWrite(number, extStart, ToIntArray(values)), ct).ConfigureAwait(false);
                     return;
                 }
-                var multiExt = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildExtMultiWrite(Array.Empty<(int No, int Bit, int Address, int Value)>(), Array.Empty<(int No, int Address, int Value)>(), CollectNoAddressValues(devices, values)), ct).ConfigureAwait(false);
-                EnsureRelayCommand(multiExt, 0x99, "Unexpected CMD in relay ext multi-write response");
+                _ = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildExtMultiWrite(Array.Empty<(int No, int Bit, int Address, int Value)>(), Array.Empty<(int No, int Address, int Value)>(), CollectNoAddressValues(devices, values)), ct).ConfigureAwait(false);
                 return;
             case "pc10-word":
                 if (TryGetConsecutivePc10BlockStart(devices, 2, out var pc10Start))
                 {
-                    var response = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildPc10BlockWrite(pc10Start, PackWordValues(values)), ct).ConfigureAwait(false);
-                    EnsureRelayCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
+                    _ = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildPc10BlockWrite(pc10Start, PackWordValues(values)), ct).ConfigureAwait(false);
                     return;
                 }
-                var multiPc10 = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildPc10MultiWrite(PackPc10MultiWordPayload(CollectAddress32WordValues(devices, values))), ct).ConfigureAwait(false);
-                EnsureRelayCommand(multiPc10, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
+                _ = await client.SendViaRelayAsync(relayHops, ToyopucProtocol.BuildPc10MultiWrite(PackPc10MultiWordPayload(CollectAddress32WordValues(devices, values))), ct).ConfigureAwait(false);
                 return;
             default:
                 throw new ToyopucProtocolError($"Single-request word write does not support group '{group}'.");
@@ -657,12 +653,6 @@ public static class ToyopucDeviceClientExtensions
         buffer[offset + 1] = (byte)((value >> 8) & 0xFF);
         buffer[offset + 2] = (byte)((value >> 16) & 0xFF);
         buffer[offset + 3] = (byte)((value >> 24) & 0xFF);
-    }
-
-    private static void EnsureRelayCommand(ResponseFrame response, int expectedCommand, string message)
-    {
-        if (response.Cmd != expectedCommand)
-            throw new ToyopucProtocolError(message);
     }
 
     private static string NormalizeDType(string text)

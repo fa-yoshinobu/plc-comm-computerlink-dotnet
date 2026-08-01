@@ -75,6 +75,21 @@ await client.CommitFrBlockAsync("FR000000");
 
 FR work-area values must be integral values in `0..65535`. The library rejects negative, overflowing, Boolean, fractional, and string values before transport instead of masking or converting them.
 
+Use only `WriteFrWorkArea` / `RelayWriteFrWorkArea` (or their async forms) for
+FR writes. Generic `Write`/`WriteMany`, typed dword/float, and bit-in-word write
+helpers reject FR before transport. This is a breaking contract: callers that
+previously passed FR to a generic or typed write must migrate to the explicit FR
+work-area API and invoke `CommitFrBlock` separately only when persistence is
+intended.
+
+## Relay route text
+
+Relay strings use decimal values only. Component notation accepts `P0..P15`,
+`L0..L15`, and station `N1..N65535`, for example `P10-L11:N20`. Direct notation
+accepts link `0..255` and station `1..65535`, for example `171:32`.
+Hexadecimal prefixes/suffixes and A-F digits are invalid. `FormatRelayHop`
+returns the decimal component form.
+
 ## PLC clock century
 
 The PLC transmits only a two-digit year. Supply the century when converting or writing:

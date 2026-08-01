@@ -310,8 +310,10 @@ public partial class ToyopucClient
     internal Task<ResponseFrame> RelayCommandAsync(int linkNo, int stationNo, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(innerPayload);
-        var payloadSnapshot = innerPayload.ToArray();
-        return RunStateChangingAsync(() => RelayCommand(linkNo, stationNo, payloadSnapshot), cancellationToken);
+        var request = ToyopucProtocol.ParseRelayInnerRequest(innerPayload);
+        return request.IsReadOnly
+            ? RunAsync(() => RelayCommand(linkNo, stationNo, request), cancellationToken)
+            : RunStateChangingAsync(() => RelayCommand(linkNo, stationNo, request), cancellationToken);
     }
 
     internal Task<ResponseFrame> RelayNestedAsync(
@@ -319,26 +321,32 @@ public partial class ToyopucClient
         byte[] innerPayload,
         CancellationToken cancellationToken = default)
     {
-        var hopsSnapshot = hops.ToArray();
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
         ArgumentNullException.ThrowIfNull(innerPayload);
-        var payloadSnapshot = innerPayload.ToArray();
-        return RunStateChangingAsync(() => RelayNested(hopsSnapshot, payloadSnapshot), cancellationToken);
+        var request = ToyopucProtocol.ParseRelayInnerRequest(innerPayload);
+        return request.IsReadOnly
+            ? RunAsync(() => RelayNested(hopsSnapshot, request), cancellationToken)
+            : RunStateChangingAsync(() => RelayNested(hopsSnapshot, request), cancellationToken);
     }
 
     internal Task<ResponseFrame> SendViaRelayAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
         ArgumentNullException.ThrowIfNull(innerPayload);
-        var payloadSnapshot = innerPayload.ToArray();
-        return RunStateChangingAsync(() => SendViaRelay(hopsSnapshot, payloadSnapshot), cancellationToken);
+        var request = ToyopucProtocol.ParseRelayInnerRequest(innerPayload);
+        return request.IsReadOnly
+            ? RunAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken)
+            : RunStateChangingAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken);
     }
 
     internal Task<ResponseFrame> SendViaRelayReadAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
     {
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
         ArgumentNullException.ThrowIfNull(innerPayload);
-        var payloadSnapshot = innerPayload.ToArray();
-        return RunAsync(() => SendViaRelayRead(hopsSnapshot, payloadSnapshot), cancellationToken);
+        var request = ToyopucProtocol.ParseRelayInnerRequest(innerPayload);
+        return request.IsReadOnly
+            ? RunAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken)
+            : RunStateChangingAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken);
     }
 
     public Task<int[]> RelayReadWordsAsync(object hops, int address, int count, CancellationToken cancellationToken = default)
@@ -583,13 +591,17 @@ public partial class ToyopucClient
 
     internal async Task<T> ExecuteExclusiveAsync<T>(
         Func<CancellationToken, Task<T>> operation,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool outcomeUnknownAfterSend = false)
     {
         ArgumentNullException.ThrowIfNull(operation);
         var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
         var priorContext = _operationContext.Value;
         if (lease.OwnsTurn)
+        {
             _operationContext.Value = new OperationContext(this, lease.Generation);
+            _requestMayHaveBeenSent = false;
+        }
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             lease.Generation.Cancellation.Token);
@@ -602,6 +614,13 @@ public partial class ToyopucClient
         }
         catch (ToyopucOperationOutcomeUnknownException)
         {
+            throw;
+        }
+        catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+        {
+            var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
+            if (unknown is not null)
+                throw unknown;
             throw;
         }
         catch when (lease.Generation.IsRetired)
@@ -618,7 +637,8 @@ public partial class ToyopucClient
 
     internal async Task ExecuteExclusiveAsync(
         Func<CancellationToken, Task> operation,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool outcomeUnknownAfterSend = false)
     {
         await ExecuteExclusiveAsync(
             async token =>
@@ -626,7 +646,8 @@ public partial class ToyopucClient
                 await operation(token).ConfigureAwait(false);
                 return true;
             },
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            outcomeUnknownAfterSend).ConfigureAwait(false);
     }
 
     private protected T ExecuteSynchronousExclusive<T>(Func<T> operation)
@@ -636,7 +657,10 @@ public partial class ToyopucClient
         var priorContext = _operationContext.Value;
         var priorCancellation = _operationCancellation.Value;
         if (lease.OwnsTurn)
+        {
             _operationContext.Value = new OperationContext(this, lease.Generation);
+            _requestMayHaveBeenSent = false;
+        }
         _operationCancellation.Value = priorCancellation.CanBeCanceled
             ? priorCancellation
             : lease.Generation.Cancellation.Token;
@@ -649,6 +673,13 @@ public partial class ToyopucClient
         }
         catch (ToyopucOperationOutcomeUnknownException)
         {
+            throw;
+        }
+        catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+        {
+            var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend: false);
+            if (unknown is not null)
+                throw unknown;
             throw;
         }
         catch when (lease.Generation.IsRetired)
@@ -701,6 +732,13 @@ public partial class ToyopucClient
                     try
                     {
                         action();
+                    }
+                    catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+                    {
+                        var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
+                        if (unknown is not null)
+                            throw unknown;
+                        throw;
                     }
                     catch (Exception exception) when (linked.IsCancellationRequested)
                     {
@@ -771,6 +809,13 @@ public partial class ToyopucClient
                     try
                     {
                         return action();
+                    }
+                    catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+                    {
+                        var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
+                        if (unknown is not null)
+                            throw unknown;
+                        throw;
                     }
                     catch (Exception exception) when (linked.IsCancellationRequested)
                     {

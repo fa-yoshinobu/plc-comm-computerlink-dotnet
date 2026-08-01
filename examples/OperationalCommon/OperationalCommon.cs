@@ -16,6 +16,36 @@ internal sealed record PlcEndpoint(
     TimeSpan Timeout,
     TimeSpan Interval);
 
+internal static class ReconnectPolicy
+{
+    internal static bool ShouldRetry(Exception exception)
+        => exception is ToyopucTransportError or ToyopucTimeoutError
+            or IOException or SocketException or TimeoutException;
+
+    internal static async Task<bool> WaitBeforeRetryAsync(
+        Exception exception,
+        TimeSpan backoff,
+        CancellationToken cancellationToken,
+        Func<TimeSpan, CancellationToken, Task>? delayAsync = null)
+    {
+        if (!ShouldRetry(exception) || exception is OperationCanceledException)
+            return false;
+
+        try
+        {
+            await (delayAsync ?? Task.Delay)(backoff, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
+    internal static TimeSpan NextBackoff(TimeSpan current, TimeSpan maximum)
+        => TimeSpan.FromSeconds(Math.Min(current.TotalSeconds * 2.0, maximum.TotalSeconds));
+}
+
 internal static class OperationalCommon
 {
     public static double ParsePositiveDouble(string value, string name)
@@ -130,11 +160,16 @@ internal static class OperationalCommon
                     {
                         client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(BuildOptions(endpoint), cancellationToken).ConfigureAwait(false);
                     }
-                    catch (Exception ex) when (IsRetryable(ex) && !cancellationToken.IsCancellationRequested)
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    catch (Exception ex) when (ReconnectPolicy.ShouldRetry(ex) && !cancellationToken.IsCancellationRequested)
                     {
                         LogState(endpoint.Name, "reconnecting", $"connect failed: {ex.Message}; retry in {backoff.TotalSeconds:0.0}s");
-                        await Delay(backoff, cancellationToken).ConfigureAwait(false);
-                        backoff = NextBackoff(backoff, maxBackoff);
+                        if (!await ReconnectPolicy.WaitBeforeRetryAsync(ex, backoff, cancellationToken).ConfigureAwait(false))
+                            break;
+                        backoff = ReconnectPolicy.NextBackoff(backoff, maxBackoff);
                         continue;
                     }
 
@@ -162,14 +197,15 @@ internal static class OperationalCommon
                 {
                     break;
                 }
-                catch (Exception ex) when (IsRetryable(ex) && !cancellationToken.IsCancellationRequested)
+                catch (Exception ex) when (ReconnectPolicy.ShouldRetry(ex) && !cancellationToken.IsCancellationRequested)
                 {
                     LogState(endpoint.Name, "lost", ex.Message);
                     await DisposeClientAsync(client).ConfigureAwait(false);
                     client = null;
                     LogState(endpoint.Name, "reconnecting", $"retry in {backoff.TotalSeconds:0.0}s");
-                    await Delay(backoff, cancellationToken).ConfigureAwait(false);
-                    backoff = NextBackoff(backoff, maxBackoff);
+                    if (!await ReconnectPolicy.WaitBeforeRetryAsync(ex, backoff, cancellationToken).ConfigureAwait(false))
+                        break;
+                    backoff = ReconnectPolicy.NextBackoff(backoff, maxBackoff);
                 }
             }
         }
@@ -214,32 +250,8 @@ internal static class OperationalCommon
         return new string(chars).Trim('_');
     }
 
-    private static bool IsRetryable(Exception ex)
-    {
-        if (ex is IOException or SocketException or TimeoutException or OperationCanceledException or ToyopucTimeoutError)
-            return true;
-        if (ex is ToyopucProtocolError
-            && (ex.Message == "Connection closed while receiving" || ex.Message == "Connection closed while sending"))
-            return true;
-        return ex is ToyopucError && ex.Message == "Socket error";
-    }
-
     private static string FormatSnapshot(IReadOnlyDictionary<string, object> snapshot)
         => string.Join(", ", snapshot.Select(item => $"{item.Key}={FormatValue(item.Value)}"));
-
-    private static TimeSpan NextBackoff(TimeSpan current, TimeSpan max)
-        => TimeSpan.FromSeconds(Math.Min(current.TotalSeconds * 2.0, max.TotalSeconds));
-
-    private static async Task Delay(TimeSpan delay, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-    }
 
     private static async Task DisposeClientAsync(ToyopucDeviceClient? client)
     {

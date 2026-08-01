@@ -12,6 +12,13 @@ Methods documented as one protocol request reject a range that crosses a command
 
 `WriteFrWorkArea` updates the work area only. `CommitFrBlock` is a separate request and reports request acceptance, not completion. Do not put flash commits in a frequent runtime write loop.
 
+FR writes are intentionally available only through the explicit
+`WriteFrWorkArea` / `RelayWriteFrWorkArea` APIs (and their async forms).
+Generic, aggregate, typed dword/float, and bit-in-word write APIs reject an FR
+address before opening or using the transport. Migrate an intentional FR write
+to the explicit FR work-area API so the separate flash-commit lifecycle remains
+visible.
+
 FR work-area words accept only integral values in `0..65535`. Boolean, fractional, string, negative, and overflowing values are rejected before communication rather than coerced or masked.
 
 The same no-coercion rule applies to generic writes: semantic bit writes accept only Boolean values (integer `0`/`1` is rejected), bytes accept `0..255`, words accept `0..65535`, and typed dword/float writes reject incompatible or non-finite values before communication.
@@ -29,6 +36,11 @@ failure as outcome-unknown until the PLC state is reconciled.
 ## Relay is never inferred
 
 Both direct and relay sessions require an explicit route. Relay routes require valid hops with link `0..255` and station `1..65535`; invalid values are rejected rather than masked.
+
+Text routes are decimal-only. Use `P10-L11:N20` for component notation or
+`171:32` for a direct link/station pair. Hexadecimal prefixes, hexadecimal
+suffixes, and A-F digits are rejected; `FormatRelayHop` also returns decimal
+text.
 
 ## UDP local port zero is not source port zero
 
@@ -49,5 +61,12 @@ This prevents a late response from an expired request from being consumed as the
 Connection timeouts, retry delays, and polling intervals have a common inclusive maximum of `2,147,483,647` milliseconds (`2,147,483.647` seconds, about 24.86 days). Timeouts and polling intervals must be greater than zero; retry delay may be zero. Invalid values raise `ArgumentOutOfRangeException` before communication or waiting starts.
 
 Cancellation is also strict: after canceling an active operation, call `OpenAsync()` explicitly before reuse, and treat a canceled state-changing request as outcome-unknown when the library reports `ToyopucOperationOutcomeUnknownException`.
+
+Malformed command-specific data is handled by the same post-send lifecycle.
+Reads raise `ToyopucProtocolError`; state-changing calls raise
+`ToyopucOperationOutcomeUnknownException` with malformed-response reason and
+the protocol error as their cause. The affected transport is retired, and a
+fixed-local-port UDP client is tainted. Validation failures found before send do
+not retire the transport.
 
 For shared wiring, setup, device ranges, and PLC response troubleshooting, use the Computerlink pages on the PLC Comm documentation site.

@@ -650,13 +650,23 @@ public static class ToyopucProtocol
     public static byte[] BuildRelayCommand(int linkNo, int stationNo, byte[] innerPayload)
     {
         var hop = ToyopucRelay.NormalizeRelayHops([(linkNo, stationNo)])[0];
-        var inner = NormalizeInnerPayload(innerPayload);
-        var frame = CreateCommandFrame(0x60, 5 + inner.Length);
-        frame[5] = (byte)hop.LinkNo;
-        frame[6] = (byte)(hop.StationNo & 0xFF);
-        frame[7] = (byte)((hop.StationNo >> 8) & 0xFF);
+        return BuildRelayCommand(hop.LinkNo, hop.StationNo, ParseRelayInnerRequest(innerPayload));
+    }
+
+    internal static byte[] BuildRelayCommand(int linkNo, int stationNo, RelayInnerRequest request)
+    {
+        var hop = ToyopucRelay.NormalizeRelayHops([(linkNo, stationNo)])[0];
+        return BuildRelayCommandFromTrimmed(hop.LinkNo, hop.StationNo, request.TrimmedPayload);
+    }
+
+    private static byte[] BuildRelayCommandFromTrimmed(int linkNo, int stationNo, byte[] trimmedPayload)
+    {
+        var frame = CreateCommandFrame(0x60, 5 + trimmedPayload.Length);
+        frame[5] = (byte)linkNo;
+        frame[6] = (byte)(stationNo & 0xFF);
+        frame[7] = (byte)((stationNo >> 8) & 0xFF);
         frame[8] = 0x05;
-        Buffer.BlockCopy(inner, 0, frame, 9, inner.Length);
+        Buffer.BlockCopy(trimmedPayload, 0, frame, 9, trimmedPayload.Length);
         frame[^1] = 0x00;
         return frame;
     }
@@ -665,62 +675,132 @@ public static class ToyopucProtocol
     {
         ArgumentNullException.ThrowIfNull(hops);
         var hopList = ToyopucRelay.NormalizeRelayHops(hops);
+        return BuildRelayNested(hopList, ParseRelayInnerRequest(innerPayload));
+    }
 
-        var inner = NormalizeInnerPayload(innerPayload);
+    internal static byte[] BuildRelayNested(
+        IReadOnlyList<(int LinkNo, int StationNo)> hopList,
+        RelayInnerRequest request)
+    {
+        var inner = request.TrimmedPayload;
         byte[]? frame = null;
         for (var i = hopList.Count - 1; i >= 0; i--)
         {
-            frame = BuildRelayCommand(hopList[i].LinkNo, hopList[i].StationNo, inner);
+            frame = BuildRelayCommandFromTrimmed(hopList[i].LinkNo, hopList[i].StationNo, inner);
             inner = FrameToInnerPayload(frame);
         }
 
         return frame ?? throw new InvalidOperationException("Relay frame construction failed");
     }
 
-    private static byte[] NormalizeInnerPayload(byte[] innerPayload)
+    internal static RelayInnerRequest ParseRelayInnerRequest(byte[] innerPayload)
     {
+        ArgumentNullException.ThrowIfNull(innerPayload);
         if (innerPayload.Length < 3)
         {
             throw new ArgumentException("inner payload must contain at least LL, LH, and CMD bytes", nameof(innerPayload));
         }
 
-        byte[] trimmed;
-        if (innerPayload[0] == FtCommand)
-        {
-            if (innerPayload.Length < 5)
-            {
-                throw new ArgumentException("inner command frame too short", nameof(innerPayload));
-            }
-
-            if (innerPayload[1] != 0x00)
-            {
-                throw new ArgumentException("relay inner frame must be a command request (RC=0x00)", nameof(innerPayload));
-            }
-
-            trimmed = new byte[innerPayload.Length - 2];
-            Buffer.BlockCopy(innerPayload, 2, trimmed, 0, trimmed.Length);
-        }
-        else
-        {
-            trimmed = new byte[innerPayload.Length];
-            Buffer.BlockCopy(innerPayload, 0, trimmed, 0, trimmed.Length);
-        }
-
-        if (trimmed.Length < 3)
-        {
-            throw new ArgumentException("inner payload must contain LL, LH, and CMD bytes", nameof(innerPayload));
-        }
-
-        var innerLength = trimmed[0] | (trimmed[1] << 8);
-        if (innerLength + 2 != trimmed.Length)
+        var isFullCommand = innerPayload.Length >= 5
+            && innerPayload[0] == FtCommand
+            && innerPayload[1] == 0x00
+            && (innerPayload[2] | (innerPayload[3] << 8)) + 4 == innerPayload.Length;
+        var isTrimmed = (innerPayload[0] | (innerPayload[1] << 8)) + 2 == innerPayload.Length;
+        if (!isFullCommand && !isTrimmed)
         {
             throw new ArgumentException(
-                $"inner payload length mismatch: len={trimmed.Length} vs expected {innerLength + 2}",
+                "inner payload must be either a complete command frame with FT=0x00, RC=0x00, and an exact declared length, or an exact LL/LH/CMD payload",
                 nameof(innerPayload));
         }
 
-        return trimmed;
+        var trimmed = isFullCommand ? innerPayload[2..] : innerPayload.ToArray();
+        var command = trimmed[2];
+        var body = trimmed[3..];
+        var isReadOnly = IsRelayReadOnlyRequest(command, body);
+        return new RelayInnerRequest(
+            trimmed,
+            command,
+            body,
+            isReadOnly,
+            isReadOnly ? GetRelayReadResponseLength(command, body) : null,
+            isReadOnly ? null : GetRelayStateResponseData(command, body));
     }
+
+    private static bool IsRelayReadOnlyRequest(byte command, byte[] body)
+    {
+        if (command is 0x1C or 0x1E or 0x20 or 0x22 or 0x24 or 0x94 or 0x96 or 0x98 or 0xA0 or 0xC2 or 0xC4)
+        {
+            return true;
+        }
+
+        return command == 0x32
+            && body.Length >= 2
+            && ((body[0] == 0x70 && body[1] == 0x00)
+                || (body[0] == 0x11 && body[1] == 0x00));
+    }
+
+    private static int? GetRelayReadResponseLength(byte command, byte[] body)
+    {
+        int ReadBodyU16(int offset)
+        {
+            if (offset < 0 || offset + 1 >= body.Length)
+            {
+                throw new ArgumentException(
+                    $"CMD={command:X2} relay request body is too short to derive its response length",
+                    nameof(body));
+            }
+
+            return body[offset] | (body[offset + 1] << 8);
+        }
+
+        return command switch
+        {
+            0x1C => checked(ReadBodyU16(2) * 2),
+            0x1E => ReadBodyU16(2),
+            0x20 => 1,
+            0x22 => body.Length,
+            0x24 => body.Length / 2,
+            0x94 => checked(ReadBodyU16(3) * 2),
+            0x96 => ReadBodyU16(3),
+            0x98 when body.Length >= 3 => checked(((body[0] + 7) / 8) + body[1] + (body[2] * 2)),
+            0x98 => throw new ArgumentException(
+                "CMD=98 relay request body is too short to derive its response length",
+                nameof(body)),
+            0xC2 => ReadBodyU16(4),
+            0xC4 when body.Length >= 4 => checked(4 + ((body[0] + 7) / 8) + body[1] + (body[2] * 2)),
+            0xC4 => throw new ArgumentException(
+                "CMD=C4 relay request body is too short to derive its response length",
+                nameof(body)),
+            _ => null,
+        };
+    }
+
+    private static byte[]? GetRelayStateResponseData(byte command, byte[] body)
+    {
+        if (command is 0x1D or 0x1F or 0x21 or 0x23 or 0x25 or 0x95 or 0x97 or 0x99 or 0xC3 or 0xC5 or 0xCA)
+        {
+            return [];
+        }
+
+        if (command == 0x32
+            && body.Length >= 2
+            && ((body[0] == 0x71 && body[1] == 0x00)
+                || (body[0] == 0x01 && body[1] == 0x00)
+                || (body[0] == 0x02 && body[1] == 0x00)))
+        {
+            return body[..2];
+        }
+
+        return null;
+    }
+
+    internal sealed record RelayInnerRequest(
+        byte[] TrimmedPayload,
+        byte Command,
+        byte[] Body,
+        bool IsReadOnly,
+        int? ExpectedReadResponseLength,
+        byte[]? ExpectedStateResponseData);
 
     private static byte[] FrameToInnerPayload(byte[] frame)
     {
