@@ -69,4 +69,11 @@ the protocol error as their cause. The affected transport is retired, and a
 fixed-local-port UDP client is tainted. Validation failures found before send do
 not retire the transport.
 
+A data-bearing NG response is definitive only when its command matches the
+active request. A mismatch follows the malformed-response rules above instead
+of surfacing as `ToyopucPlcError`. The special NG form with no response data is
+different: its command field is the detailed error code and is not correlated
+as a command echo. A data-bearing NG command mismatch additionally requires an
+explicit `Open()` or `OpenAsync()` before reuse.
+
 For shared wiring, setup, device ranges, and PLC response troubleshooting, use the Computerlink pages on the PLC Comm documentation site.

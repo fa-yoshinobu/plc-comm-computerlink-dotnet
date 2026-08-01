@@ -1174,6 +1174,12 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
                 if (response.Rc != 0x00)
                 {
+                    if (response.Data.Length > 0 && payload.Length >= 5 && response.Cmd != payload[4])
+                    {
+                        _explicitReconnectRequired = true;
+                        throw new ToyopucProtocolError(
+                            $"Unexpected response command in data-bearing NG response: expected 0x{payload[4]:X2}, got 0x{response.Cmd:X2}");
+                    }
                     throw new ToyopucPlcError(FormatResponseError(response));
                 }
 
