@@ -12,6 +12,84 @@ public sealed class OverhaulContractTests
     private const string Profile = "toyopuc:pc10g:pc10";
 
     [Fact]
+    public void SyncOpenDiscardsLateSocketWhenCloseRetiresDnsGeneration()
+    {
+        using var resolverEntered = new ManualResetEventSlim();
+        using var releaseResolver = new ManualResetEventSlim();
+        using var client = new ToyopucClient(
+            "localhost", 8501, ToyopucTransportMode.Udp, timeout: TimeSpan.FromSeconds(2));
+        client.HostResolver = (_, _) =>
+        {
+            resolverEntered.Set();
+            releaseResolver.Wait();
+            return IPAddress.Loopback;
+        };
+
+        Exception? openError = null;
+        var openThread = new Thread(() =>
+        {
+            try
+            {
+                client.Open();
+            }
+            catch (Exception error)
+            {
+                openError = error;
+            }
+        });
+        openThread.Start();
+        Assert.True(resolverEntered.Wait(TimeSpan.FromSeconds(2)));
+
+        client.Close();
+        releaseResolver.Set();
+        Assert.True(openThread.Join(TimeSpan.FromSeconds(2)));
+
+        Assert.IsType<ToyopucConnectionClosedException>(openError);
+        Assert.False(client.IsOpen);
+    }
+
+    [Fact]
+    public void SyncOpenPublishesOnlyAfterConnectAndDisposesPostConnectCandidateRetiredByClose()
+    {
+        using var connected = new ManualResetEventSlim();
+        using var releasePublication = new ManualResetEventSlim();
+        using var client = new ToyopucClient(
+            "127.0.0.1", 8501, ToyopucTransportMode.Udp, timeout: TimeSpan.FromSeconds(2));
+        Socket? candidate = null;
+        client.ConnectedSocketHook = socket =>
+        {
+            candidate = socket;
+            connected.Set();
+            releasePublication.Wait();
+        };
+
+        Exception? openError = null;
+        var openThread = new Thread(() =>
+        {
+            try
+            {
+                client.Open();
+            }
+            catch (Exception error)
+            {
+                openError = error;
+            }
+        });
+        openThread.Start();
+        Assert.True(connected.Wait(TimeSpan.FromSeconds(2)));
+        Assert.False(client.IsOpen);
+
+        client.Close();
+        releasePublication.Set();
+        Assert.True(openThread.Join(TimeSpan.FromSeconds(2)));
+
+        Assert.IsType<ToyopucConnectionClosedException>(openError);
+        Assert.False(client.IsOpen);
+        Assert.NotNull(candidate);
+        Assert.True(candidate.SafeHandle.IsClosed);
+    }
+
+    [Fact]
     public async Task EveryNamedFrGenericAndTypedWriteRejectsBeforeTransport()
     {
         await using var client = new ToyopucDeviceClient(
@@ -2417,9 +2495,12 @@ public sealed class OverhaulContractTests
                 ToyopucTransportMode.Tcp,
                 timeout: TimeSpan.FromSeconds(10));
             using var cancellation = new CancellationTokenSource();
+            using var connectStarted = new ManualResetEventSlim();
+            client.SocketConnectStartedHook = _ => connectStarted.Set();
 
             var open = client.OpenAsync(cancellation.Token);
-            Assert.True(SpinWait.SpinUntil(() => client.IsOpen, TimeSpan.FromSeconds(2)));
+            Assert.True(connectStarted.Wait(TimeSpan.FromSeconds(2)));
+            Assert.False(client.IsOpen);
             Assert.False(open.IsCompleted);
             cancellation.Cancel();
 

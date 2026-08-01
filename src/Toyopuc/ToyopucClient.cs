@@ -81,6 +81,9 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     private int _traceFrameCapacity;
     private readonly ConcurrentDictionary<string, IReadOnlyList<(int LinkNo, int StationNo)>> _relayHopCache =
         new(StringComparer.Ordinal);
+    internal Func<string, long, IPAddress> HostResolver { get; set; } = ResolveRemoteAddress;
+    internal Action<Socket>? SocketConnectStartedHook { get; set; }
+    internal Action<Socket>? ConnectedSocketHook { get; set; }
 
     public ToyopucClient(
         string host,
@@ -171,6 +174,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
     private void OpenCore(bool explicitRequest, long deadline)
     {
+        OperationGeneration generation = RequireCurrentOperationGeneration();
         if (_fixedUdpSessionTainted)
         {
             throw new InvalidOperationException(
@@ -188,26 +192,29 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             return;
         }
 
-        var remoteAddress = ResolveRemoteAddress(Host, deadline);
+        var remoteAddress = HostResolver(Host, deadline);
+        ThrowIfOpenGenerationInvalid(generation);
         ThrowIfDeadlineExpired(deadline, "Connect timeout");
-        _remoteEndPoint = new IPEndPoint(remoteAddress, Port);
+        var remoteEndPoint = new IPEndPoint(remoteAddress, Port);
 
         var socket = Transport == ToyopucTransportMode.Tcp
             ? new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
             : new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-        _socket = socket;
         try
         {
             ConfigureSocket(socket);
             if (Transport == ToyopucTransportMode.Tcp)
-                ConnectWithTimeout(socket, _remoteEndPoint, deadline);
+                ConnectWithTimeout(socket, remoteEndPoint, deadline, generation);
             else
             {
                 SetSocketDeadline(socket, deadline, "Connect timeout");
                 socket.Bind(new IPEndPoint(IPAddress.Any, LocalPort));
-                socket.Connect(_remoteEndPoint);
+                socket.Connect(remoteEndPoint);
+                ThrowIfOpenGenerationInvalid(generation);
             }
+            ConnectedSocketHook?.Invoke(socket);
+            PublishConnectedSocket(socket, remoteEndPoint, generation);
         }
         catch (Exception exception)
         {
@@ -217,6 +224,39 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             if (exception is ToyopucError)
                 throw;
             throw new ToyopucTransportError("Socket connection failed", exception);
+        }
+    }
+
+    private OperationGeneration RequireCurrentOperationGeneration()
+    {
+        OperationContext? context = _operationContext.Value;
+        if (context is null || !ReferenceEquals(context.Client, this))
+            throw new InvalidOperationException("Open must run inside the client operation lifecycle.");
+        return context.Generation;
+    }
+
+    private void ThrowIfOpenGenerationInvalid(OperationGeneration generation)
+    {
+        _operationCancellation.Value.ThrowIfCancellationRequested();
+        lock (_operationSync)
+        {
+            if (generation.IsRetired || !ReferenceEquals(_operationGeneration, generation))
+                throw generation.CreateFailure(this);
+        }
+    }
+
+    private void PublishConnectedSocket(
+        Socket socket,
+        IPEndPoint remoteEndPoint,
+        OperationGeneration generation)
+    {
+        _operationCancellation.Value.ThrowIfCancellationRequested();
+        lock (_operationSync)
+        {
+            if (generation.IsRetired || !ReferenceEquals(_operationGeneration, generation))
+                throw generation.CreateFailure(this);
+            _remoteEndPoint = remoteEndPoint;
+            _socket = socket;
         }
     }
 
@@ -1381,10 +1421,26 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 new SocketException((int)SocketError.HostNotFound));
     }
 
-    private static void ConnectWithTimeout(Socket socket, EndPoint endPoint, long deadline)
+    private void ConnectWithTimeout(
+        Socket socket,
+        EndPoint endPoint,
+        long deadline,
+        OperationGeneration generation)
     {
         var result = socket.BeginConnect(endPoint, null, null);
-        if (!result.AsyncWaitHandle.WaitOne(GetRemainingTime(deadline, "Connect timeout")))
+        SocketConnectStartedHook?.Invoke(socket);
+        var cancellationToken = _operationCancellation.Value;
+        int completed = cancellationToken.CanBeCanceled
+            ? WaitHandle.WaitAny(
+                [result.AsyncWaitHandle, cancellationToken.WaitHandle],
+                GetRemainingTime(deadline, "Connect timeout"))
+            : result.AsyncWaitHandle.WaitOne(GetRemainingTime(deadline, "Connect timeout")) ? 0 : WaitHandle.WaitTimeout;
+        if (completed == 1)
+        {
+            ThrowIfOpenGenerationInvalid(generation);
+            throw new OperationCanceledException(cancellationToken);
+        }
+        if (completed == WaitHandle.WaitTimeout)
         {
             socket.Dispose();
             throw new ToyopucTimeoutError("Connect timeout");
@@ -1392,6 +1448,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
         socket.EndConnect(result);
         ThrowIfDeadlineExpired(deadline, "Connect timeout");
+        ThrowIfOpenGenerationInvalid(generation);
     }
 
     private void ConfigureSocket(Socket socket)
