@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Toyopuc\PlcComm.Toyopuc.csproj" />
+    <Compile Include="..\OperationalCommon\OperationalCommon.cs" Link="OperationalCommon.cs" />
   </ItemGroup>
 
   <PropertyGroup>

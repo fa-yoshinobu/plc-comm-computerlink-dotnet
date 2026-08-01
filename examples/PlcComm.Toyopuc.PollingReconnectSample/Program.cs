@@ -1,7 +1,6 @@
 using System.Globalization;
-using System.IO;
-using System.Net.Sockets;
 using PlcComm.Toyopuc;
+using PlcComm.Toyopuc.Examples;
 
 if (args.Length < 4)
 {
@@ -51,11 +50,16 @@ try
                 };
                 client = await ToyopucDeviceClientFactory.OpenAndConnectAsync(options, shutdown.Token);
             }
-            catch (Exception ex) when (IsRetryable(ex) && !shutdown.IsCancellationRequested)
+            catch (OperationCanceledException) when (shutdown.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex) when (ReconnectPolicy.ShouldRetry(ex) && !shutdown.IsCancellationRequested)
             {
                 Log("reconnecting", $"connect failed: {ex.Message}; retry in {backoff.TotalSeconds:0.0}s");
-                await Delay(backoff, shutdown.Token);
-                backoff = NextBackoff(backoff, maxBackoff);
+                if (!await ReconnectPolicy.WaitBeforeRetryAsync(ex, backoff, shutdown.Token))
+                    break;
+                backoff = ReconnectPolicy.NextBackoff(backoff, maxBackoff);
                 continue;
             }
 
@@ -74,14 +78,15 @@ try
         {
             break;
         }
-        catch (Exception ex) when (IsRetryable(ex) && !shutdown.IsCancellationRequested)
+        catch (Exception ex) when (ReconnectPolicy.ShouldRetry(ex) && !shutdown.IsCancellationRequested)
         {
             Log("lost", ex.Message);
             await DisposeClientAsync(client);
             client = null;
             Log("reconnecting", $"retry in {backoff.TotalSeconds:0.0}s");
-            await Delay(backoff, shutdown.Token);
-            backoff = NextBackoff(backoff, maxBackoff);
+            if (!await ReconnectPolicy.WaitBeforeRetryAsync(ex, backoff, shutdown.Token))
+                break;
+            backoff = ReconnectPolicy.NextBackoff(backoff, maxBackoff);
         }
     }
 }
@@ -92,22 +97,6 @@ finally
 
 Log("closed", "stopped");
 
-static bool IsRetryable(Exception ex)
-{
-    if (ex is IOException or SocketException or TimeoutException or OperationCanceledException or ToyopucTimeoutError)
-    {
-        return true;
-    }
-
-    if (ex is ToyopucProtocolError
-        && (ex.Message == "Connection closed while receiving" || ex.Message == "Connection closed while sending"))
-    {
-        return true;
-    }
-
-    return ex is ToyopucError && ex.Message == "Socket error";
-}
-
 static async Task DisposeClientAsync(ToyopucDeviceClient? client)
 {
     if (client is not null)
@@ -115,20 +104,6 @@ static async Task DisposeClientAsync(ToyopucDeviceClient? client)
         await client.DisposeAsync();
     }
 }
-
-static async Task Delay(TimeSpan delay, CancellationToken cancellationToken)
-{
-    try
-    {
-        await Task.Delay(delay, cancellationToken);
-    }
-    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-    {
-    }
-}
-
-static TimeSpan NextBackoff(TimeSpan current, TimeSpan max)
-    => TimeSpan.FromSeconds(Math.Min(current.TotalSeconds * 2.0, max.TotalSeconds));
 
 static double ParseDouble(string? value, double fallback)
     => string.IsNullOrWhiteSpace(value) ? fallback : double.Parse(value, CultureInfo.InvariantCulture);

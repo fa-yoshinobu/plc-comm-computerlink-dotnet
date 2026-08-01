@@ -3,12 +3,228 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using PlcComm.Toyopuc;
+using PlcComm.Toyopuc.Examples;
 
 namespace PlcComm.Toyopuc.Tests;
 
 public sealed class OverhaulContractTests
 {
     private const string Profile = "toyopuc:pc10g:pc10";
+
+    [Fact]
+    public async Task EveryNamedFrGenericAndTypedWriteRejectsBeforeTransport()
+    {
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            Profile,
+            timeout: TimeSpan.FromMilliseconds(10));
+
+        var resolved = client.ResolveDevice("FR000000");
+        foreach (var device in new object[] { "FR000000", resolved })
+        {
+            var syncWrites = new (string Name, Action Write)[]
+            {
+                ("Write scalar", () => client.Write(device, 1)),
+                ("Write sequence", () => client.Write(device, new[] { 1, 2 })),
+                ("WriteMany", () => client.WriteMany(new Dictionary<object, object> { [device] = 1 })),
+                ("WriteDWord", () => client.WriteDWord(device, 1)),
+                ("WriteDWords", () => client.WriteDWords(device, new uint[] { 1, 2 })),
+                ("WriteFloat32", () => client.WriteFloat32(device, 1)),
+                ("WriteFloat32s", () => client.WriteFloat32s(device, new float[] { 1, 2 })),
+                ("RelayWrite scalar", () => client.RelayWrite("P1-L2:N2", device, 1)),
+                ("RelayWrite sequence", () => client.RelayWrite("P1-L2:N2", device, new[] { 1, 2 })),
+                ("RelayWriteWords", () => client.RelayWriteWords("P1-L2:N2", device, new[] { 1, 2 })),
+                ("RelayWriteMany", () => client.RelayWriteMany("P1-L2:N2", new Dictionary<object, object> { [device] = 1 })),
+                ("RelayWriteDWord", () => client.RelayWriteDWord("P1-L2:N2", device, 1)),
+                ("RelayWriteDWords", () => client.RelayWriteDWords("P1-L2:N2", device, new uint[] { 1, 2 })),
+                ("RelayWriteFloat32", () => client.RelayWriteFloat32("P1-L2:N2", device, 1)),
+                ("RelayWriteFloat32s", () => client.RelayWriteFloat32s("P1-L2:N2", device, new float[] { 1, 2 })),
+            };
+
+            foreach (var (name, write) in syncWrites)
+            {
+                var error = Record.Exception(write);
+                Assert.True(error is ArgumentException, $"{name} did not reject FR before transport: {error}");
+                Assert.Equal(default, client.TrafficStats);
+                Assert.Null(client.LastTx);
+            }
+
+            var asyncWrites = new (string Name, Func<Task> Write)[]
+            {
+                ("WriteAsync scalar", () => client.WriteAsync(device, 1)),
+                ("WriteAsync sequence", () => client.WriteAsync(device, new[] { 1, 2 })),
+                ("WriteManyAsync", () => client.WriteManyAsync(new Dictionary<object, object> { [device] = 1 })),
+                ("WriteDWordAsync", () => client.WriteDWordAsync(device, 1)),
+                ("WriteDWordsAsync", () => client.WriteDWordsAsync(device, new uint[] { 1, 2 })),
+                ("WriteFloat32Async", () => client.WriteFloat32Async(device, 1)),
+                ("WriteFloat32sAsync", () => client.WriteFloat32sAsync(device, new float[] { 1, 2 })),
+                ("RelayWriteAsync scalar", () => client.RelayWriteAsync("P1-L2:N2", device, 1)),
+                ("RelayWriteAsync sequence", () => client.RelayWriteAsync("P1-L2:N2", device, new[] { 1, 2 })),
+                ("RelayWriteWordsAsync", () => client.RelayWriteWordsAsync("P1-L2:N2", device, new[] { 1, 2 })),
+                ("RelayWriteManyAsync", () => client.RelayWriteManyAsync("P1-L2:N2", new Dictionary<object, object> { [device] = 1 })),
+                ("RelayWriteDWordAsync", () => client.RelayWriteDWordAsync("P1-L2:N2", device, 1)),
+                ("RelayWriteDWordsAsync", () => client.RelayWriteDWordsAsync("P1-L2:N2", device, new uint[] { 1, 2 })),
+                ("RelayWriteFloat32Async", () => client.RelayWriteFloat32Async("P1-L2:N2", device, 1)),
+                ("RelayWriteFloat32sAsync", () => client.RelayWriteFloat32sAsync("P1-L2:N2", device, new float[] { 1, 2 })),
+            };
+
+            foreach (var (name, write) in asyncWrites)
+            {
+                var error = await Record.ExceptionAsync(write);
+                Assert.True(error is ArgumentException, $"{name} did not reject FR before transport: {error}");
+                Assert.Equal(default, client.TrafficStats);
+                Assert.Null(client.LastTx);
+            }
+        }
+
+        var extensionWrites = new (string Name, Func<Task> Write)[]
+        {
+            ("WriteTypedAsync", () => ToyopucDeviceClientExtensions.WriteTypedAsync(client, "FR000000", "U", 1)),
+            ("WriteWordsAsync extension", () => ToyopucDeviceClientExtensions.WriteWordsAsync(client, "FR000000", new ushort[] { 1 })),
+            ("WriteDWordsAsync extension", () => ToyopucDeviceClientExtensions.WriteDWordsAsync(client, "FR000000", new uint[] { 1 })),
+            ("WriteBitInWordAsync", () => ToyopucDeviceClientExtensions.WriteBitInWordAsync(client, "FR000000", 0, true)),
+        };
+
+        foreach (var (name, write) in extensionWrites)
+        {
+            var error = await Record.ExceptionAsync(write);
+            Assert.True(error is ArgumentException, $"{name} did not reject FR before transport: {error}");
+            Assert.Equal(default, client.TrafficStats);
+            Assert.Null(client.LastTx);
+        }
+
+        Assert.False(client.IsOpen);
+    }
+
+    [Fact]
+    public async Task ExplicitFrWorkAreaWrites_AreAllowedWithoutImplicitCommit()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var receivedCommands = new List<int>();
+        var relayRequests = new[] { false, false, true, true };
+
+        var serverTask = Task.Run(async () =>
+        {
+            foreach (var relay in relayRequests)
+            {
+                using var server = await listener.AcceptTcpClientAsync();
+                await using var stream = server.GetStream();
+                var request = await ReadFrameAsync(stream);
+                receivedCommands.Add(request[4]);
+                Assert.Equal(relay ? 0x60 : 0xC3, request[4]);
+                await stream.WriteAsync(relay
+                    ? BuildRelayResponse(0x12, 2, 0xC3, [])
+                    : BuildResponse(0xC3, []));
+            }
+        });
+
+        using (var client = new ToyopucDeviceClient("127.0.0.1", port, ToyopucTransportMode.Tcp, Profile))
+        {
+            client.WriteFrWorkArea("FR000000", new[] { 0x1234 });
+            Assert.Equal(1UL, client.TrafficStats.RequestCount);
+        }
+
+        await using (var client = new ToyopucDeviceClient("127.0.0.1", port, ToyopucTransportMode.Tcp, Profile))
+        {
+            var resolved = client.ResolveDevice("FR000000");
+            await client.WriteFrWorkAreaAsync(resolved, new[] { 0x1234 });
+            Assert.Equal(1UL, client.TrafficStats.RequestCount);
+        }
+
+        using (var client = new ToyopucDeviceClient("127.0.0.1", port, ToyopucTransportMode.Tcp, Profile))
+        {
+            client.RelayWriteFrWorkArea("P1-L2:N2", "FR000000", new[] { 0x1234 });
+            Assert.Equal(1UL, client.TrafficStats.RequestCount);
+        }
+
+        await using (var client = new ToyopucDeviceClient("127.0.0.1", port, ToyopucTransportMode.Tcp, Profile))
+        {
+            var resolved = client.ResolveDevice("FR000000");
+            await client.RelayWriteFrWorkAreaAsync("P1-L2:N2", resolved, new[] { 0x1234 });
+            Assert.Equal(1UL, client.TrafficStats.RequestCount);
+        }
+
+        await serverTask;
+        Assert.Equal(new[] { 0xC3, 0xC3, 0x60, 0x60 }, receivedCommands);
+    }
+
+    [Fact]
+    public async Task ReconnectPolicy_RetriesOnlyTransportAndTimeoutAfterBackoff()
+    {
+        var backoff = TimeSpan.FromMilliseconds(125);
+        foreach (var exception in new Exception[]
+        {
+            new ToyopucTransportError("transport", new IOException("socket")),
+            new ToyopucTimeoutError("timeout"),
+        })
+        {
+            var delayCount = 0;
+            var retry = await ReconnectPolicy.WaitBeforeRetryAsync(
+                exception,
+                backoff,
+                CancellationToken.None,
+                (delay, cancellationToken) =>
+                {
+                    Assert.Equal(backoff, delay);
+                    Assert.False(cancellationToken.IsCancellationRequested);
+                    delayCount++;
+                    return Task.CompletedTask;
+                });
+
+            Assert.True(retry);
+            Assert.Equal(1, delayCount);
+        }
+
+        Assert.Equal(TimeSpan.FromSeconds(2), ReconnectPolicy.NextBackoff(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30)));
+        Assert.Equal(TimeSpan.FromSeconds(30), ReconnectPolicy.NextBackoff(TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(30)));
+    }
+
+    [Fact]
+    public async Task ReconnectPolicy_CancellationAndNonTransportFailuresDoNotSleepOrRetry()
+    {
+        foreach (var exception in new Exception[]
+        {
+            new OperationCanceledException(),
+            new ToyopucPlcError("plc"),
+            new ArgumentException("argument"),
+            new ToyopucProtocolError("protocol"),
+        })
+        {
+            var delayCount = 0;
+            var retry = await ReconnectPolicy.WaitBeforeRetryAsync(
+                exception,
+                TimeSpan.FromSeconds(1),
+                CancellationToken.None,
+                (_, _) =>
+                {
+                    delayCount++;
+                    return Task.CompletedTask;
+                });
+
+            Assert.False(retry);
+            Assert.Equal(0, delayCount);
+        }
+
+        using var cancelled = new CancellationTokenSource();
+        var delayStarted = false;
+        var retryAfterCancellation = await ReconnectPolicy.WaitBeforeRetryAsync(
+            new ToyopucTimeoutError("timeout"),
+            TimeSpan.FromSeconds(1),
+            cancelled.Token,
+            (_, cancellationToken) =>
+            {
+                delayStarted = true;
+                cancelled.Cancel();
+                return Task.FromCanceled(cancellationToken);
+            });
+
+        Assert.True(delayStarted);
+        Assert.False(retryAfterCancellation);
+    }
 
     [Fact]
     public void ConnectionOptions_RequireEndpointTransportProfileAndRoute()
@@ -1196,8 +1412,234 @@ public sealed class OverhaulContractTests
             ToyopucPlcProfiles.Nano10GxCompatible.Name);
 
         await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadTypedAsync("P1-D0000", "F"));
+        Assert.False(client.IsOpen);
         await serverTask;
         listener.Stop();
+    }
+
+    [Fact]
+    public async Task RelayTypedFloatRead_RetiresTransportOnSemanticMalformedResponse()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var endpoint = (IPEndPoint)listener.LocalEndpoint;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            var stream = server.GetStream();
+            var request = await ReadFrameAsync(stream);
+            Assert.Equal(0x60, request[4]);
+            await stream.WriteAsync(BuildRelayResponse(0x12, 2, 0x94, [0x00, 0x00, 0xC0, 0x7F]));
+        });
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            timeout: TimeSpan.FromSeconds(2),
+            route: ToyopucRoute.Relay("P1-L2:N2"));
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadTypedAsync("P1-D0000", "F"));
+
+        Assert.False(client.IsOpen);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task RelayReadFrOne_MalformedResponseCompletesBeforeQueuedReadUsesNewTransport()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var endpoint = (IPEndPoint)listener.LocalEndpoint;
+        using var firstRequestReceived = new ManualResetEventSlim();
+        using var releaseMalformedResponse = new ManualResetEventSlim();
+        var requestCommands = new List<byte>();
+
+        var serverTask = Task.Run(async () =>
+        {
+            using (var malformedServer = await listener.AcceptTcpClientAsync())
+            {
+                await using var stream = malformedServer.GetStream();
+                var request = await ReadFrameAsync(stream);
+                requestCommands.Add(request[4]);
+                firstRequestReceived.Set();
+                releaseMalformedResponse.Wait();
+                await stream.WriteAsync(BuildRelayResponse(0x12, 2, 0xC2, [0x34]));
+            }
+
+            using var validServer = await listener.AcceptTcpClientAsync();
+            await using var validStream = validServer.GetStream();
+            var validRequest = await ReadFrameAsync(validStream);
+            requestCommands.Add(validRequest[4]);
+            await validStream.WriteAsync(BuildRelayResponse(0x12, 2, 0xC2, [0x78, 0x56]));
+        });
+
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Tcp,
+            Profile,
+            timeout: TimeSpan.FromSeconds(2));
+
+        var malformed = Task.Run(() => client.RelayReadFrOne("P1-L2:N2", "FR000000"));
+        Assert.True(firstRequestReceived.Wait(TimeSpan.FromSeconds(2)));
+        var queued = Task.Run(() => client.RelayReadFrOne("P1-L2:N2", "FR000000"));
+        releaseMalformedResponse.Set();
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(async () => await malformed);
+        Assert.Equal(0x5678, await queued);
+        await serverTask;
+        Assert.Equal(new byte[] { 0x60, 0x60 }, requestCommands);
+    }
+
+    [Fact]
+    public async Task DirectHighLevelMalformedStateResponse_IsOutcomeUnknownWithCause()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var endpoint = (IPEndPoint)listener.LocalEndpoint;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            var stream = server.GetStream();
+            var request = await ReadFrameAsync(stream);
+            Assert.Equal(0x95, request[4]);
+            await stream.WriteAsync(BuildResponse(0x95, [0x00]));
+        });
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            timeout: TimeSpan.FromSeconds(2));
+
+        var error = Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+            () => client.Write("P1-D0000", 0x1234));
+
+        Assert.Equal(ToyopucOutcomeUnknownReason.MalformedResponse, error.Reason);
+        Assert.IsType<ToyopucProtocolError>(error.InnerException);
+        Assert.False(client.IsOpen);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task RelayMalformedStateResponse_IsOutcomeUnknownAndValidResponseRemainsUsable()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var endpoint = (IPEndPoint)listener.LocalEndpoint;
+        var serverTask = Task.Run(async () =>
+        {
+            using (var malformedServer = await listener.AcceptTcpClientAsync())
+            {
+                var stream = malformedServer.GetStream();
+                _ = await ReadFrameAsync(stream);
+                await stream.WriteAsync(BuildRelayResponse(0x12, 2, 0x1D, [0x00]));
+            }
+
+            using (var asyncMalformedServer = await listener.AcceptTcpClientAsync())
+            {
+                var stream = asyncMalformedServer.GetStream();
+                _ = await ReadFrameAsync(stream);
+                await stream.WriteAsync(BuildRelayResponse(0x12, 2, 0x1D, [0x00]));
+            }
+
+            using var validServer = await listener.AcceptTcpClientAsync();
+            var validStream = validServer.GetStream();
+            _ = await ReadFrameAsync(validStream);
+            await validStream.WriteAsync(BuildRelayResponse(0x12, 2, 0x1D, []));
+        });
+
+        using (var malformedClient = new ToyopucClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2)))
+        {
+            var error = Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+                () => malformedClient.RelayWriteWords("P1-L2:N2", 0x2000, [0x1234]));
+            Assert.Equal(ToyopucOutcomeUnknownReason.MalformedResponse, error.Reason);
+            Assert.IsType<ToyopucProtocolError>(error.InnerException);
+            Assert.False(malformedClient.IsOpen);
+        }
+
+        await using (var asyncMalformedClient = new ToyopucClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2)))
+        {
+            var error = await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
+                () => asyncMalformedClient.RelayWriteWordsAsync("P1-L2:N2", 0x2000, [0x3456]));
+            Assert.Equal(ToyopucOutcomeUnknownReason.MalformedResponse, error.Reason);
+            Assert.IsType<ToyopucProtocolError>(error.InnerException);
+            Assert.False(asyncMalformedClient.IsOpen);
+        }
+
+        using (var validClient = new ToyopucClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2)))
+        {
+            validClient.RelayWriteWords("P1-L2:N2", 0x2000, [0x5678]);
+            Assert.True(validClient.IsOpen);
+        }
+
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task FixedPortUdpTypedMalformedResponse_TaintsSession()
+    {
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var endpoint = (IPEndPoint)server.Client.LocalEndPoint!;
+        using var reservation = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var localPort = ((IPEndPoint)reservation.Client.LocalEndPoint!).Port;
+        reservation.Dispose();
+        var serverTask = Task.Run(async () =>
+        {
+            var request = await server.ReceiveAsync();
+            await server.SendAsync(BuildResponse(0x94, [0x00, 0x00, 0xC0, 0x7F]), request.RemoteEndPoint);
+        });
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Udp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            localPort: localPort,
+            timeout: TimeSpan.FromSeconds(2));
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadTypedAsync("P1-D0000", "F"));
+
+        Assert.Throws<InvalidOperationException>(client.Open);
+        Assert.False(client.IsOpen);
+        await serverTask;
+    }
+
+    [Fact]
+    public void FixedPortUdpRelayPreflightFailure_DoesNotTaintSession()
+    {
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var endpoint = (IPEndPoint)server.Client.LocalEndPoint!;
+        using var reservation = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var localPort = ((IPEndPoint)reservation.Client.LocalEndPoint!).Port;
+        reservation.Dispose();
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            endpoint.Port,
+            ToyopucTransportMode.Udp,
+            localPort: localPort,
+            timeout: TimeSpan.FromSeconds(2));
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => client.RelayReadWords("P16-L0:N1", 0x2000, 1));
+        Assert.Throws<ArgumentException>(
+            () => client.RelayCommand(0x12, 2, [0x02, 0x00, 0x1C]));
+
+        client.Open();
+        Assert.True(client.IsOpen);
+        Assert.Equal(0UL, client.TrafficStats.RequestCount);
     }
 
     [Fact]
@@ -1921,6 +2363,23 @@ public sealed class OverhaulContractTests
             (byte)command,
             .. data,
         ];
+    }
+
+    private static byte[] BuildRelayResponse(int linkNo, int stationNo, int command, byte[] data)
+    {
+        var innerLength = checked(1 + data.Length);
+        return BuildResponse(
+            0x60,
+            [
+                (byte)linkNo,
+                (byte)(stationNo & 0xFF),
+                (byte)(stationNo >> 8),
+                0x06,
+                (byte)(innerLength & 0xFF),
+                (byte)(innerLength >> 8),
+                (byte)command,
+                .. data,
+            ]);
     }
 
     private static byte[] BuildErrorResponse(int command, byte errorCode)

@@ -6,11 +6,15 @@ namespace PlcComm.Toyopuc;
 public static class ToyopucRelay
 {
     private static readonly Regex PreferredPattern = new(
-        @"^P([0-9A-Fa-f])[-:]L([0-9A-Fa-f])\s*:\s*N([0-9A-Fa-fx]+)$",
+        @"^P([0-9]+)[-:]L([0-9]+)\s*:\s*N([0-9]+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    private static readonly Regex CompactPattern = new(
-        @"^([0-9A-Fa-f])[-:]([0-9A-Fa-f]):([0-9A-Fa-fx]+)$",
+    private static readonly Regex ComponentPattern = new(
+        @"^([0-9]+)-([0-9]+):([0-9]+)$",
+        RegexOptions.Compiled);
+
+    private static readonly Regex DirectPattern = new(
+        @"^([0-9]+):([0-9]+)$",
         RegexOptions.Compiled);
 
     public static IReadOnlyList<(int LinkNo, int StationNo)> ParseRelayHops(string text)
@@ -30,32 +34,36 @@ public static class ToyopucRelay
             var preferred = PreferredPattern.Match(item);
             if (preferred.Success)
             {
-                var link = (Convert.ToInt32(preferred.Groups[1].Value, 16) << 4)
-                    | Convert.ToInt32(preferred.Groups[2].Value, 16);
-                var station = ParseInteger(preferred.Groups[3].Value);
-                hops.Add(ValidateHop(link, station, nameof(text)));
+                var page = ParseDecimal(preferred.Groups[1].Value, nameof(text));
+                var line = ParseDecimal(preferred.Groups[2].Value, nameof(text));
+                ValidateComponent(page, nameof(text));
+                ValidateComponent(line, nameof(text));
+                var station = ParseDecimal(preferred.Groups[3].Value, nameof(text));
+                hops.Add(ValidateHop((page << 4) | line, station, nameof(text)));
                 continue;
             }
 
-            var compact = CompactPattern.Match(item);
-            if (compact.Success)
+            var component = ComponentPattern.Match(item);
+            if (component.Success)
             {
-                var link = (Convert.ToInt32(compact.Groups[1].Value, 16) << 4)
-                    | Convert.ToInt32(compact.Groups[2].Value, 16);
-                var station = ParseInteger(compact.Groups[3].Value);
-                hops.Add(ValidateHop(link, station, nameof(text)));
+                var page = ParseDecimal(component.Groups[1].Value, nameof(text));
+                var line = ParseDecimal(component.Groups[2].Value, nameof(text));
+                ValidateComponent(page, nameof(text));
+                ValidateComponent(line, nameof(text));
+                var station = ParseDecimal(component.Groups[3].Value, nameof(text));
+                hops.Add(ValidateHop((page << 4) | line, station, nameof(text)));
                 continue;
             }
 
-            var separator = item.IndexOf(':');
-            if (separator < 0)
+            var direct = DirectPattern.Match(item);
+            if (!direct.Success)
             {
                 throw new ArgumentException("each hop must be LINK:STATION or P1-L2:N2", nameof(text));
             }
-
-            var linkText = item[..separator];
-            var stationText = item[(separator + 1)..];
-            hops.Add(ValidateHop(ParseInteger(linkText), ParseInteger(stationText), nameof(text)));
+            hops.Add(ValidateHop(
+                ParseDecimal(direct.Groups[1].Value, nameof(text)),
+                ParseDecimal(direct.Groups[2].Value, nameof(text)),
+                nameof(text)));
         }
 
         if (hops.Count == 0)
@@ -110,7 +118,7 @@ public static class ToyopucRelay
     public static string FormatRelayHop(int linkNo, int stationNo)
     {
         (linkNo, stationNo) = ValidateHop(linkNo, stationNo, nameof(linkNo));
-        return $"P{(linkNo >> 4) & 0x0F:X}-L{linkNo & 0x0F:X}:N{stationNo} (0x{linkNo:X2}:0x{stationNo:X4})";
+        return $"P{(linkNo >> 4) & 0x0F}-L{linkNo & 0x0F}:N{stationNo}";
     }
 
     public static (ResponseFrame Response, byte[] Padding) ParseRelayInnerResponse(byte[] innerRaw)
@@ -169,14 +177,19 @@ public static class ToyopucRelay
         return (layers, current);
     }
 
-    private static int ParseInteger(string value)
+    private static int ParseDecimal(string value, string parameterName)
     {
-        if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed))
         {
-            return Convert.ToInt32(value, 16);
+            throw new ArgumentOutOfRangeException(parameterName, "relay values must fit in a signed 32-bit decimal integer");
         }
+        return parsed;
+    }
 
-        return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
+    private static void ValidateComponent(int value, string parameterName)
+    {
+        if (value is < 0 or > 15)
+            throw new ArgumentOutOfRangeException(parameterName, "relay P and L components must be in the range 0-15");
     }
 
     private static (int LinkNo, int StationNo) ValidateHop(int linkNo, int stationNo, string parameterName)

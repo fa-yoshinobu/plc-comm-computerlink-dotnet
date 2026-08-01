@@ -132,6 +132,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     public void RelayWrite(object hops, object device, object value)
     {
         var resolved = ResolveDeviceObject(device);
+        RequireGenericWriteDevice(resolved);
         if (resolved.Unit == "bit")
         {
             if (TryEnumerateSequence(value, out var bitValues))
@@ -227,7 +228,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             throw new ArgumentException("ReadFr() requires an FR word device such as FR000000", nameof(device));
         }
 
-        return ReadOne(resolved);
+        return ExecuteSynchronousExclusive(() => ReadOne(resolved));
     }
 
     public object[] ReadFr(object device, int count)
@@ -248,7 +249,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             throw new ArgumentException("RelayReadFr() requires an FR word device such as FR000000", nameof(device));
         }
 
-        return RelayReadOne(hops, resolved);
+        return ExecuteSynchronousExclusive(() => RelayReadOne(hops, resolved));
     }
 
     public object[] RelayReadFr(object hops, object device, int count)
@@ -325,10 +326,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
     public void Write(object device, object value)
     {
         var resolved = ResolveDeviceObject(device);
-        if (resolved.Area == "FR")
-        {
-            RaiseGenericFrWriteError();
-        }
+        RequireGenericWriteDevice(resolved);
 
         if (resolved.Unit == "bit")
         {
@@ -436,6 +434,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
             foreach (var item in collection)
             {
                 var device = ResolveDeviceObject(item.Key);
+                RequireGenericWriteDevice(device);
                 resolved[index++] = (device, NormalizeDeviceValue(device, item.Value));
             }
 
@@ -446,6 +445,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         foreach (var item in items)
         {
             var device = ResolveDeviceObject(item.Key);
+            RequireGenericWriteDevice(device);
             list.Add((device, NormalizeDeviceValue(device, item.Value)));
         }
 
@@ -1196,10 +1196,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 return;
             case "basic-byte":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildMultiByteWrite(CollectBasicAddressValues(items)));
-                    EnsureCommand(response, 0x25, "Unexpected CMD in relay multi-byte-write response");
                     return;
                 }
             case "ext-word":
@@ -1216,10 +1215,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 return;
             case "pc10-bit":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiBitPayload(CollectAddress32BitValues(items))));
-                    EnsureCommand(response, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
                     return;
                 }
             case "pc10-byte":
@@ -1250,19 +1248,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
         if (TryGetConsecutiveStart(devices, static device => device.BasicAddress, 1, out var startAddress))
         {
             var response = SendViaRelayRead(hops, ToyopucProtocol.BuildWordRead(startAddress, devices.Count));
-            EnsureCommand(response, 0x1C, "Unexpected CMD in relay word-read response");
             return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
         }
 
         var multiResponse = SendViaRelayRead(hops, ToyopucProtocol.BuildMultiWordRead(CollectBasicAddresses(devices)));
-        EnsureCommand(multiResponse, 0x22, "Unexpected CMD in relay multi-word-read response");
         return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(multiResponse.Data));
     }
 
     private object[] RelayReadBasicByteBatch(object hops, IReadOnlyList<ResolvedDevice> devices)
     {
         var response = SendViaRelayRead(hops, ToyopucProtocol.BuildMultiByteRead(CollectBasicAddresses(devices)));
-        EnsureCommand(response, 0x24, "Unexpected CMD in relay multi-byte-read response");
         return BoxBytes(response.Data);
     }
 
@@ -1287,7 +1282,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
             && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var startAddress))
         {
             var response = SendViaRelayRead(hops, ToyopucProtocol.BuildExtWordRead(number, startAddress, devices.Count));
-            EnsureCommand(response, 0x94, "Unexpected CMD in relay ext word-read response");
             return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
         }
 
@@ -1297,7 +1291,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 Array.Empty<(int No, int Bit, int Address)>(),
                 Array.Empty<(int No, int Address)>(),
                 CollectNoWordMonitorAddresses(devices)));
-        EnsureCommand(responseMulti, 0x98, "Unexpected CMD in relay ext multi-read response");
         return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(responseMulti.Data));
     }
 
@@ -1322,7 +1315,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
             && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var startAddress))
         {
             var response = SendViaRelayRead(hops, ToyopucProtocol.BuildExtByteRead(number, startAddress, devices.Count));
-            EnsureCommand(response, 0x96, "Unexpected CMD in relay ext byte-read response");
             return BoxBytes(response.Data);
         }
 
@@ -1332,7 +1324,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 Array.Empty<(int No, int Bit, int Address)>(),
                 CollectNoAddresses(devices),
                 Array.Empty<(int No, int Address)>()));
-        EnsureCommand(responseMulti, 0x98, "Unexpected CMD in relay ext multi-read response");
         return BoxBytes(responseMulti.Data);
     }
 
@@ -1353,7 +1344,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                 CollectNoBitAddresses(devices),
                 Array.Empty<(int No, int Address)>(),
                 Array.Empty<(int No, int Address)>()));
-        EnsureCommand(response, 0x98, "Unexpected CMD in relay ext multi-read response");
         return BoxBooleanBits(ParseExtMultiBitData(response.Data, devices.Count));
     }
 
@@ -1378,7 +1368,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
         if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 2, out var startAddress))
         {
             var response = SendViaRelayRead(hops, ToyopucProtocol.BuildPc10BlockRead(startAddress, devices.Count * 2));
-            EnsureCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
             return BoxWords(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
         }
 
@@ -1389,7 +1378,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
         }
 
         var responseMulti = SendViaRelayRead(hops, ToyopucProtocol.BuildPc10MultiRead(Pc10Payloads.BuildMultiWordReadPayload(CollectAddress32Values(devices))));
-        EnsureCommand(responseMulti, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
         return BoxWords(ParsePc10MultiWordData(responseMulti.Data, devices.Count));
     }
 
@@ -1398,7 +1386,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var response = SendViaRelayRead(
             hops,
             ToyopucProtocol.BuildPc10MultiRead(Pc10Payloads.BuildMultiBitReadPayload(CollectAddress32Values(devices))));
-        EnsureCommand(response, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
         return BoxBooleanBits(ParsePc10MultiBitData(response.Data, devices.Count));
     }
 
@@ -1417,7 +1404,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
         if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(devices, 1, out var startAddress))
         {
             var response = SendViaRelayRead(hops, ToyopucProtocol.BuildPc10BlockRead(startAddress, devices.Count));
-            EnsureCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
             return BoxBytes(response.Data);
         }
 
@@ -1441,13 +1427,11 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var values = CollectIntValues(items);
         if (TryGetConsecutiveStart(items, static item => item.Device.BasicAddress, 1, out var startAddress))
         {
-            var response = SendViaRelay(hops, ToyopucProtocol.BuildWordWrite(startAddress, values));
-            EnsureCommand(response, 0x1D, "Unexpected CMD in relay word-write response");
+            _ = SendViaRelay(hops, ToyopucProtocol.BuildWordWrite(startAddress, values));
             return;
         }
 
-        var multiResponse = SendViaRelay(hops, ToyopucProtocol.BuildMultiWordWrite(CollectBasicAddressValues(items)));
-        EnsureCommand(multiResponse, 0x23, "Unexpected CMD in relay multi-word-write response");
+        _ = SendViaRelay(hops, ToyopucProtocol.BuildMultiWordWrite(CollectBasicAddressValues(items)));
     }
 
     private void WriteExtWordBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1472,18 +1456,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
         if (TryGetUniformNumber(items, out var number)
             && TryGetConsecutiveStart(items, static item => item.Device.Address, 1, out var startAddress))
         {
-            var response = SendViaRelay(hops, ToyopucProtocol.BuildExtWordWrite(number, startAddress, values));
-            EnsureCommand(response, 0x95, "Unexpected CMD in relay ext word-write response");
+            _ = SendViaRelay(hops, ToyopucProtocol.BuildExtWordWrite(number, startAddress, values));
             return;
         }
 
-        var responseMulti = SendViaRelay(
+        _ = SendViaRelay(
             hops,
             ToyopucProtocol.BuildExtMultiWrite(
                 Array.Empty<(int No, int Bit, int Address, int Value)>(),
                 Array.Empty<(int No, int Address, int Value)>(),
                 CollectNoWordMonitorAddressValues(items)));
-        EnsureCommand(responseMulti, 0x99, "Unexpected CMD in relay ext multi-write response");
     }
 
     private void WriteExtByteBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1508,18 +1490,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
         if (TryGetUniformNumber(items, out var number)
             && TryGetConsecutiveStart(items, static item => item.Device.Address, 1, out var startAddress))
         {
-            var response = SendViaRelay(hops, ToyopucProtocol.BuildExtByteWrite(number, startAddress, values));
-            EnsureCommand(response, 0x97, "Unexpected CMD in relay ext byte-write response");
+            _ = SendViaRelay(hops, ToyopucProtocol.BuildExtByteWrite(number, startAddress, values));
             return;
         }
 
-        var responseMulti = SendViaRelay(
+        _ = SendViaRelay(
             hops,
             ToyopucProtocol.BuildExtMultiWrite(
                 Array.Empty<(int No, int Bit, int Address, int Value)>(),
                 CollectNoAddressValues(items),
                 Array.Empty<(int No, int Address, int Value)>()));
-        EnsureCommand(responseMulti, 0x99, "Unexpected CMD in relay ext multi-write response");
     }
 
     private void WriteExtBitBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1532,13 +1512,12 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void RelayWriteExtBitBatch(object hops, IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
-        var response = SendViaRelay(
+        _ = SendViaRelay(
             hops,
             ToyopucProtocol.BuildExtMultiWrite(
                 CollectNoBitAddressValues(items),
                 Array.Empty<(int No, int Address, int Value)>(),
                 Array.Empty<(int No, int Address, int Value)>()));
-        EnsureCommand(response, 0x99, "Unexpected CMD in relay ext multi-write response");
     }
 
     private void WritePc10WordBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1558,15 +1537,13 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var values = CollectIntValues(items);
         if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 2, out var startAddress))
         {
-            var response = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockWrite(startAddress, Pc10Payloads.PackWordValues(values)));
-            EnsureCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
+            _ = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockWrite(startAddress, Pc10Payloads.PackWordValues(values)));
             return;
         }
 
-        var responseMulti = SendViaRelay(
+        _ = SendViaRelay(
             hops,
             ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiWordPayload(CollectAddress32WordValues(items))));
-        EnsureCommand(responseMulti, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
     }
 
     private void WritePc10ByteBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1587,10 +1564,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
     {
         if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 1, out var startAddress))
         {
-            var response = SendViaRelay(
+            _ = SendViaRelay(
                 hops,
                 ToyopucProtocol.BuildPc10BlockWrite(startAddress, CollectByteValues(items)));
-            EnsureCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
             return;
         }
 
@@ -2079,10 +2055,13 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return RequireBitValue(value);
     }
 
-    private static void RaiseGenericFrWriteError()
+    internal static void RequireGenericWriteDevice(ResolvedDevice resolved)
     {
-        throw new ArgumentException(
-            "Generic FR writes are disabled; use WriteFrWorkArea() and CommitFrBlock() as separate operations.");
+        if (resolved.Area == "FR")
+        {
+            throw new ArgumentException(
+                "Generic FR writes are disabled; use WriteFrWorkArea() and CommitFrBlock() as separate operations.");
+        }
     }
 
     private object ReadOne(ResolvedDevice resolved)
@@ -2118,29 +2097,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
             case "basic-bit":
                 {
                     var response = SendViaRelayRead(hops, ToyopucProtocol.BuildBitRead(Require(resolved.BasicAddress, "basic_addr")));
-                    EnsureCommand(response, 0x20, "Unexpected CMD in relay bit-read response");
-                    if (response.Data.Length != 1)
-                    {
-                        throw new ToyopucProtocolError("Relay bit-read response must be 1 byte");
-                    }
-
                     return (response.Data[0] & 0x01) != 0;
                 }
             case "basic-word":
                 {
                     var response = SendViaRelayRead(hops, ToyopucProtocol.BuildWordRead(Require(resolved.BasicAddress, "basic_addr"), 1));
-                    EnsureCommand(response, 0x1C, "Unexpected CMD in relay word-read response");
                     return ToyopucProtocol.UnpackU16LittleEndian(response.Data)[0];
                 }
             case "basic-byte":
                 {
                     var response = SendViaRelayRead(hops, ToyopucProtocol.BuildByteRead(Require(resolved.BasicAddress, "basic_addr"), 1));
-                    EnsureCommand(response, 0x1E, "Unexpected CMD in relay byte-read response");
-                    if (response.Data.Length != 1)
-                    {
-                        throw new ToyopucProtocolError("Relay byte-read response must be 1 byte");
-                    }
-
                     return response.Data[0];
                 }
             case "program-bit":
@@ -2151,12 +2117,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                             new[] { (Require(resolved.No, "program number"), Require(resolved.BitNo, "program bit"), Require(resolved.Address, "program addr")) },
                             Array.Empty<(int No, int Address)>(),
                             Array.Empty<(int No, int Address)>()));
-                    EnsureCommand(response, 0x98, "Unexpected CMD in relay multi-read response");
-                    if (response.Data.Length == 0)
-                    {
-                        throw new ToyopucProtocolError("Relay multi-read response missing bit payload");
-                    }
-
                     return (response.Data[0] & 0x01) != 0;
                 }
             case "program-word":
@@ -2164,7 +2124,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                     var response = SendViaRelayRead(
                         hops,
                         ToyopucProtocol.BuildExtWordRead(Require(resolved.No, "program number"), Require(resolved.Address, "program addr"), 1));
-                    EnsureCommand(response, 0x94, "Unexpected CMD in relay ext word-read response");
                     return ToyopucProtocol.UnpackU16LittleEndian(response.Data)[0];
                 }
             case "program-byte":
@@ -2172,12 +2131,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                     var response = SendViaRelayRead(
                         hops,
                         ToyopucProtocol.BuildExtByteRead(Require(resolved.No, "program number"), Require(resolved.Address, "program addr"), 1));
-                    EnsureCommand(response, 0x96, "Unexpected CMD in relay ext byte-read response");
-                    if (response.Data.Length != 1)
-                    {
-                        throw new ToyopucProtocolError("Relay ext byte-read response must be 1 byte");
-                    }
-
                     return response.Data[0];
                 }
             case "ext-bit":
@@ -2188,12 +2141,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                             new[] { (Require(resolved.No, "extended number"), Require(resolved.BitNo, "extended bit"), Require(resolved.Address, "extended addr")) },
                             Array.Empty<(int No, int Address)>(),
                             Array.Empty<(int No, int Address)>()));
-                    EnsureCommand(response, 0x98, "Unexpected CMD in relay multi-read response");
-                    if (response.Data.Length == 0)
-                    {
-                        throw new ToyopucProtocolError("Relay multi-read response missing bit payload");
-                    }
-
                     return (response.Data[0] & 0x01) != 0;
                 }
             case "ext-word":
@@ -2201,7 +2148,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                     var response = SendViaRelayRead(
                         hops,
                         ToyopucProtocol.BuildExtWordRead(Require(resolved.No, "extended number"), Require(resolved.Address, "extended addr"), 1));
-                    EnsureCommand(response, 0x94, "Unexpected CMD in relay ext word-read response");
                     return ToyopucProtocol.UnpackU16LittleEndian(response.Data)[0];
                 }
             case "ext-byte":
@@ -2209,12 +2155,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
                     var response = SendViaRelayRead(
                         hops,
                         ToyopucProtocol.BuildExtByteRead(Require(resolved.No, "extended number"), Require(resolved.Address, "extended addr"), 1));
-                    EnsureCommand(response, 0x96, "Unexpected CMD in relay ext byte-read response");
-                    if (response.Data.Length != 1)
-                    {
-                        throw new ToyopucProtocolError("Relay ext byte-read response must be 1 byte");
-                    }
-
                     return response.Data[0];
                 }
             case "pc10-bit":
@@ -2222,34 +2162,16 @@ public partial class ToyopucDeviceClient : ToyopucClient
                     var response = SendViaRelayRead(
                         hops,
                         ToyopucProtocol.BuildPc10MultiRead(Pc10Payloads.BuildMultiBitReadPayload(new[] { Require(resolved.Address32, "pc10 addr32") })));
-                    EnsureCommand(response, 0xC4, "Unexpected CMD in relay PC10 multi-read response");
-                    if (response.Data.Length < 5)
-                    {
-                        throw new ToyopucProtocolError("Relay PC10 bit-read response too short");
-                    }
-
                     return (response.Data[4] & 0x01) != 0;
                 }
             case "pc10-word":
                 {
                     var response = SendViaRelayRead(hops, ToyopucProtocol.BuildPc10BlockRead(Require(resolved.Address32, "pc10 addr32"), 2));
-                    EnsureCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
-                    if (response.Data.Length < 2)
-                    {
-                        throw new ToyopucProtocolError("Relay PC10 word-read response too short");
-                    }
-
                     return response.Data[0] | (response.Data[1] << 8);
                 }
             case "pc10-byte":
                 {
                     var response = SendViaRelayRead(hops, ToyopucProtocol.BuildPc10BlockRead(Require(resolved.Address32, "pc10 addr32"), 1));
-                    EnsureCommand(response, 0xC2, "Unexpected CMD in relay PC10 block-read response");
-                    if (response.Data.Length < 1)
-                    {
-                        throw new ToyopucProtocolError("Relay PC10 byte-read response too short");
-                    }
-
                     return response.Data[0];
                 }
             default:
@@ -2259,10 +2181,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void WriteOne(ResolvedDevice resolved, object value)
     {
-        if (resolved.Area == "FR")
-        {
-            RaiseGenericFrWriteError();
-        }
+        RequireGenericWriteDevice(resolved);
         value = NormalizeDeviceValue(resolved, value);
 
         switch (resolved.Scheme)
@@ -2316,103 +2235,92 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void RelayWriteOne(object hops, ResolvedDevice resolved, object value)
     {
+        RequireGenericWriteDevice(resolved);
         value = NormalizeDeviceValue(resolved, value);
         switch (resolved.Scheme)
         {
             case "basic-bit":
                 {
-                    var response = SendViaRelay(hops, ToyopucProtocol.BuildBitWrite(Require(resolved.BasicAddress, "basic_addr"), ToInt32Invariant(value)));
-                    EnsureCommand(response, 0x21, "Unexpected CMD in relay bit-write response");
+                    _ = SendViaRelay(hops, ToyopucProtocol.BuildBitWrite(Require(resolved.BasicAddress, "basic_addr"), ToInt32Invariant(value)));
                     return;
                 }
             case "basic-word":
                 {
-                    var response = SendViaRelay(hops, ToyopucProtocol.BuildWordWrite(Require(resolved.BasicAddress, "basic_addr"), new[] { ToInt32Invariant(value) }));
-                    EnsureCommand(response, 0x1D, "Unexpected CMD in relay word-write response");
+                    _ = SendViaRelay(hops, ToyopucProtocol.BuildWordWrite(Require(resolved.BasicAddress, "basic_addr"), new[] { ToInt32Invariant(value) }));
                     return;
                 }
             case "basic-byte":
                 {
-                    var response = SendViaRelay(hops, ToyopucProtocol.BuildByteWrite(Require(resolved.BasicAddress, "basic_addr"), new[] { ToInt32Invariant(value) }));
-                    EnsureCommand(response, 0x1F, "Unexpected CMD in relay byte-write response");
+                    _ = SendViaRelay(hops, ToyopucProtocol.BuildByteWrite(Require(resolved.BasicAddress, "basic_addr"), new[] { ToInt32Invariant(value) }));
                     return;
                 }
             case "program-bit":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtMultiWrite(
                             new[] { (Require(resolved.No, "program number"), Require(resolved.BitNo, "program bit"), Require(resolved.Address, "program addr"), ToInt32Invariant(value)) },
                             Array.Empty<(int No, int Address, int Value)>(),
                             Array.Empty<(int No, int Address, int Value)>()));
-                    EnsureCommand(response, 0x99, "Unexpected CMD in relay multi-write response");
                     return;
                 }
             case "program-word":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtWordWrite(Require(resolved.No, "program number"), Require(resolved.Address, "program addr"), new[] { ToInt32Invariant(value) }));
-                    EnsureCommand(response, 0x95, "Unexpected CMD in relay ext word-write response");
                     return;
                 }
             case "program-byte":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtByteWrite(Require(resolved.No, "program number"), Require(resolved.Address, "program addr"), new[] { ToInt32Invariant(value) }));
-                    EnsureCommand(response, 0x97, "Unexpected CMD in relay ext byte-write response");
                     return;
                 }
             case "ext-bit":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtMultiWrite(
                             new[] { (Require(resolved.No, "extended number"), Require(resolved.BitNo, "extended bit"), Require(resolved.Address, "extended addr"), ToInt32Invariant(value)) },
                             Array.Empty<(int No, int Address, int Value)>(),
                             Array.Empty<(int No, int Address, int Value)>()));
-                    EnsureCommand(response, 0x99, "Unexpected CMD in relay multi-write response");
                     return;
                 }
             case "ext-word":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtWordWrite(Require(resolved.No, "extended number"), Require(resolved.Address, "extended addr"), new[] { ToInt32Invariant(value) }));
-                    EnsureCommand(response, 0x95, "Unexpected CMD in relay ext word-write response");
                     return;
                 }
             case "ext-byte":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildExtByteWrite(Require(resolved.No, "extended number"), Require(resolved.Address, "extended addr"), new[] { ToInt32Invariant(value) }));
-                    EnsureCommand(response, 0x97, "Unexpected CMD in relay ext byte-write response");
                     return;
                 }
             case "pc10-bit":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiBitPayload(new[] { (Require(resolved.Address32, "pc10 addr32"), ToInt32Invariant(value)) })));
-                    EnsureCommand(response, 0xC5, "Unexpected CMD in relay PC10 multi-write response");
                     return;
                 }
             case "pc10-word":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildPc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), ToyopucProtocol.PackU16LittleEndian(ToInt32Invariant(value))));
-                    EnsureCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
                     return;
                 }
             case "pc10-byte":
                 {
-                    var response = SendViaRelay(
+                    _ = SendViaRelay(
                         hops,
                         ToyopucProtocol.BuildPc10BlockWrite(Require(resolved.Address32, "pc10 addr32"), new[] { (byte)ToInt32Invariant(value) }));
-                    EnsureCommand(response, 0xC3, "Unexpected CMD in relay PC10 block-write response");
                     return;
                 }
             default:

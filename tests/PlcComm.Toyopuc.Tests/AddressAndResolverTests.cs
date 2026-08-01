@@ -307,6 +307,62 @@ public class AddressAndResolverTests
     }
 
     [Fact]
+    public void RelayHopText_IsDecimalOnlyAndFormatsCanonically()
+    {
+        Assert.Equal([(0xAB, 20)], ToyopucRelay.ParseRelayHops("P10-L11:N20"));
+        Assert.Equal([(0xAB, 32)], ToyopucRelay.ParseRelayHops("171:32"));
+        Assert.Equal("P10-L11:N20", ToyopucRelay.FormatRelayHop(0xAB, 20));
+
+        Assert.Throws<ArgumentException>(() => ToyopucRelay.ParseRelayHops("0x12:0x20"));
+        Assert.Throws<ArgumentException>(() => ToyopucRelay.ParseRelayHops("P1-LA:N20"));
+        Assert.Throws<ArgumentException>(() => ToyopucRelay.ParseRelayHops("P1-L2:Nff"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ToyopucRelay.ParseRelayHops("P16-L0:N1"));
+    }
+
+    [Fact]
+    public void RelayBuilder_AcceptsEquivalentFullAndZeroLowLengthTrimmedRequests()
+    {
+        var complete = ToyopucProtocol.BuildByteWrite(0x1234, new int[253]);
+        var completeRequest = ToyopucProtocol.ParseRelayInnerRequest(complete);
+        var trimmedRequest = ToyopucProtocol.ParseRelayInnerRequest(complete[2..]);
+
+        Assert.Equal(0, complete[2]);
+        Assert.Equal(completeRequest.Command, trimmedRequest.Command);
+        Assert.Equal(completeRequest.Body, trimmedRequest.Body);
+        Assert.False(completeRequest.IsReadOnly);
+        Assert.False(trimmedRequest.IsReadOnly);
+        Assert.Equal(Array.Empty<byte>(), completeRequest.ExpectedStateResponseData);
+        Assert.Null(completeRequest.ExpectedReadResponseLength);
+        Assert.Equal(
+            ToyopucProtocol.BuildRelayCommand(0x12, 2, complete),
+            ToyopucProtocol.BuildRelayCommand(0x12, 2, complete[2..]));
+    }
+
+    [Fact]
+    public void RelayParser_ClassifiesReadAndRejectsMalformedFormsBeforeTransport()
+    {
+        var full = ToyopucProtocol.BuildWordRead(0x1234, 2);
+        var request = ToyopucProtocol.ParseRelayInnerRequest(full);
+
+        Assert.True(request.IsReadOnly);
+        Assert.Equal(0x1C, request.Command);
+        Assert.Equal(full[5..], request.Body);
+        Assert.Equal(4, request.ExpectedReadResponseLength);
+        Assert.Null(request.ExpectedStateResponseData);
+
+        var wrongResponseCode = full.ToArray();
+        wrongResponseCode[1] = 0x10;
+        var wrongFrameType = full.ToArray();
+        wrongFrameType[0] = 0x01;
+        var wrongDeclaredLength = full.ToArray();
+        wrongDeclaredLength[2]++;
+        Assert.Throws<ArgumentException>(() => ToyopucProtocol.ParseRelayInnerRequest(wrongResponseCode));
+        Assert.Throws<ArgumentException>(() => ToyopucProtocol.ParseRelayInnerRequest(wrongFrameType));
+        Assert.Throws<ArgumentException>(() => ToyopucProtocol.ParseRelayInnerRequest(wrongDeclaredLength));
+        Assert.Throws<ArgumentException>(() => ToyopucProtocol.ParseRelayInnerRequest([0x02, 0x00, 0x1C]));
+    }
+
+    [Fact]
     public void DeviceCatalog_ReturnsExpectedAreaMetadata()
     {
         var directAreas = ToyopucDeviceCatalog.GetAreas(prefixed: false, GenericProfile);

@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### BREAKING
 
+- Library: Named, aggregate, typed dword/float, bit-in-word, direct, relay, sync, and async generic write paths now reject FR addresses before transport. Migrate intentional FR updates to `WriteFrWorkArea` / `RelayWriteFrWorkArea`; low-level numeric/raw and explicit FR APIs remain available.
+- Library: Relay route strings and `FormatRelayHop` are now decimal-only. Migrate hexadecimal route text such as `PA-LB:N20` or `0xAB:0x20` to `P10-L11:N20` or `171:32`.
 - Library: Removed `QueuedToyopucDeviceClient` and all queued-only extension overloads. `ToyopucClient` and `ToyopucDeviceClient` now provide the required per-instance arrival-order FIFO contract directly; migrate wrapper variables and constructors to the ordinary client.
 - Library: `ToyopucDeviceClientFactory.OpenAndConnectAsync` now returns `ToyopucDeviceClient`. The returned client retains the immutable `ToyopucRoute`, and ordinary high-level async methods automatically use its direct or relay route.
 - Library: Extended-area numbers, FR indices, PC10 addresses, bit ranges, write values, and polling intervals now reject values that cannot be represented by their protocol field instead of truncating, wrapping, or accepting non-finite values.
@@ -44,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Library: Full and header-trimmed relay requests now share one strict parser, including a zero length-low byte, and every command-specific response validator runs inside the post-send lifecycle boundary. Malformed reads retire the transport and raise `ToyopucProtocolError`; malformed state-changing calls raise outcome-unknown with the protocol error preserved as the cause.
 - Library: Explicit direct and relay read aggregates now validate their complete plan before transport and split only when required by protocol capacity, address block, or route boundaries. Every aggregate preserves caller order in one FIFO turn, remains non-atomic across PLC scan instants, and withholds partial results when a later request fails; writes that require multiple requests remain pre-transport errors.
 - Library: The transaction deadline now includes lazy connection, send, receive, relay unwrapping, exact command-specific response validation, and decoding. No operation, including a read, is automatically retried after sending may have started; configured retries are restricted to failures proven before send.
 - Library: Concurrent async operations now use an explicit FIFO admission queue. Waiting cancellation sends nothing, admitted collections and relay hops are snapshotted, nested compound helpers do not deadlock, and `Close`/dispose reject active and queued work from the retired transport generation.

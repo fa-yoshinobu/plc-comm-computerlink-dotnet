@@ -14,6 +14,23 @@ public sealed class ExampleCliContractTests
     private static readonly SemaphoreSlim BuildGate = new(1, 1);
     private static readonly HashSet<string> BuiltProjects = new(StringComparer.OrdinalIgnoreCase);
 
+    [Fact]
+    public void ReconnectSamples_ClassifyByExceptionTypeWithoutMessageMatching()
+    {
+        var pollingSource = File.ReadAllText(Path.Combine(
+            RepoRoot,
+            "examples/PlcComm.Toyopuc.PollingReconnectSample/Program.cs"));
+        var policySource = File.ReadAllText(Path.Combine(
+            RepoRoot,
+            "examples/OperationalCommon/OperationalCommon.cs"));
+
+        Assert.Contains("ReconnectPolicy", pollingSource, StringComparison.Ordinal);
+        Assert.Contains("ToyopucTransportError", policySource, StringComparison.Ordinal);
+        Assert.Contains("ToyopucTimeoutError", policySource, StringComparison.Ordinal);
+        Assert.DoesNotContain("ex.Message ==", pollingSource + policySource, StringComparison.Ordinal);
+        Assert.DoesNotContain("Connection closed while", pollingSource + policySource, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(
         @"examples\PlcComm.Toyopuc.HighLevelSample\PlcComm.Toyopuc.HighLevelSample.csproj",

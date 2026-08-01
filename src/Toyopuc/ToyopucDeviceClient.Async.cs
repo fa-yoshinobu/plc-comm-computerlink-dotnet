@@ -42,6 +42,7 @@ public partial class ToyopucDeviceClient
 
         var resolved = ResolveDeviceObject(device);
         EnsureWordResolvedDevice(resolved, nameof(device), "WriteDWords()");
+        RequireGenericWriteDevice(resolved);
         WriteResolvedWordValues(resolved, PackUInt32LowWordFirstToWords(values));
     }
 
@@ -82,6 +83,7 @@ public partial class ToyopucDeviceClient
 
         var resolved = ResolveDeviceObject(device);
         EnsureWordResolvedDevice(resolved, nameof(device), "WriteFloat32s()");
+        RequireGenericWriteDevice(resolved);
         WriteResolvedWordValues(resolved, PackFloat32LowWordFirstToWords(values));
     }
 
@@ -111,6 +113,7 @@ public partial class ToyopucDeviceClient
     {
         var resolved = ResolveDeviceObject(device);
         EnsureWordResolvedDevice(resolved, nameof(device), "RelayWriteDWords()");
+        RequireGenericWriteDevice(resolved);
         RelayWriteResolvedWordValues(hops, resolved, PackUInt32LowWordFirstToWords(values));
     }
 
@@ -140,6 +143,7 @@ public partial class ToyopucDeviceClient
     {
         var resolved = ResolveDeviceObject(device);
         EnsureWordResolvedDevice(resolved, nameof(device), "RelayWriteFloat32s()");
+        RequireGenericWriteDevice(resolved);
         RelayWriteResolvedWordValues(hops, resolved, PackFloat32LowWordFirstToWords(values));
     }
 
@@ -516,6 +520,11 @@ public partial class ToyopucDeviceClient
 
     private int[] ReadResolvedWordValues(ResolvedDevice resolved, int wordCount)
     {
+        return ExecuteSynchronousExclusive(() => ReadResolvedWordValuesCore(resolved, wordCount));
+    }
+
+    private int[] ReadResolvedWordValuesCore(ResolvedDevice resolved, int wordCount)
+    {
         if (wordCount < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(wordCount), "wordCount must be >= 1");
@@ -541,6 +550,11 @@ public partial class ToyopucDeviceClient
     }
 
     private int[] RelayReadResolvedWordValues(object hops, ResolvedDevice resolved, int wordCount)
+    {
+        return ExecuteSynchronousExclusive(() => RelayReadResolvedWordValuesCore(hops, resolved, wordCount));
+    }
+
+    private int[] RelayReadResolvedWordValuesCore(object hops, ResolvedDevice resolved, int wordCount)
     {
         if (wordCount < 1)
         {
@@ -574,11 +588,7 @@ public partial class ToyopucDeviceClient
             throw new ArgumentException("values must not be empty", nameof(wordValues));
         }
 
-        if (resolved.Area == "FR")
-        {
-            WriteFrWorkArea(resolved, wordValues.ToArray());
-            return;
-        }
+        RequireGenericWriteDevice(resolved);
 
         var boxedValues = new object[wordValues.Count];
         for (var i = 0; i < wordValues.Count; i++)
@@ -598,11 +608,7 @@ public partial class ToyopucDeviceClient
             throw new ArgumentException("values must not be empty", nameof(wordValues));
         }
 
-        if (resolved.Area == "FR")
-        {
-            RelayWriteFrWorkArea(hops, resolved, wordValues.ToArray());
-            return;
-        }
+        RequireGenericWriteDevice(resolved);
 
         var boxedValues = new object[wordValues.Count];
         for (var i = 0; i < wordValues.Count; i++)
