@@ -2091,6 +2091,175 @@ public sealed class OverhaulContractTests
         await serverTask;
     }
 
+    [Theory]
+    [InlineData(ToyopucTransportMode.Tcp, false, false)]
+    [InlineData(ToyopucTransportMode.Tcp, false, true)]
+    [InlineData(ToyopucTransportMode.Tcp, true, false)]
+    [InlineData(ToyopucTransportMode.Tcp, true, true)]
+    [InlineData(ToyopucTransportMode.Udp, false, false)]
+    [InlineData(ToyopucTransportMode.Udp, false, true)]
+    [InlineData(ToyopucTransportMode.Udp, true, false)]
+    [InlineData(ToyopucTransportMode.Udp, true, true)]
+    public async Task DataBearingNgCommandMismatchIsCorrelatedBeforePlcError(
+        ToyopucTransportMode transport,
+        bool stateChanging,
+        bool asynchronous)
+    {
+        using var listener = transport == ToyopucTransportMode.Tcp
+            ? new TcpListener(IPAddress.Loopback, 0)
+            : null;
+        using var udp = transport == ToyopucTransportMode.Udp
+            ? new UdpClient(new IPEndPoint(IPAddress.Loopback, 0))
+            : null;
+        listener?.Start();
+        var port = transport == ToyopucTransportMode.Tcp
+            ? ((IPEndPoint)listener!.LocalEndpoint).Port
+            : ((IPEndPoint)udp!.Client.LocalEndPoint!).Port;
+        var requestCommand = stateChanging ? 0x1D : 0x1C;
+        var serverTask = Task.Run(async () =>
+        {
+            if (transport == ToyopucTransportMode.Tcp)
+            {
+                using (var first = await listener!.AcceptTcpClientAsync())
+                {
+                    await using var stream = first.GetStream();
+                    _ = await ReadFrameAsync(stream);
+                    await stream.WriteAsync(BuildNgResponse(requestCommand ^ 1, [0x5A]));
+                }
+                using var second = await listener!.AcceptTcpClientAsync();
+                await using var secondStream = second.GetStream();
+                _ = await ReadFrameAsync(secondStream);
+                await secondStream.WriteAsync(BuildResponse(0x1C, [0x34, 0x12]));
+            }
+            else
+            {
+                var first = await udp!.ReceiveAsync();
+                await udp.SendAsync(BuildNgResponse(requestCommand ^ 1, [0x5A]), first.RemoteEndPoint);
+                var second = await udp.ReceiveAsync();
+                await udp.SendAsync(BuildResponse(0x1C, [0x34, 0x12]), second.RemoteEndPoint);
+            }
+        });
+        await using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            transport,
+            timeout: TimeSpan.FromSeconds(2));
+
+        if (stateChanging)
+        {
+            var error = asynchronous
+                ? await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
+                    () => client.WriteWordsAsync(0x2000, [0x1234]))
+                : Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+                    () => client.WriteWords(0x2000, [0x1234]));
+            Assert.Equal(ToyopucOutcomeUnknownReason.MalformedResponse, error.Reason);
+            Assert.IsType<ToyopucProtocolError>(error.InnerException);
+        }
+        else if (asynchronous)
+        {
+            await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadWordsAsync(0x2000, 1));
+        }
+        else
+        {
+            Assert.Throws<ToyopucProtocolError>(() => client.ReadWords(0x2000, 1));
+        }
+
+        Assert.False(client.IsOpen);
+        Assert.Throws<ToyopucNotConnectedException>(() => client.ReadWords(0x2000, 1));
+        await client.OpenAsync();
+        var reopenedWords = await client.ReadWordsAsync(0x2000, 1);
+        Assert.Equal(new[] { 0x1234 }, reopenedWords);
+        await serverTask;
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeviceClientPreservesDataBearingNgCommandMismatchClassification(bool stateChanging)
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var requestCommand = stateChanging ? 0x1D : 0x1C;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            await using var stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            await stream.WriteAsync(BuildNgResponse(requestCommand ^ 1, [0x5A]));
+        });
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            timeout: TimeSpan.FromSeconds(2));
+
+        if (stateChanging)
+        {
+            var error = Assert.Throws<ToyopucOperationOutcomeUnknownException>(
+                () => client.Write("P1-D0000", 0x1234));
+            Assert.Equal(ToyopucOutcomeUnknownReason.MalformedResponse, error.Reason);
+            Assert.IsType<ToyopucProtocolError>(error.InnerException);
+        }
+        else
+        {
+            Assert.Throws<ToyopucProtocolError>(() => client.ReadOne("P1-D0000"));
+        }
+
+        Assert.False(client.IsOpen);
+        await serverTask;
+    }
+
+    [Theory]
+    [InlineData(ToyopucTransportMode.Tcp, false)]
+    [InlineData(ToyopucTransportMode.Tcp, true)]
+    [InlineData(ToyopucTransportMode.Udp, false)]
+    [InlineData(ToyopucTransportMode.Udp, true)]
+    public async Task NgResponseCommandRulesPreserveMatchingDataAndNoDataSpecialForm(
+        ToyopucTransportMode transport,
+        bool noDataSpecialForm)
+    {
+        using var listener = transport == ToyopucTransportMode.Tcp
+            ? new TcpListener(IPAddress.Loopback, 0)
+            : null;
+        using var udp = transport == ToyopucTransportMode.Udp
+            ? new UdpClient(new IPEndPoint(IPAddress.Loopback, 0))
+            : null;
+        listener?.Start();
+        var port = transport == ToyopucTransportMode.Tcp
+            ? ((IPEndPoint)listener!.LocalEndpoint).Port
+            : ((IPEndPoint)udp!.Client.LocalEndPoint!).Port;
+        var response = noDataSpecialForm
+            ? BuildNgResponse(0x5A, [])
+            : BuildNgResponse(0x1C, [0x5A]);
+        var serverTask = Task.Run(async () =>
+        {
+            if (transport == ToyopucTransportMode.Tcp)
+            {
+                using var server = await listener!.AcceptTcpClientAsync();
+                await using var stream = server.GetStream();
+                _ = await ReadFrameAsync(stream);
+                await stream.WriteAsync(response);
+            }
+            else
+            {
+                var request = await udp!.ReceiveAsync();
+                await udp.SendAsync(response, request.RemoteEndPoint);
+            }
+        });
+        using var client = new ToyopucClient(
+            "127.0.0.1",
+            port,
+            transport,
+            timeout: TimeSpan.FromSeconds(2));
+
+        var error = Assert.Throws<ToyopucPlcError>(() => client.ReadWords(0x2000, 1));
+        Assert.Contains("error_code=0x5A", error.Message, StringComparison.Ordinal);
+        Assert.True(client.IsOpen);
+        await serverTask;
+    }
+
     [Fact]
     public async Task StateChangingTrailingResponseData_IsMalformedUnknownOutcome()
     {
@@ -2392,6 +2561,20 @@ public sealed class OverhaulContractTests
             0x00,
             (byte)command,
             errorCode,
+        ];
+    }
+
+    private static byte[] BuildNgResponse(int command, byte[] data)
+    {
+        var length = checked(1 + data.Length);
+        return
+        [
+            ToyopucProtocol.FtResponse,
+            0x10,
+            (byte)(length & 0xFF),
+            (byte)(length >> 8),
+            (byte)command,
+            .. data,
         ];
     }
 }

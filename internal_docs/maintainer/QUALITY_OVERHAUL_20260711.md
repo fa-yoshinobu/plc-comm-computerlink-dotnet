@@ -724,3 +724,90 @@ Acceptance criteria:
 - [x] Live PLC checks are not required for a compile target/prerequisite change.
 - [x] User prerequisite guidance and changelog agree with the project files.
 - [x] Final sample acceptance criteria verified by the executed worktree and extracted source-archive gates.
+
+## GOAL-COMPUTERLINK-ERROR-CMD-CORRELATION-20260802 — Correlate data-bearing NG responses
+
+Stable identifier: `COMPUTERLINK-ERROR-CMD-CORRELATION-001`.
+
+Implementation scope: the shared .NET ComputerLink TCP and UDP response path,
+including synchronous and asynchronous low-level operations and the high-level
+device client paths that delegate to it.
+
+Target contract: when an NG response contains response data, the response
+command must be compared with the active request command before the PLC error
+is made definitive. A matching command retains the existing `ToyopucPlcError`
+classification and error detail. A mismatched command is a malformed response,
+invalidates the active transport generation, and requires explicit reopen
+before later communication. For a state-changing request, the mismatch produces
+`ToyopucOperationOutcomeUnknownException` with reason `MalformedResponse` and a
+`ToyopucProtocolError` cause. For a read-only request, it produces the existing
+protocol/malformed error classification and is never exposed as the current
+request's definitive PLC error.
+
+An NG response without response data is outside command correlation because
+the protocol's special no-data form can use the command field as its detailed
+error code. That form retains its current behavior and is not rejected merely
+because the field differs from the request command.
+
+Compatibility impact: data-bearing NG responses that identify another command
+are no longer reported as definitive PLC errors for the active request, and the
+affected transport cannot be reused. Applications that retry a state-changing
+operation based on the former PLC-error classification must instead treat its
+result as unknown. Matching data-bearing responses and the special no-data NG
+form remain compatible.
+
+Machine-verifiable acceptance criteria:
+
+1. TCP and UDP fixtures issue read-only and state-changing requests and return
+   an otherwise valid data-bearing NG response whose command differs from the
+   request; command correlation occurs before PLC-error construction.
+2. Every mismatched state-changing response produces
+   `ToyopucOperationOutcomeUnknownException` with reason `MalformedResponse`
+   and a `ToyopucProtocolError` cause, retires the transport generation, rejects
+   implicit reuse, and permits communication only after explicit reopen.
+3. Every mismatched read-only response produces `ToyopucProtocolError`, retires
+   the transport generation, and never exposes the response as a definitive
+   `ToyopucPlcError` for the active request.
+4. TCP and UDP data-bearing NG responses with a command exactly matching the
+   request retain the existing `ToyopucPlcError`, return the same detailed error
+   code, and preserve the established definitive-result connection behavior.
+5. TCP and UDP no-data special NG responses with a command-field value that
+   differs from the request retain their existing detailed-error-code behavior
+   and are not classified as malformed solely by that difference.
+6. The same classification and transport-generation assertions pass through
+   synchronous, asynchronous, and representative high-level device operations.
+7. The acceptance suite passes independently on `net8.0`, `net9.0`, and
+   `net10.0`; no criterion relies on live PLC communication.
+
+- [x] Implementation completed in every affected repository.
+- [x] Tests added or updated for every acceptance criterion.
+- [x] Relevant static checks, unit tests, integration tests, examples, and package/build checks passed.
+- [x] Codex self-review completed against the approved contract and cross-language consistency requirements.
+- [x] Required live-PLC checks passed, or each unavailable check has an explicit release disposition.
+- [x] Documentation, migration notes, changelog, and generated API reference agree with the implementation.
+- [x] Final acceptance criteria verified and the item marked complete.
+
+### Verification evidence and self-review disposition (2026-08-02)
+
+- `run_ci.bat`: PASS. Build, generated API freshness, formatting, sample
+  publication, 303 tests on each of `net8.0` and `net10.0`, and 317 tests on
+  `net9.0` completed with zero failures or skips.
+- Deterministic loopback fixtures cover TCP and UDP, synchronous and
+  asynchronous read-only and state-changing calls, mismatch classification
+  before PLC-error construction, transport retirement and explicit reopen,
+  matching data-bearing NG responses, no-data special NG responses, and
+  representative high-level `ToyopucDeviceClient` read/write delegation.
+- Codex self-review inspected the actual diff, shared decode order, public error
+  classification, data-bearing boundary, no-data special form, read/write
+  outcome mapping, invalidation and explicit reopen lifecycle, synchronous,
+  asynchronous, and high-level delegation, tests, documentation, generated API,
+  and package/sample checks. Accepted findings: an initial implementation set
+  the explicit-reopen flag for unrelated malformed responses, which would have
+  changed existing lifecycle contracts, so the flag was narrowed to this
+  approved mismatch only; and the first test set lacked direct high-level
+  DeviceClient evidence, so representative read/write tests were added.
+  Rejected findings: none. Duplicate findings: none. Deferred findings: none.
+- Live PLC verification is not required for this item: response correlation and
+  lifecycle behavior are completely observable with deterministic transport
+  fixtures, and no PLC/profile compatibility claim changed. No live PLC
+  communication was performed.
