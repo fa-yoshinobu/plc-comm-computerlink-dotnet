@@ -1,6 +1,6 @@
 # Getting started
 
-Use the .NET 8, 9, or 10 SDK. These are the target frameworks built and tested by the package and CI.
+Use the .NET 8, 9, or 10 SDK when consuming the package. Building or running this repository's user examples requires the .NET 10 SDK because every project under `examples/` targets `net10.0`; the maintainer validation tools are outside that sample policy.
 
 Install the package:
 

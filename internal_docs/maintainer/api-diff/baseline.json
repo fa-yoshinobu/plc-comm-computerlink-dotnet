@@ -1,0 +1,41 @@
+{
+  "schema_version": 2,
+  "package_id": "PlcComm.Toyopuc",
+  "baseline_version": "3.2.1",
+  "source_uri": "https://api.nuget.org/v3-flatcontainer/plccomm.toyopuc/3.2.1/plccomm.toyopuc.3.2.1.nupkg",
+  "sha256": "34AB3ACFB7942F69BAC65D46DA559DCD37CEB66551FC104D583B63D130A98622",
+  "frameworks": [
+    {
+      "tfm": "net8.0",
+      "asset_path": "lib/net8.0/PlcComm.Toyopuc.dll"
+    },
+    {
+      "tfm": "net9.0",
+      "asset_path": "lib/net9.0/PlcComm.Toyopuc.dll"
+    },
+    {
+      "tfm": "net10.0",
+      "asset_path": "lib/net10.0/PlcComm.Toyopuc.dll"
+    }
+  ],
+  "source": {
+    "tag": "v3.2.1",
+    "commit": "e7f199233b815fe745f8525657e837cdbe46dc31",
+    "documentation_paths": [
+      "README.md",
+      "docsrc/user/GETTING_STARTED.md",
+      "docsrc/user/USAGE_GUIDE.md",
+      "docsrc/user/PROFILES.md",
+      "docsrc/user/GOTCHAS.md",
+      "docsrc/user/API_REFERENCE.md"
+    ],
+    "examples_prefix": "examples/",
+    "purpose": "Immutable source and documentation basis corresponding to the prior stable package, not the candidate working tree."
+  },
+  "release_policy": {
+    "baseline_major": 3,
+    "minimum_release_major": 4,
+    "required_disposition": "next-major"
+  },
+  "purpose": "Immutable prior stable-package API and documentation baseline; not a user-facing current-version display."
+}

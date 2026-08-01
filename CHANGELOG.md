@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Samples: Retargeted all five user examples to `net10.0`; building repository examples now requires the .NET 10 SDK, while the library and test projects continue to target .NET 8, 9, and 10 and maintainer validation tools remain outside the sample policy.
+- CI: Added an immutable prior stable NuGet and matching source-commit documentation baseline plus a three-TFM public API diff gate; every difference must match one exact candidate signature classification, and a breaking release must satisfy the recorded next-major policy.
+- Tests: Added exact four-category API-difference policy fixtures for all three target frameworks, candidate-signature drift, forbidden prefix rules, incomplete review state, unclassified differences, and release-major enforcement.
 - Release: Aligned artifact roles so the registry package contains consumer runtime, native API metadata, license, README, and ecosystem-native examples where applicable while excluding repository tests and maintainer tooling; the GitHub source archive retains tracked non-hardware validation and maintainer inputs.
 - Library: Audited profile-bound `ResolvedDevice` inputs: every live read/write path requires exact canonical profile identity with the client before request construction or transport state changes; no base-family or addressing-mode fallback is used.
 - Tests: Added profile-mismatch regression coverage for error diagnostics, traffic counters, and trace state.

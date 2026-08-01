@@ -36,6 +36,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ steps.version.outputs.tag }}
+          fetch-depth: 0
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
@@ -51,6 +52,9 @@ jobs:
 
       - name: Restore
         run: dotnet restore PlcComm.Toyopuc.sln
+
+      - name: Restore TFM-matched API exporter
+        run: dotnet restore tools/api-diff/PlcComm.Toyopuc.ApiSurfaceExporter/PlcComm.Toyopuc.ApiSurfaceExporter.csproj
 
       - name: Verify tag and package version
         shell: pwsh
@@ -70,6 +74,15 @@ jobs:
 
       - name: Build
         run: dotnet build PlcComm.Toyopuc.sln -c Release --no-restore
+
+      - name: Build TFM-matched API exporter
+        run: dotnet build tools/api-diff/PlcComm.Toyopuc.ApiSurfaceExporter/PlcComm.Toyopuc.ApiSurfaceExporter.csproj -c Release --no-restore
+
+      - name: Verify exact public API classifications and release major
+        shell: pwsh
+        run: |
+          ./scripts/test_documented_api_diff.ps1
+          ./scripts/check_documented_api_diff.ps1 -CandidateAssemblyRoot src/Toyopuc/bin/Release -ReleaseVersion "${{ steps.version.outputs.version }}" -ReviewOutput build/documented-api-diff-review.json
 
       - name: Test
         run: dotnet test PlcComm.Toyopuc.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
