@@ -624,11 +624,11 @@ Acceptance criteria:
 
 - [x] Implementation completed in this repository.
 - [x] Tests added or updated for every locally applicable acceptance criterion.
-- [ ] Relevant static checks and the bounded Linux smoke passed; execution was intentionally not performed during this change set.
+- [x] Relevant static checks and the bounded Linux smoke passed on the same reviewed source state.
 - [x] Codex self-review completed against the approved contract and confirmed that the Linux job is filtered and bounded rather than a second full gate.
 - [x] Live PLC checks are not required because every selected property is a deterministic socket/lifecycle contract exercised on loopback or an in-process fake.
 - [x] Documentation and changelog agree with the implementation.
-- [ ] Final acceptance criteria verified by an executed CI run and the item marked complete.
+- [x] Final acceptance criteria verified by an executed CI run and the item marked complete.
 
 ## GOAL-DOCUMENTED-API-DIFF-001 — immutable baseline and classified public API delta
 
