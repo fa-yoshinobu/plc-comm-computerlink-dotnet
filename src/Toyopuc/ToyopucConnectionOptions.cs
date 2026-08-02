@@ -19,17 +19,17 @@ public sealed record ToyopucConnectionOptions(
     string PlcProfile,
     ToyopucRoute Route)
 {
-    /// <summary>Gets or sets the communication timeout.</summary>
+    /// <summary>Gets or initializes the communication timeout.</summary>
     /// <remarks>When omitted, each communication attempt uses three seconds. The inclusive maximum is 2,147,483,647 milliseconds.</remarks>
     public TimeSpan? Timeout { get; init; }
 
-    /// <summary>Gets or sets the local UDP port. Ignored for TCP.</summary>
+    /// <summary>Gets or initializes the local UDP port. TCP requires zero; a nonzero value is rejected.</summary>
     public int LocalPort { get; init; }
 
-    /// <summary>Gets or sets the retry count for transport operations.</summary>
+    /// <summary>Gets or initializes the retry count for transport operations.</summary>
     public int Retries { get; init; }
 
-    /// <summary>Gets or sets the retry delay. The inclusive maximum is 2,147,483,647 milliseconds.</summary>
+    /// <summary>Gets or initializes the retry delay. The inclusive maximum is 2,147,483,647 milliseconds.</summary>
     public TimeSpan? RetryDelay { get; init; }
 
     /// <summary>Gets the effective timeout used for a new client instance.</summary>

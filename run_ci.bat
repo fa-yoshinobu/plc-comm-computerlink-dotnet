@@ -11,6 +11,10 @@ dotnet build PlcComm.Toyopuc.sln
 if %errorlevel% neq 0 (echo [ERROR] Build failed. & exit /b %errorlevel%)
 
 echo [2/5] Validating API reference...
+python scripts\test_generate_api_reference.py
+if %errorlevel% neq 0 (echo [ERROR] API reference generator tests failed. & exit /b %errorlevel%)
+python scripts\test_documentation_examples.py
+if %errorlevel% neq 0 (echo [ERROR] Documentation example tests failed. & exit /b %errorlevel%)
 python scripts\generate_api_reference.py --assembly src\Toyopuc\bin\Debug\net8.0\PlcComm.Toyopuc.dll --xml src\Toyopuc\bin\Debug\net8.0\PlcComm.Toyopuc.xml --output docsrc\user\API_REFERENCE.md --title "TOYOPUC Computerlink .NET API Reference" --package PlcComm.Toyopuc --check
 if %errorlevel% neq 0 (echo [ERROR] API reference is out of date. & exit /b %errorlevel%)
 

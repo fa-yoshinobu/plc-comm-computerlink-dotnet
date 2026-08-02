@@ -46,9 +46,8 @@ When adding or changing a method, verify:
 
 ## CI
 
-CI runs on every push via `.github/workflows/ci.yml`:
-
-```powershell
-dotnet build PlcComm.Toyopuc.sln
-dotnet test PlcComm.Toyopuc.sln --no-build
-```
+CI runs on every push and pull request via `.github/workflows/ci.yml`. The
+Windows job checks no-auto-publish policy, the exported source archive,
+restore/build/test, the generated API reference, documented API differences,
+NuGet package contents, and formatting. A separate Linux job runs the bounded
+network-contract smoke tests.

@@ -13,4 +13,6 @@ publish/
 *.log
 *.nupkg
 *.snupkg
+__pycache__/
+*.pyc
 _site/

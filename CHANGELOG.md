@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Docs: Corrected generated `init` accessors and TCP `LocalPort` wording, disabled general state-changing examples by default, and synchronized maintainer release/CI descriptions with the executable gates.
+- Tests: Added real mutable/init-only generator fixtures, generated-reference CI coverage, and documentation-contract checks for connection options and controlled state changes.
 - Library: Synchronous `Open()` now validates its lifecycle generation after DNS resolution and connection, and publishes only a still-current connected socket, so `Close()` cannot leave a late-created TCP or UDP socket open.
 - Library: Data-bearing NG responses now require their command to match the active request before the PLC error becomes definitive. A mismatch is malformed, retires the transport, and makes a transmitted state change outcome-unknown; the protocol's no-data special NG form continues to use its command field as the detailed error code.
 - Samples: Retargeted all five user examples to `net10.0`; building repository examples now requires the .NET 10 SDK, while the library and test projects continue to target .NET 8, 9, and 10 and maintainer validation tools remain outside the sample policy.

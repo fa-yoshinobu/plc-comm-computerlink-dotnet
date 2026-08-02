@@ -29,43 +29,43 @@ public DateTime AsDateTime(int yearBase)
 ##### Second
 
 ```csharp
-public int Second { get; set; }
+public int Second { get; init; }
 ```
 
 ##### Minute
 
 ```csharp
-public int Minute { get; set; }
+public int Minute { get; init; }
 ```
 
 ##### Hour
 
 ```csharp
-public int Hour { get; set; }
+public int Hour { get; init; }
 ```
 
 ##### Day
 
 ```csharp
-public int Day { get; set; }
+public int Day { get; init; }
 ```
 
 ##### Month
 
 ```csharp
-public int Month { get; set; }
+public int Month { get; init; }
 ```
 
 ##### Year2Digit
 
 ```csharp
-public int Year2Digit { get; set; }
+public int Year2Digit { get; init; }
 ```
 
 ##### Weekday
 
 ```csharp
-public int Weekday { get; set; }
+public int Weekday { get; init; }
 ```
 
 ### CpuStatusData
@@ -405,19 +405,19 @@ public ExNoAddress32(int ExNo, int Address, string Unit)
 ##### ExNo
 
 ```csharp
-public int ExNo { get; set; }
+public int ExNo { get; init; }
 ```
 
 ##### Address
 
 ```csharp
-public int Address { get; set; }
+public int Address { get; init; }
 ```
 
 ##### Unit
 
 ```csharp
-public string Unit { get; set; }
+public string Unit { get; init; }
 ```
 
 ### ExtNoAddress
@@ -437,19 +437,19 @@ public ExtNoAddress(int No, int Address, string Unit)
 ##### No
 
 ```csharp
-public int No { get; set; }
+public int No { get; init; }
 ```
 
 ##### Address
 
 ```csharp
-public int Address { get; set; }
+public int Address { get; init; }
 ```
 
 ##### Unit
 
 ```csharp
-public string Unit { get; set; }
+public string Unit { get; init; }
 ```
 
 ### ParsedAddress
@@ -469,37 +469,37 @@ public ParsedAddress(string Area, int Index, string Unit, bool High = false, boo
 ##### Area
 
 ```csharp
-public string Area { get; set; }
+public string Area { get; init; }
 ```
 
 ##### Index
 
 ```csharp
-public int Index { get; set; }
+public int Index { get; init; }
 ```
 
 ##### Unit
 
 ```csharp
-public string Unit { get; set; }
+public string Unit { get; init; }
 ```
 
 ##### High
 
 ```csharp
-public bool High { get; set; }
+public bool High { get; init; }
 ```
 
 ##### Packed
 
 ```csharp
-public bool Packed { get; set; }
+public bool Packed { get; init; }
 ```
 
 ##### DigitCount
 
 ```csharp
-public int? DigitCount { get; set; }
+public int? DigitCount { get; init; }
 ```
 
 ### RelayLayer
@@ -519,31 +519,31 @@ public RelayLayer(int LinkNo, int StationNo, int Ack, byte[] InnerRaw, byte[] Pa
 ##### LinkNo
 
 ```csharp
-public int LinkNo { get; set; }
+public int LinkNo { get; init; }
 ```
 
 ##### StationNo
 
 ```csharp
-public int StationNo { get; set; }
+public int StationNo { get; init; }
 ```
 
 ##### Ack
 
 ```csharp
-public int Ack { get; set; }
+public int Ack { get; init; }
 ```
 
 ##### InnerRaw
 
 ```csharp
-public byte[] InnerRaw { get; set; }
+public byte[] InnerRaw { get; init; }
 ```
 
 ##### Padding
 
 ```csharp
-public byte[] Padding { get; set; }
+public byte[] Padding { get; init; }
 ```
 
 ### ResolvedDevice
@@ -563,85 +563,85 @@ public ResolvedDevice(string Text, string Scheme, string Unit, string Area, int 
 ##### Text
 
 ```csharp
-public string Text { get; set; }
+public string Text { get; init; }
 ```
 
 ##### Scheme
 
 ```csharp
-public string Scheme { get; set; }
+public string Scheme { get; init; }
 ```
 
 ##### Unit
 
 ```csharp
-public string Unit { get; set; }
+public string Unit { get; init; }
 ```
 
 ##### Area
 
 ```csharp
-public string Area { get; set; }
+public string Area { get; init; }
 ```
 
 ##### Index
 
 ```csharp
-public int Index { get; set; }
+public int Index { get; init; }
 ```
 
 ##### Prefix
 
 ```csharp
-public string Prefix { get; set; }
+public string Prefix { get; init; }
 ```
 
 ##### High
 
 ```csharp
-public bool High { get; set; }
+public bool High { get; init; }
 ```
 
 ##### Packed
 
 ```csharp
-public bool Packed { get; set; }
+public bool Packed { get; init; }
 ```
 
 ##### BasicAddress
 
 ```csharp
-public int? BasicAddress { get; set; }
+public int? BasicAddress { get; init; }
 ```
 
 ##### No
 
 ```csharp
-public int? No { get; set; }
+public int? No { get; init; }
 ```
 
 ##### Address
 
 ```csharp
-public int? Address { get; set; }
+public int? Address { get; init; }
 ```
 
 ##### BitNo
 
 ```csharp
-public int? BitNo { get; set; }
+public int? BitNo { get; init; }
 ```
 
 ##### Address32
 
 ```csharp
-public int? Address32 { get; set; }
+public int? Address32 { get; init; }
 ```
 
 ##### PlcProfile
 
 ```csharp
-public string PlcProfile { get; set; }
+public string PlcProfile { get; init; }
 ```
 
 Gets the canonical PLC profile used to resolve this device.
@@ -663,25 +663,25 @@ public ResponseFrame(byte Ft, byte Rc, byte Cmd, byte[] Data)
 ##### Ft
 
 ```csharp
-public byte Ft { get; set; }
+public byte Ft { get; init; }
 ```
 
 ##### Rc
 
 ```csharp
-public byte Rc { get; set; }
+public byte Rc { get; init; }
 ```
 
 ##### Cmd
 
 ```csharp
-public byte Cmd { get; set; }
+public byte Cmd { get; init; }
 ```
 
 ##### Data
 
 ```csharp
-public byte[] Data { get; set; }
+public byte[] Data { get; init; }
 ```
 
 ### ToyopucAddress
@@ -867,13 +867,13 @@ public bool Contains(int index)
 ##### Start
 
 ```csharp
-public int Start { get; set; }
+public int Start { get; init; }
 ```
 
 ##### End
 
 ```csharp
-public int End { get; set; }
+public int End { get; init; }
 ```
 
 ### ToyopucAreaDescriptor
@@ -917,49 +917,49 @@ public IReadOnlyList<ToyopucAddressRange> GetRanges(bool prefixed, string unit, 
 ##### Area
 
 ```csharp
-public string Area { get; set; }
+public string Area { get; init; }
 ```
 
 ##### DirectRanges
 
 ```csharp
-public IReadOnlyList<ToyopucAddressRange> DirectRanges { get; set; }
+public IReadOnlyList<ToyopucAddressRange> DirectRanges { get; init; }
 ```
 
 ##### PrefixedRanges
 
 ```csharp
-public IReadOnlyList<ToyopucAddressRange> PrefixedRanges { get; set; }
+public IReadOnlyList<ToyopucAddressRange> PrefixedRanges { get; init; }
 ```
 
 ##### SupportsPackedWord
 
 ```csharp
-public bool SupportsPackedWord { get; set; }
+public bool SupportsPackedWord { get; init; }
 ```
 
 ##### AddressWidth
 
 ```csharp
-public int AddressWidth { get; set; }
+public int AddressWidth { get; init; }
 ```
 
 ##### SuggestedStartStep
 
 ```csharp
-public int SuggestedStartStep { get; set; }
+public int SuggestedStartStep { get; init; }
 ```
 
 ##### PackedDirectRangesOverride
 
 ```csharp
-public IReadOnlyList<ToyopucAddressRange> PackedDirectRangesOverride { get; set; }
+public IReadOnlyList<ToyopucAddressRange> PackedDirectRangesOverride { get; init; }
 ```
 
 ##### PackedPrefixedRangesOverride
 
 ```csharp
-public IReadOnlyList<ToyopucAddressRange> PackedPrefixedRangesOverride { get; set; }
+public IReadOnlyList<ToyopucAddressRange> PackedPrefixedRangesOverride { get; init; }
 ```
 
 ##### DirectRange
@@ -1798,7 +1798,7 @@ Parameters:
 ##### Host
 
 ```csharp
-public string Host { get; set; }
+public string Host { get; init; }
 ```
 
 PLC IPv4 address or a hostname that resolves to IPv4.
@@ -1806,7 +1806,7 @@ PLC IPv4 address or a hostname that resolves to IPv4.
 ##### Port
 
 ```csharp
-public int Port { get; set; }
+public int Port { get; init; }
 ```
 
 PLC port number.
@@ -1814,7 +1814,7 @@ PLC port number.
 ##### Transport
 
 ```csharp
-public ToyopucTransportMode Transport { get; set; }
+public ToyopucTransportMode Transport { get; init; }
 ```
 
 Explicit TCP or UDP transport.
@@ -1822,7 +1822,7 @@ Explicit TCP or UDP transport.
 ##### PlcProfile
 
 ```csharp
-public string PlcProfile { get; set; }
+public string PlcProfile { get; init; }
 ```
 
 Required canonical PLC profile name.
@@ -1830,7 +1830,7 @@ Required canonical PLC profile name.
 ##### Route
 
 ```csharp
-public ToyopucRoute Route { get; set; }
+public ToyopucRoute Route { get; init; }
 ```
 
 Explicit direct or relay route.
@@ -1838,36 +1838,36 @@ Explicit direct or relay route.
 ##### Timeout
 
 ```csharp
-public TimeSpan? Timeout { get; set; }
+public TimeSpan? Timeout { get; init; }
 ```
 
-Gets or sets the communication timeout.
+Gets or initializes the communication timeout.
 
 Remarks: When omitted, each communication attempt uses three seconds. The inclusive maximum is 2,147,483,647 milliseconds.
 
 ##### LocalPort
 
 ```csharp
-public int LocalPort { get; set; }
+public int LocalPort { get; init; }
 ```
 
-Gets or sets the local UDP port. Ignored for TCP.
+Gets or initializes the local UDP port. TCP requires zero; a nonzero value is rejected.
 
 ##### Retries
 
 ```csharp
-public int Retries { get; set; }
+public int Retries { get; init; }
 ```
 
-Gets or sets the retry count for transport operations.
+Gets or initializes the retry count for transport operations.
 
 ##### RetryDelay
 
 ```csharp
-public TimeSpan? RetryDelay { get; set; }
+public TimeSpan? RetryDelay { get; init; }
 ```
 
-Gets or sets the retry delay. The inclusive maximum is 2,147,483,647 milliseconds.
+Gets or initializes the retry delay. The inclusive maximum is 2,147,483,647 milliseconds.
 
 ##### EffectiveTimeout
 
@@ -2855,25 +2855,25 @@ Metadata used to present and select one canonical TOYOPUC PLC profile.
 ##### CanonicalName
 
 ```csharp
-public string CanonicalName { get; set; }
+public string CanonicalName { get; init; }
 ```
 
 ##### DisplayName
 
 ```csharp
-public string DisplayName { get; set; }
+public string DisplayName { get; init; }
 ```
 
 ##### Connectable
 
 ```csharp
-public bool Connectable { get; set; }
+public bool Connectable { get; init; }
 ```
 
 ##### BaseProfile
 
 ```csharp
-public string BaseProfile { get; set; }
+public string BaseProfile { get; init; }
 ```
 
 ### ToyopucPlcProfiles
@@ -3408,19 +3408,19 @@ Immutable lifetime traffic counters for one TOYOPUC client.
 ##### RequestCount
 
 ```csharp
-public ulong RequestCount { get; set; }
+public ulong RequestCount { get; init; }
 ```
 
 ##### TxBytes
 
 ```csharp
-public ulong TxBytes { get; set; }
+public ulong TxBytes { get; init; }
 ```
 
 ##### RxBytes
 
 ```csharp
-public ulong RxBytes { get; set; }
+public ulong RxBytes { get; init; }
 ```
 
 ### ToyopucTransportError

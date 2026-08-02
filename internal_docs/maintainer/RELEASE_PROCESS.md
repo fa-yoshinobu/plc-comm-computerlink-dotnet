@@ -4,16 +4,12 @@ This document is the release checklist for `PlcComm.Toyopuc`.
 
 ## Scope
 
-Confirm that the release contains only public .NET assets:
+Confirm that the source archive contains the complete buildable and reviewable repository contract:
 
-- `src/Toyopuc`
-- `tools/validation/PlcComm.Toyopuc.SmokeTest`
-- `examples/PlcComm.Toyopuc.MinimalRead`
-- `tools/validation/PlcComm.Toyopuc.SoakMonitor`
-- `README.md`
-- `CHANGELOG.md`
-- `LICENSE`
-- maintainer archive
+- solution and project manifests, `src/Toyopuc`, and every tracked `examples/` or `samples/` file
+- repository tests, `tools/validation/` (including `tools/validation/PlcComm.Toyopuc.SmokeTest` and `tools/validation/PlcComm.Toyopuc.SoakMonitor`), and the standard pages under `docsrc/user/`
+- tracked validation and maintainer material under `.github/`, `docsrc/maintainer/`, `internal_docs/`, `scripts/`, and `tools/`
+- `run_ci.bat`, `release_check.bat`, `README.md`, `CHANGELOG.md`, `LICENSE`, and repository instruction/TODO files when tracked
 
 Confirm that local output is excluded:
 
@@ -62,8 +58,12 @@ release_check.bat
 This runs:
 
 1. NuGet registry duplicate check
-2. `run_ci.bat`
-3. `dotnet pack`
+2. Canonical ComputerLink profile fixture freshness check
+3. GitHub source archive build/test check
+4. `run_ci.bat`
+5. Exact three-TFM API classification check
+6. API next-major release-disposition check
+7. `dotnet pack`
 
 For package output, run:
 
@@ -115,7 +115,7 @@ Before creating a release tag, confirm these review items:
 Repository workflows:
 
 - `.github/workflows/ci.yml`
-  - restore, build, and test on Windows for pushes and pull requests
+  - on pushes and pull requests, checks no-auto-publish policy, source-archive build/test, restore/build/test, generated-reference freshness, documented API differences, package contents, formatting, and a bounded Linux network-contract smoke test
 - `.github/workflows/release.yml`
   - check out the exact existing tag on tag pushes and manual dispatch
   - fail when the tag and MSBuild package version differ

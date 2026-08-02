@@ -33,9 +33,13 @@ Typed contiguous helpers follow the same rule:
 ```csharp
 ushort[] words = await client.ReadWordsAsync("P1-D0000", 8);
 uint[] dwords = await client.ReadDWordsAsync("P1-D0100", 4);
-await client.WriteWordsAsync("P1-D0000", new ushort[] { 10, 20 });
-await client.WriteDWordsAsync("P1-D0100", new uint[] { 1000, 2000 });
 ```
+
+The general example is intentionally read-only. Use `WriteWordsAsync` and
+`WriteDWordsAsync` only with addresses prepared for controlled testing. Save
+the original values first and restore them afterward. If a write has an
+outcome-unknown failure, reopen the client and reconcile the actual PLC state
+before deciding whether restoration or any retry is safe.
 
 Explicit read aggregates (`ReadMany`, `ReadDevices`, their relay forms, and async equivalents) compile and validate the complete request plan before communication. They use one client FIFO turn, preserve caller-declared entry order, and split only when one protocol request cannot represent the aggregate. The calls are not PLC-atomic: different split requests can observe different PLC scan instants. If a later split request fails, the aggregate raises an error and does not return partial results.
 
@@ -66,12 +70,18 @@ FR work-area update and nonvolatile commit are separate operations:
 
 ```csharp
 var original = await client.ReadFrOneAsync("FR000000");
-await client.WriteFrWorkAreaAsync("FR000000", 0x1234);
-// Explicitly persist the containing block only when intended:
-await client.CommitFrBlockAsync("FR000000");
+// On a controlled test PLC only:
+// await client.WriteFrWorkAreaAsync("FR000000", 0x1234);
+// await client.CommitFrBlockAsync("FR000000"); // persists the containing block
 ```
 
 `WriteFrWorkAreaAsync` performs one write request and never commits. `CommitFrBlockAsync` sends one block commit request and returns when that request is accepted; it does not poll for flash completion. Applications that need completion monitoring must explicitly read the profile-selected CPU status and control their own interval and deadline.
+
+The calls are commented out because a commit changes nonvolatile PLC state.
+When persistence testing is intentional, save the original value, perform the
+work-area write and commit, then restore the original value and commit that
+restoration. Reconcile the actual PLC state before any follow-up write after an
+outcome-unknown failure.
 
 FR work-area values must be integral values in `0..65535`. The library rejects negative, overflowing, Boolean, fractional, and string values before transport instead of masking or converting them.
 
@@ -96,12 +106,14 @@ The PLC transmits only a two-digit year. Supply the century when converting or w
 
 ```csharp
 var localClock = (await client.ReadClockAsync()).AsDateTime(2000);
-await client.WriteClockAsync(
-    new DateTime(2026, 7, 11, 12, 0, 0, DateTimeKind.Unspecified),
-    2000);
+// On a controlled test PLC only:
+// await client.WriteClockAsync(localClock, 2000);
 ```
 
 Clock values are timezone-unspecified PLC local time. UTC or offset conversion is never inferred.
+The write is commented out because changing a PLC clock can affect scheduled
+logic, timestamps, and process records. Perform clock-write verification only
+on a controlled PLC with an explicit restoration plan.
 
 ## Cancellation
 

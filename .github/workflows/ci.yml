@@ -45,6 +45,11 @@ jobs:
       - name: Build TFM-matched API exporter
         run: dotnet build tools/api-diff/PlcComm.Toyopuc.ApiSurfaceExporter/PlcComm.Toyopuc.ApiSurfaceExporter.csproj -c Release --no-restore
 
+      - name: Check generated API reference
+        run: |
+          python scripts/test_generate_api_reference.py
+          python scripts/generate_api_reference.py --assembly src/Toyopuc/bin/Release/net8.0/PlcComm.Toyopuc.dll --xml src/Toyopuc/bin/Release/net8.0/PlcComm.Toyopuc.xml --output docsrc/user/API_REFERENCE.md --title "TOYOPUC Computerlink .NET API Reference" --package PlcComm.Toyopuc --check
+
       - name: Check documented public API diff
         shell: pwsh
         run: |
