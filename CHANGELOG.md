@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Library: Send and receive phases now update only their own socket deadline. This preserves the
+  opposite direction's active timeout while retaining the single absolute transaction deadline.
 - Docs: Corrected generated `init` accessors and TCP `LocalPort` wording, disabled general state-changing examples by default, and synchronized maintainer release/CI descriptions with the executable gates.
 - Tests: Added real mutable/init-only generator fixtures, generated-reference CI coverage, and documentation-contract checks for connection options and controlled state changes.
 - Library: Synchronous `Open()` now validates its lifecycle generation after DNS resolution and connection, and publishes only a still-current connected socket, so `Close()` cannot leave a late-created TCP or UDP socket open.

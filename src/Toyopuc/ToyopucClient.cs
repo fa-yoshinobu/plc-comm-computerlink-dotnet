@@ -6,6 +6,13 @@ using System.Net.Sockets;
 
 namespace PlcComm.Toyopuc;
 
+internal enum ToyopucSocketDeadlineDirection
+{
+    Both,
+    Send,
+    Receive,
+}
+
 internal static class ToyopucAddressFamilyValidation
 {
     internal static string NormalizeIPv4Host(string host, string parameterName)
@@ -84,6 +91,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     internal Func<string, long, IPAddress> HostResolver { get; set; } = ResolveRemoteAddress;
     internal Action<Socket>? SocketConnectStartedHook { get; set; }
     internal Action<Socket>? ConnectedSocketHook { get; set; }
+    internal Action<ToyopucSocketDeadlineDirection, int>? SocketDeadlineAppliedHook { get; set; }
 
     public ToyopucClient(
         string host,
@@ -208,7 +216,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 ConnectWithTimeout(socket, remoteEndPoint, deadline, generation);
             else
             {
-                SetSocketDeadline(socket, deadline, "Connect timeout");
+                SetSocketDeadlines(socket, deadline, "Connect timeout");
                 socket.Bind(new IPEndPoint(IPAddress.Any, LocalPort));
                 socket.Connect(remoteEndPoint);
                 ThrowIfOpenGenerationInvalid(generation);
@@ -1456,6 +1464,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         var timeoutMs = checked((int)Math.Ceiling(Timeout.TotalMilliseconds));
         socket.ReceiveTimeout = timeoutMs;
         socket.SendTimeout = timeoutMs;
+        SocketDeadlineAppliedHook?.Invoke(ToyopucSocketDeadlineDirection.Both, timeoutMs);
         if (socket.SocketType == SocketType.Stream && socket.ProtocolType == ProtocolType.Tcp)
         {
             socket.NoDelay = true;
@@ -1472,7 +1481,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         var offset = 0;
         while (offset < payload.Length)
         {
-            SetSocketDeadline(_socket, deadline, "Send timeout");
+            SetSocketSendDeadline(_socket, deadline, "Send timeout");
             _requestMayHaveBeenSent = true;
             var sent = _socket.Send(payload, offset, payload.Length - offset, SocketFlags.None);
             if (sent <= 0)
@@ -1493,7 +1502,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
 
         while (!buffer.IsEmpty)
         {
-            SetSocketDeadline(_socket, deadline, "Receive timeout");
+            SetSocketReceiveDeadline(_socket, deadline, "Receive timeout");
             var received = _socket.Receive(buffer, SocketFlags.None);
             if (received <= 0)
             {
@@ -1519,14 +1528,14 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
 
         _requestMayHaveBeenSent = true;
-        SetSocketDeadline(_socket, deadline, "UDP send timeout");
+        SetSocketSendDeadline(_socket, deadline, "UDP send timeout");
         if (_socket.Send(payload, SocketFlags.None) != payload.Length)
             throw new ToyopucProtocolError("UDP send did not accept the complete datagram");
         RecordSend(payload.Length);
         var buffer = ArrayPool<byte>.Shared.Rent(UdpReceiveBufferSize);
         try
         {
-            SetSocketDeadline(_socket, deadline, "UDP receive timeout");
+            SetSocketReceiveDeadline(_socket, deadline, "UDP receive timeout");
             var received = _socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
             return buffer.AsSpan(0, received).ToArray();
         }
@@ -1586,12 +1595,32 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             throw new ToyopucTimeoutError(message);
     }
 
-    private static void SetSocketDeadline(Socket socket, long deadline, string message)
+    private static int GetSocketDeadlineMilliseconds(long deadline, string message)
     {
         var remaining = GetRemainingTime(deadline, message);
-        var milliseconds = Math.Max(1, checked((int)Math.Ceiling(remaining.TotalMilliseconds)));
+        return Math.Max(1, checked((int)Math.Ceiling(remaining.TotalMilliseconds)));
+    }
+
+    private void SetSocketDeadlines(Socket socket, long deadline, string message)
+    {
+        var milliseconds = GetSocketDeadlineMilliseconds(deadline, message);
         socket.SendTimeout = milliseconds;
         socket.ReceiveTimeout = milliseconds;
+        SocketDeadlineAppliedHook?.Invoke(ToyopucSocketDeadlineDirection.Both, milliseconds);
+    }
+
+    private void SetSocketSendDeadline(Socket socket, long deadline, string message)
+    {
+        var milliseconds = GetSocketDeadlineMilliseconds(deadline, message);
+        socket.SendTimeout = milliseconds;
+        SocketDeadlineAppliedHook?.Invoke(ToyopucSocketDeadlineDirection.Send, milliseconds);
+    }
+
+    private void SetSocketReceiveDeadline(Socket socket, long deadline, string message)
+    {
+        var milliseconds = GetSocketDeadlineMilliseconds(deadline, message);
+        socket.ReceiveTimeout = milliseconds;
+        SocketDeadlineAppliedHook?.Invoke(ToyopucSocketDeadlineDirection.Receive, milliseconds);
     }
 
     private static byte[] PackWordSlice(IReadOnlyList<int> values, int offset, int count)

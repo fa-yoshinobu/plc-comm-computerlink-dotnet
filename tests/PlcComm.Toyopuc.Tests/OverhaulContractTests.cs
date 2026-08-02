@@ -12,6 +12,116 @@ public sealed class OverhaulContractTests
     private const string Profile = "toyopuc:pc10g:pc10";
 
     [Fact]
+    public void SocketDeadlineSettersChangeOnlyTheirOwnedDirection()
+    {
+        var type = typeof(ToyopucClient);
+        var setSend = type.GetMethod(
+            "SetSocketSendDeadline",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        var setReceive = type.GetMethod(
+            "SetSocketReceiveDeadline",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(setSend);
+        Assert.NotNull(setReceive);
+
+        using var client = new ToyopucClient(
+            "127.0.0.1", 8501, ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(2));
+        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+        {
+            SendTimeout = 111,
+            ReceiveTimeout = 222,
+        };
+        var deadline = Stopwatch.GetTimestamp() + (2 * Stopwatch.Frequency);
+
+        setSend.Invoke(client, [socket, deadline, "send timeout"]);
+        var sendTimeout = socket.SendTimeout;
+        Assert.InRange(sendTimeout, 1, 2000);
+        Assert.Equal(222, socket.ReceiveTimeout);
+
+        setReceive.Invoke(client, [socket, deadline, "receive timeout"]);
+        Assert.InRange(socket.ReceiveTimeout, 1, 2000);
+        Assert.Equal(sendTimeout, socket.SendTimeout);
+
+        foreach (MethodInfo setter in new[] { setSend, setReceive })
+        {
+            TargetInvocationException invocation = Assert.Throws<TargetInvocationException>(() =>
+                setter.Invoke(client, [socket, Stopwatch.GetTimestamp() - 1, "expired deadline"]));
+            Assert.IsType<ToyopucTimeoutError>(invocation.InnerException);
+        }
+    }
+
+    [Fact]
+    public async Task TcpRequestUsesConnectionThenDirectionSpecificDeadlineUpdates()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        byte[] response = BuildResponse(0x1C, [0x34, 0x12]);
+        var serverTask = Task.Run(async () =>
+        {
+            using TcpClient server = await listener.AcceptTcpClientAsync();
+            await using NetworkStream stream = server.GetStream();
+            _ = await ReadFrameAsync(stream);
+            foreach (byte[] fragment in response.Chunk(2))
+            {
+                await stream.WriteAsync(fragment);
+                await Task.Delay(5);
+            }
+        });
+        var events = new List<(ToyopucSocketDeadlineDirection Direction, int Milliseconds)>();
+        using var client = new ToyopucClient(
+            "127.0.0.1", port, ToyopucTransportMode.Tcp, timeout: TimeSpan.FromSeconds(2));
+        client.SocketDeadlineAppliedHook = (direction, milliseconds) =>
+            events.Add((direction, milliseconds));
+
+        Assert.Equal(new[] { 0x1234 }, await client.ReadWordsAsync(0x2000, 1));
+        await serverTask;
+
+        int firstDirectional = events.FindIndex(static item =>
+            item.Direction != ToyopucSocketDeadlineDirection.Both);
+        Assert.True(firstDirectional > 0);
+        Assert.All(events.Take(firstDirectional), static item =>
+            Assert.Equal(ToyopucSocketDeadlineDirection.Both, item.Direction));
+        Assert.Equal(ToyopucSocketDeadlineDirection.Send, events[firstDirectional].Direction);
+        Assert.DoesNotContain(
+            events.Skip(firstDirectional),
+            static item => item.Direction == ToyopucSocketDeadlineDirection.Both);
+        Assert.True(events.Count(static item => item.Direction == ToyopucSocketDeadlineDirection.Receive) >= 2);
+        AssertDeadlineValuesDoNotIncrease(events);
+    }
+
+    [Fact]
+    public async Task UdpRequestUsesConnectionThenDirectionSpecificDeadlineUpdates()
+    {
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)server.Client.LocalEndPoint!).Port;
+        var serverTask = Task.Run(async () =>
+        {
+            UdpReceiveResult request = await server.ReceiveAsync();
+            byte[] response = BuildResponse(0x1C, [0x78, 0x56]);
+            await server.SendAsync(response, response.Length, request.RemoteEndPoint);
+        });
+        var events = new List<(ToyopucSocketDeadlineDirection Direction, int Milliseconds)>();
+        using var client = new ToyopucClient(
+            "127.0.0.1", port, ToyopucTransportMode.Udp, timeout: TimeSpan.FromSeconds(2));
+        client.SocketDeadlineAppliedHook = (direction, milliseconds) =>
+            events.Add((direction, milliseconds));
+
+        Assert.Equal(new[] { 0x5678 }, await client.ReadWordsAsync(0x2000, 1));
+        await serverTask;
+
+        int firstSend = events.FindIndex(static item =>
+            item.Direction == ToyopucSocketDeadlineDirection.Send);
+        Assert.True(firstSend > 0);
+        Assert.All(events.Take(firstSend), static item =>
+            Assert.Equal(ToyopucSocketDeadlineDirection.Both, item.Direction));
+        Assert.Equal(
+            [ToyopucSocketDeadlineDirection.Send, ToyopucSocketDeadlineDirection.Receive],
+            events.Skip(firstSend).Select(static item => item.Direction));
+        AssertDeadlineValuesDoNotIncrease(events);
+    }
+
+    [Fact]
     public void SyncOpenDiscardsLateSocketWhenCloseRetiresDnsGeneration()
     {
         using var resolverEntered = new ManualResetEventSlim();
@@ -2124,11 +2234,20 @@ public sealed class OverhaulContractTests
             port,
             ToyopucTransportMode.Tcp,
             timeout: TimeSpan.FromMilliseconds(120));
+        var deadlineEvents = new List<(ToyopucSocketDeadlineDirection Direction, int Milliseconds)>();
+        client.SocketDeadlineAppliedHook = (direction, milliseconds) =>
+            deadlineEvents.Add((direction, milliseconds));
         var stopwatch = Stopwatch.StartNew();
         Assert.Throws<ToyopucTimeoutError>(() => client.ReadWords(0x2000, 1));
         stopwatch.Stop();
 
         Assert.True(stopwatch.Elapsed < TimeSpan.FromMilliseconds(300), $"Elapsed: {stopwatch.Elapsed}");
+        var receiveDeadlines = deadlineEvents
+            .Where(static item => item.Direction == ToyopucSocketDeadlineDirection.Receive)
+            .ToArray();
+        Assert.True(receiveDeadlines.Length >= 2);
+        AssertDeadlineValuesDoNotIncrease(receiveDeadlines);
+        Assert.True(receiveDeadlines[^1].Milliseconds < receiveDeadlines[0].Milliseconds);
         Assert.False(client.IsOpen);
         await serverTask;
     }
@@ -2565,6 +2684,19 @@ public sealed class OverhaulContractTests
         await Assert.ThrowsAsync<ToyopucOperationOutcomeUnknownException>(
             async () => await send.WaitAsync(TimeSpan.FromSeconds(2)));
         Assert.False(client.IsOpen);
+    }
+
+    private static void AssertDeadlineValuesDoNotIncrease(
+        IReadOnlyList<(ToyopucSocketDeadlineDirection Direction, int Milliseconds)> events)
+    {
+        Assert.NotEmpty(events);
+        Assert.All(events, static item => Assert.True(item.Milliseconds > 0));
+        for (int index = 1; index < events.Count; index++)
+        {
+            Assert.True(
+                events[index].Milliseconds <= events[index - 1].Milliseconds,
+                $"Deadline increased from {events[index - 1].Milliseconds} ms to {events[index].Milliseconds} ms.");
+        }
     }
 
     private sealed class TrackingClient()

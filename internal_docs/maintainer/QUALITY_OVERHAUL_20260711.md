@@ -811,3 +811,33 @@ Machine-verifiable acceptance criteria:
   lifecycle behavior are completely observable with deterministic transport
   fixtures, and no PLC/profile compatibility claim changed. No live PLC
   communication was performed.
+
+## PERF-009B — Direction-specific socket deadline updates
+
+Scope: synchronous TCP/UDP send and receive loops in `ToyopucClient`.
+
+Target contract: the connection setup may initialize both socket timeouts, but a send operation
+updates only `Socket.SendTimeout` and a receive operation updates only `Socket.ReceiveTimeout`.
+Both values continue to be calculated from the same immutable absolute transaction deadline.
+Fragmented sends and receives refresh only their own direction from the remaining time, without
+resetting or extending the transaction deadline.
+
+Compatibility impact: public API, wire traffic, timeout duration, retry behavior, error
+classification, and PLC request count are unchanged. The change removes unnecessary opposite-side
+socket option mutations from the normal path.
+
+Machine-verifiable acceptance criteria:
+
+1. Connection setup initializes both socket timeout directions.
+2. Each send fragment changes only `SendTimeout`; each receive fragment changes only
+   `ReceiveTimeout`.
+3. Both setters reject an expired absolute deadline through the existing timeout classification.
+4. TCP and UDP requests retain the existing absolute deadline and response behavior.
+
+- [x] Implementation completed in this repository.
+- [x] Deterministic helper, TCP/UDP loopback path, fragmented receive, monotonic deadline, and expired-deadline classification tests were added or updated and passed.
+- [x] Relevant static checks, all-target tests, examples, build/package, API/documentation, and current-worktree source-archive checks passed.
+- [x] Final diff self-review passed for public API, validation order, socket-option ownership, absolute deadline, and error classification.
+- [x] Live PLC verification is not required because socket option ownership is locally observable.
+- [x] Changelog and maintainer documentation agree with the implementation.
+- [x] Final PERF-009B acceptance criteria verified and the item marked complete.
