@@ -841,3 +841,22 @@ Machine-verifiable acceptance criteria:
 - [x] Live PLC verification is not required because socket option ownership is locally observable.
 - [x] Changelog and maintainer documentation agree with the implementation.
 - [x] Final PERF-009B acceptance criteria verified and the item marked complete.
+
+## CL-DOTNET-001 — Final synchronous open/close publication recheck
+
+Target contract: a synchronous `Open()` candidate may publish only while its
+captured operation generation remains current. `Close()` during DNS or after
+connect but before publication retires that generation, rejects the open as
+`ToyopucConnectionClosedException`, closes any candidate socket, and leaves the
+client closed.
+
+Final source-state evidence on 2026-08-02: the exact net8.0 filtered command
+selecting `SyncOpenDiscardsLateSocketWhenCloseRetiresDnsGeneration` and
+`SyncOpenPublishesOnlyAfterConnectAndDisposesPostConnectCandidateRetiredByClose`
+passed 2/2. The first deterministic barrier releases DNS only after close and
+proves no late socket publication. The second retires the generation after
+connect and proves the unpublished candidate socket is disposed. No live PLC
+is required because DNS/connect scheduling and socket identity are controlled
+local lifecycle facts.
+
+- [x] `CL-DOTNET-001` deterministic non-live disposition reverified on the final source state.
