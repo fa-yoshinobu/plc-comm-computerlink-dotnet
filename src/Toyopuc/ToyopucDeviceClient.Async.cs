@@ -185,23 +185,33 @@ public partial class ToyopucDeviceClient
 
     public Task<object[]> RelayReadManyAsync(object hops, object device, int count, CancellationToken cancellationToken = default)
     {
+        if (count < 1)
+            throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
-        var deviceSnapshot = ResolveDeviceObject(device);
-        return RunAsync(() => RelayReadMany(hopsSnapshot, deviceSnapshot, count), cancellationToken);
+        var resolved = ResolveSequentialDevices(ResolveDeviceObject(device), count);
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: true);
+        var prepared = PrepareReadPlan(hopsSnapshot, resolved, plan);
+        return ExecutePreparedReadAsync(prepared, resolved.Count, cancellationToken);
     }
 
     public Task<object[]> RelayReadDevicesAsync(object hops, IEnumerable<object> devices, CancellationToken cancellationToken = default)
     {
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
-        var devicesSnapshot = ResolveDevices(devices).Cast<object>().ToArray();
-        return RunAsync(() => RelayReadDevices(hopsSnapshot, devicesSnapshot), cancellationToken);
+        var resolved = ResolveDevices(devices);
+        RequireReadItems(resolved, nameof(RelayReadDevices));
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: false);
+        var prepared = PrepareReadPlan(hopsSnapshot, resolved, plan);
+        return ExecutePreparedReadAsync(prepared, resolved.Length, cancellationToken);
     }
 
     public Task RelayWriteManyAsync(object hops, IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
     {
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
-        var itemsSnapshot = SnapshotWriteItems(items);
-        return RunStateChangingAsync(() => RelayWriteMany(hopsSnapshot, itemsSnapshot), cancellationToken);
+        var resolved = ResolveWriteItems(items);
+        RequireSingleWriteRequest(resolved, splitPc10BlockBoundaries: true, nameof(RelayWriteMany));
+        return RunStateChangingAsync(
+            () => RelayWriteRuns(hopsSnapshot, resolved, splitPc10BlockBoundaries: true),
+            cancellationToken);
     }
 
     public Task<object> ReadFrOneAsync(object device, CancellationToken cancellationToken = default)
@@ -297,26 +307,73 @@ public partial class ToyopucDeviceClient
 
     public Task<object[]> ReadManyAsync(object device, int count, CancellationToken cancellationToken = default)
     {
-        var snapshot = ResolveDeviceObject(device);
-        return UsesRelay
-            ? RunAsync(() => RelayReadMany(RelayHops!, snapshot, count), cancellationToken)
-            : RunAsync(() => ReadMany(snapshot, count), cancellationToken);
+        if (count < 1)
+            throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
+        var resolved = ResolveSequentialDevices(ResolveDeviceObject(device), count);
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: true);
+        var prepared = UsesRelay
+            ? PrepareReadPlan(RelayHops!, resolved, plan)
+            : PrepareReadPlan(resolved, plan);
+        return ExecutePreparedReadAsync(prepared, resolved.Count, cancellationToken);
     }
 
     public Task<object[]> ReadDevicesAsync(IEnumerable<object> devices, CancellationToken cancellationToken = default)
     {
-        var snapshot = ResolveDevices(devices).Cast<object>().ToArray();
-        return UsesRelay
-            ? RunAsync(() => RelayReadDevices(RelayHops!, snapshot), cancellationToken)
-            : RunAsync(() => ReadDevices(snapshot), cancellationToken);
+        var resolved = ResolveDevices(devices);
+        RequireReadItems(resolved, nameof(ReadDevices));
+        var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: false);
+        var prepared = UsesRelay
+            ? PrepareReadPlan(RelayHops!, resolved, plan)
+            : PrepareReadPlan(resolved, plan);
+        return ExecutePreparedReadAsync(prepared, resolved.Length, cancellationToken);
     }
 
     public Task WriteManyAsync(IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
     {
-        var snapshot = SnapshotWriteItems(items);
+        var resolved = ResolveWriteItems(items);
+        RequireSingleWriteRequest(resolved, splitPc10BlockBoundaries: true, nameof(WriteMany));
         return UsesRelay
-            ? RunStateChangingAsync(() => RelayWriteMany(RelayHops!, snapshot), cancellationToken)
-            : RunStateChangingAsync(() => WriteMany(snapshot), cancellationToken);
+            ? RunStateChangingAsync(
+                () => RelayWriteRuns(RelayHops!, resolved, splitPc10BlockBoundaries: true),
+                cancellationToken)
+            : RunStateChangingAsync(
+                () => WriteRuns(resolved, splitPc10BlockBoundaries: true),
+                cancellationToken);
+    }
+
+    private Task<object[]> ExecutePreparedReadAsync(
+        IReadOnlyList<PreparedReadSegment> prepared,
+        int resultCount,
+        CancellationToken cancellationToken)
+    {
+        return RunNativeSequenceAsync(
+            async exchange =>
+            {
+                var results = new object[resultCount];
+                foreach (var segment in prepared)
+                {
+                    if (segment.Relay is null)
+                    {
+                        var response = await exchange(segment.Payload, false).ConfigureAwait(false);
+                        DecodePreparedReadSegment(response, segment, results);
+                    }
+                    else
+                    {
+                        var outer = await exchange(segment.Relay.OuterPayload, false).ConfigureAwait(false);
+                        DecodePreparedRelayReadResponse(
+                            segment.Relay,
+                            outer,
+                            response =>
+                            {
+                                DecodePreparedReadSegment(response, segment, results);
+                                return true;
+                            });
+                    }
+                }
+                return results;
+            },
+            outcomeUnknownAfterSend: false,
+            cancellationToken);
     }
 
     public Task<uint> ReadDWordAsync(object device, CancellationToken cancellationToken = default)
@@ -503,21 +560,6 @@ public partial class ToyopucDeviceClient
             : value;
     }
 
-    private KeyValuePair<object, object>[] SnapshotWriteItems(
-        IEnumerable<KeyValuePair<object, object>> items)
-    {
-        ArgumentNullException.ThrowIfNull(items);
-        var snapshot = new List<KeyValuePair<object, object>>();
-        foreach (var item in items)
-        {
-            var device = ResolveDeviceObject(item.Key);
-            var value = SnapshotDeviceValue(item.Value);
-            _ = NormalizeDeviceValue(device, value);
-            snapshot.Add(new KeyValuePair<object, object>(device, value));
-        }
-        return snapshot.ToArray();
-    }
-
     private int[] ReadResolvedWordValues(ResolvedDevice resolved, int wordCount)
     {
         return ExecuteSynchronousExclusive(() => ReadResolvedWordValuesCore(resolved, wordCount));
@@ -538,8 +580,8 @@ public partial class ToyopucDeviceClient
         var devices = ResolveSequentialDevices(resolved, wordCount);
         RequireSingleEntryAtomicReadRequest(devices, splitPc10BlockBoundaries: true, nameof(ReadDWords));
         var plan = GetRunPlan(devices, splitPc10BlockBoundaries: true);
-        PreflightReadPlan(devices, plan);
-        var values = ReadRuns(devices, plan);
+        var prepared = PrepareReadPlan(devices, plan);
+        var values = ExecutePreparedRead(prepared, devices.Count);
         var words = new int[values.Length];
         for (var i = 0; i < values.Length; i++)
         {
@@ -570,8 +612,8 @@ public partial class ToyopucDeviceClient
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
         RequireSingleEntryAtomicReadRequest(devices, splitPc10BlockBoundaries: true, nameof(RelayReadDWords));
         var plan = GetRunPlan(devices, splitPc10BlockBoundaries: true);
-        PreflightReadPlan(hopsSnapshot, devices, plan);
-        var values = RelayReadRuns(hopsSnapshot, devices, plan);
+        var prepared = PrepareReadPlan(hopsSnapshot, devices, plan);
+        var values = ExecutePreparedRead(prepared, devices.Count);
         var words = new int[values.Length];
         for (var i = 0; i < values.Length; i++)
         {

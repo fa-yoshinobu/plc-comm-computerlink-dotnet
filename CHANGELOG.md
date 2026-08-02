@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- BREAKING: `OpenAsync()` now owns native asynchronous DNS/connect work and no longer invokes a synchronous `Open()` override. Derived clients that customize connection establishment must override `OpenAsync()` explicitly.
+- Library: Async TCP/UDP operations now use native `Socket` async APIs under the existing FIFO, with one absolute post-admission deadline across DNS, connect, send, receive, response validation, and decode; cancellation and close retire the active transport without occupying a worker thread for socket waits.
+- Library: Synchronous and asynchronous hostname opens share the cancellation-aware IPv4 resolver core without library-owned `Task.Run`, timeout `Task.Delay`, resolver cache, or stale-address fallback.
+- Library: Aggregate direct/relay reads now retain fully validated, owned segment frames through execution, decode each validated response directly into the final result, and avoid per-segment temporary result arrays. Async aggregates execute the prepared segments as one native sequence without replaying completed decode work. Typed response and nested relay decoding use private borrowed payload views while public raw responses and diagnostics remain owned.
+- Tests: Added borrowed-view/public-ownership, multi-layer relay-view, native async lifecycle, single-execution prepared aggregate, shared deadline, and cancellation-aware resolver contract coverage.
+
 - Library: Send and receive phases now update only their own socket deadline. This preserves the
   opposite direction's active timeout while retaining the single absolute transaction deadline.
 - Docs: Corrected generated `init` accessors and TCP `LocalPort` wording, disabled general state-changing examples by default, and synchronized maintainer release/CI descriptions with the executable gates.

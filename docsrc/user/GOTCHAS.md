@@ -50,6 +50,8 @@ text.
 
 TCP and UDP accept an IPv4 literal or a hostname that resolves to IPv4. An IPv6 literal, including an IPv4-mapped IPv6 literal such as `::ffff:192.0.2.1`, raises `ArgumentException` before a socket is created. When a hostname has multiple results, the library uses the first IPv4 result in resolver order; a hostname with no IPv4 result fails the connection without falling back to IPv6.
 
+`OpenAsync()` does not dispatch a synchronous `Open()` override. If a derived client previously customized only `Open()`, add an explicit `OpenAsync(CancellationToken)` override; ordinary clients require no migration.
+
 ## The PLC clock has no century or timezone
 
 Pass an explicit century to `AsDateTime(yearBase)` and clock writes. Use a timezone-unspecified `DateTime` representing PLC local time.

@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +12,40 @@ public partial class ToyopucClient
     private readonly AsyncLocal<OperationContext?> _operationContext = new();
     private OperationGeneration _operationGeneration = new();
     private bool _operationActive;
+    private readonly AsyncLocal<AsyncOperationScript?> _asyncTransportScript = new();
+
+    private sealed record CompletedAsyncExchange(byte[] Payload, bool OutcomeUnknownAfterSend, byte[] Frame);
+
+    private sealed class AsyncOperationScript
+    {
+        private readonly List<CompletedAsyncExchange> _completed = new();
+        private int _cursor;
+
+        internal void Reset() => _cursor = 0;
+
+        internal byte[] Exchange(byte[] payload, bool outcomeUnknownAfterSend)
+        {
+            if (_cursor == _completed.Count)
+                throw new AsyncTransportRequiredException(payload, outcomeUnknownAfterSend);
+            var completed = _completed[_cursor++];
+            if (!payload.AsSpan().SequenceEqual(completed.Payload)
+                || outcomeUnknownAfterSend != completed.OutcomeUnknownAfterSend)
+            {
+                throw new ToyopucProtocolError(
+                    "Prepared async operation changed its request sequence during replay.");
+            }
+            return completed.Frame;
+        }
+
+        internal void Add(byte[] payload, bool outcomeUnknownAfterSend, byte[] frame)
+            => _completed.Add(new CompletedAsyncExchange(payload, outcomeUnknownAfterSend, frame));
+    }
+
+    private sealed class AsyncTransportRequiredException(byte[] payload, bool outcomeUnknownAfterSend) : Exception
+    {
+        internal byte[] Payload { get; } = payload;
+        internal bool OutcomeUnknownAfterSend { get; } = outcomeUnknownAfterSend;
+    }
 
     private sealed class OperationGeneration
     {
@@ -85,9 +121,34 @@ public partial class ToyopucClient
         WriteWords(address, PackFloat32LowWordFirstToWords(values));
     }
 
+    /// <summary>Opens the configured TCP or UDP transport asynchronously.</summary>
+    /// <remarks>
+    /// This native asynchronous contract does not invoke a synchronous <see cref="Open"/> override.
+    /// Derived clients that customize connection establishment must override this method explicitly.
+    /// </remarks>
     public virtual Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        return RunAsync(Open, cancellationToken);
+        return ExecuteExclusiveAsync(
+            async operationCancellation =>
+            {
+                var deadline = CreateDeadline(Timeout);
+                using var deadlineCancellation = new CancellationTokenSource(
+                    GetRemainingTime(deadline, "Connect timeout"));
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                    operationCancellation,
+                    deadlineCancellation.Token);
+                try
+                {
+                    await OpenCoreAsync(explicitRequest: true, deadline, linked.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (
+                    deadlineCancellation.IsCancellationRequested && !operationCancellation.IsCancellationRequested)
+                {
+                    CloseTransport();
+                    throw new ToyopucTimeoutError("Connect timeout");
+                }
+            },
+            cancellationToken);
     }
 
     /// <summary>Closes the connection and rejects active and queued operations from its transport generation.</summary>
@@ -335,8 +396,8 @@ public partial class ToyopucClient
         ArgumentNullException.ThrowIfNull(innerPayload);
         var request = ToyopucProtocol.ParseRelayInnerRequest(innerPayload);
         return request.IsReadOnly
-            ? RunAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken)
-            : RunStateChangingAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken);
+            ? RunAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response.ToOwned()), cancellationToken)
+            : RunStateChangingAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response.ToOwned()), cancellationToken);
     }
 
     internal Task<ResponseFrame> SendViaRelayReadAsync(object hops, byte[] innerPayload, CancellationToken cancellationToken = default)
@@ -345,8 +406,23 @@ public partial class ToyopucClient
         ArgumentNullException.ThrowIfNull(innerPayload);
         var request = ToyopucProtocol.ParseRelayInnerRequest(innerPayload);
         return request.IsReadOnly
-            ? RunAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken)
-            : RunStateChangingAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response), cancellationToken);
+            ? RunAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response.ToOwned()), cancellationToken)
+            : RunStateChangingAsync(() => SendViaRelayCore(hopsSnapshot, request, static response => response.ToOwned()), cancellationToken);
+    }
+
+    internal Task<T> SendViaRelayReadDecodedAsync<T>(
+        object hops,
+        byte[] innerPayload,
+        Func<ResponseFrameView, T> decode,
+        CancellationToken cancellationToken = default)
+    {
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        ArgumentNullException.ThrowIfNull(innerPayload);
+        ArgumentNullException.ThrowIfNull(decode);
+        var request = ToyopucProtocol.ParseRelayInnerRequest(innerPayload);
+        if (!request.IsReadOnly)
+            throw new ArgumentException("A read-only relay request is required.", nameof(innerPayload));
+        return RunAsync(() => SendViaRelayCore(hopsSnapshot, request, decode), cancellationToken);
     }
 
     public Task<int[]> RelayReadWordsAsync(object hops, int address, int count, CancellationToken cancellationToken = default)
@@ -711,75 +787,14 @@ public partial class ToyopucClient
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(action);
-        var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
-        var priorContext = _operationContext.Value;
-        if (lease.OwnsTurn)
-            _operationContext.Value = new OperationContext(this, lease.Generation);
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            lease.Generation.Cancellation.Token);
-        try
-        {
-            await Task.Run(
-                () =>
-                {
-                    linked.Token.ThrowIfCancellationRequested();
-                    _requestMayHaveBeenSent = false;
-                    _operationCancellation.Value = linked.Token;
-                    using var cancellationRegistration = linked.Token.Register(
-                        static state => ((ToyopucClient)state!).CancelActiveOperation(),
-                        this);
-                    try
-                    {
-                        action();
-                    }
-                    catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
-                    {
-                        var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
-                        if (unknown is not null)
-                            throw unknown;
-                        throw;
-                    }
-                    catch (Exception exception) when (linked.IsCancellationRequested)
-                    {
-                        CancelActiveOperation();
-                        if (exception is ToyopucOperationOutcomeUnknownException)
-                        {
-                            throw;
-                        }
-                        if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
-                        {
-                            throw new ToyopucOperationOutcomeUnknownException(
-                                lease.Generation.IsRetired
-                                    ? ToyopucOutcomeUnknownReason.Closed
-                                    : ToyopucOutcomeUnknownReason.Cancellation,
-                                "The operation was canceled after its request may have been sent; the PLC state is unknown.",
-                                exception);
-                        }
-                        throw new OperationCanceledException(linked.Token);
-                    }
-                    finally
-                    {
-                        _operationCancellation.Value = default;
-                    }
-                }).ConfigureAwait(false);
-            if (lease.Generation.IsRetired)
-                throw lease.Generation.CreateFailure(this);
-        }
-        catch (ToyopucOperationOutcomeUnknownException)
-        {
-            throw;
-        }
-        catch when (lease.Generation.IsRetired)
-        {
-            throw lease.Generation.CreateFailure(this);
-        }
-        finally
-        {
-            if (lease.OwnsTurn)
-                _operationContext.Value = priorContext;
-            ExitOperation(lease);
-        }
+        await RunAsyncCore(
+            () =>
+            {
+                action();
+                return true;
+            },
+            outcomeUnknownAfterSend,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<T> RunAsyncCore<T>(
@@ -788,58 +803,101 @@ public partial class ToyopucClient
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(action);
-        var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
-        var priorContext = _operationContext.Value;
-        if (lease.OwnsTurn)
-            _operationContext.Value = new OperationContext(this, lease.Generation);
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            lease.Generation.Cancellation.Token);
-        try
-        {
-            var result = await Task.Run(
-                () =>
+        return await RunAsyncLifecycleCore(
+            async (deadline, linkedCancellation, generation) =>
+            {
+                // Preserve the asynchronous method boundary for protected pure
+                // delegates; transport waits below use Socket async APIs directly.
+                await Task.Yield();
+                linkedCancellation.ThrowIfCancellationRequested();
+                var script = new AsyncOperationScript();
+                while (true)
                 {
-                    linked.Token.ThrowIfCancellationRequested();
-                    _requestMayHaveBeenSent = false;
-                    _operationCancellation.Value = linked.Token;
-                    using var cancellationRegistration = linked.Token.Register(
-                        static state => ((ToyopucClient)state!).CancelActiveOperation(),
-                        this);
+                    script.Reset();
+                    _asyncTransportScript.Value = script;
                     try
                     {
                         return action();
                     }
-                    catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+                    catch (AsyncTransportRequiredException required)
                     {
-                        var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
-                        if (unknown is not null)
-                            throw unknown;
-                        throw;
-                    }
-                    catch (Exception exception) when (linked.IsCancellationRequested)
-                    {
-                        CancelActiveOperation();
-                        if (exception is ToyopucOperationOutcomeUnknownException)
-                        {
-                            throw;
-                        }
-                        if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
-                        {
-                            throw new ToyopucOperationOutcomeUnknownException(
-                                lease.Generation.IsRetired
-                                    ? ToyopucOutcomeUnknownReason.Closed
-                                    : ToyopucOutcomeUnknownReason.Cancellation,
-                                "The operation was canceled after its request may have been sent; the PLC state is unknown.",
-                                exception);
-                        }
-                        throw new OperationCanceledException(linked.Token);
+                        _asyncTransportScript.Value = null;
+                        var frame = await ExchangeAsync(
+                            required.Payload,
+                            required.OutcomeUnknownAfterSend,
+                            deadline,
+                            linkedCancellation,
+                            generation).ConfigureAwait(false);
+                        script.Add(required.Payload, required.OutcomeUnknownAfterSend, frame);
                     }
                     finally
                     {
-                        _operationCancellation.Value = default;
+                        _asyncTransportScript.Value = null;
                     }
-                }).ConfigureAwait(false);
+                }
+            },
+            outcomeUnknownAfterSend,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private protected Task<T> RunNativeSequenceAsync<T>(
+        Func<Func<byte[], bool, Task<ResponseFrameView>>, Task<T>> operation,
+        bool outcomeUnknownAfterSend,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        return RunAsyncLifecycleCore(
+            async (deadline, linkedCancellation, generation) =>
+            {
+                await Task.Yield();
+                linkedCancellation.ThrowIfCancellationRequested();
+
+                async Task<ResponseFrameView> ExchangePreparedAsync(
+                    byte[] payload,
+                    bool exchangeOutcomeUnknownAfterSend)
+                {
+                    var frame = await ExchangeAsync(
+                        payload,
+                        exchangeOutcomeUnknownAfterSend,
+                        deadline,
+                        linkedCancellation,
+                        generation).ConfigureAwait(false);
+                    return DecodePreparedAsyncResponse(
+                        payload,
+                        frame,
+                        static response => response);
+                }
+
+                return await operation(ExchangePreparedAsync).ConfigureAwait(false);
+            },
+            outcomeUnknownAfterSend,
+            cancellationToken);
+    }
+
+    private async Task<T> RunAsyncLifecycleCore<T>(
+        Func<long, CancellationToken, OperationGeneration, Task<T>> operation,
+        bool outcomeUnknownAfterSend,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
+        var priorContext = _operationContext.Value;
+        if (lease.OwnsTurn)
+            _operationContext.Value = new OperationContext(this, lease.Generation);
+        var deadline = CreateDeadline(Timeout);
+        using var deadlineCancellation = new CancellationTokenSource(
+            GetRemainingTime(deadline, "Send/receive timeout"));
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            lease.Generation.Cancellation.Token,
+            deadlineCancellation.Token);
+        var priorCancellation = _operationCancellation.Value;
+        try
+        {
+            _requestMayHaveBeenSent = false;
+            _operationCancellation.Value = linked.Token;
+            var result = await operation(deadline, linked.Token, lease.Generation).ConfigureAwait(false);
+            linked.Token.ThrowIfCancellationRequested();
             if (lease.Generation.IsRetired)
                 throw lease.Generation.CreateFailure(this);
             return result;
@@ -848,15 +906,255 @@ public partial class ToyopucClient
         {
             throw;
         }
+        catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+        {
+            var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
+            if (unknown is not null)
+                throw unknown;
+            throw;
+        }
+        catch (OperationCanceledException exception) when (linked.IsCancellationRequested)
+        {
+            if (lease.Generation.IsRetired)
+            {
+                if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
+                {
+                    throw new ToyopucOperationOutcomeUnknownException(
+                        ToyopucOutcomeUnknownReason.Closed,
+                        "The operation ended after its request may have been sent; the PLC state is unknown.",
+                        exception);
+                }
+                throw lease.Generation.CreateFailure(this);
+            }
+            var deadlineExpired = deadlineCancellation.IsCancellationRequested
+                && !cancellationToken.IsCancellationRequested
+                && !lease.Generation.IsRetired;
+            if (!deadlineExpired)
+                _explicitReconnectRequired = true;
+            CloseTransport();
+            if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
+            {
+                throw new ToyopucOperationOutcomeUnknownException(
+                    lease.Generation.IsRetired
+                        ? ToyopucOutcomeUnknownReason.Closed
+                        : deadlineExpired
+                            ? ToyopucOutcomeUnknownReason.Timeout
+                            : ToyopucOutcomeUnknownReason.Cancellation,
+                    "The operation ended after its request may have been sent; the PLC state is unknown.",
+                    exception);
+            }
+            if (deadlineExpired)
+                throw new ToyopucTimeoutError("Send/receive timeout", exception);
+            throw;
+        }
         catch when (lease.Generation.IsRetired)
         {
             throw lease.Generation.CreateFailure(this);
         }
         finally
         {
+            _operationCancellation.Value = priorCancellation;
             if (lease.OwnsTurn)
                 _operationContext.Value = priorContext;
             ExitOperation(lease);
+        }
+    }
+
+    private async Task OpenCoreAsync(
+        bool explicitRequest,
+        long deadline,
+        CancellationToken cancellationToken)
+    {
+        var generation = RequireCurrentOperationGeneration();
+        if (_fixedUdpSessionTainted)
+        {
+            throw new InvalidOperationException(
+                "This fixed-port UDP session cannot be reused after an uncertain request; " +
+                "create a new client only after late responses can no longer be present.");
+        }
+        if (explicitRequest)
+            _explicitReconnectRequired = false;
+        else if (_explicitReconnectRequired)
+            throw new ToyopucNotConnectedException(
+                "The canceled session requires an explicit Open/OpenAsync before another command.");
+        if (_socket is not null)
+            return;
+
+        var remoteAddress = await ResolveRemoteAddressAsync(Host, cancellationToken).ConfigureAwait(false);
+        ThrowIfOpenGenerationInvalid(generation);
+        ThrowIfDeadlineExpired(deadline, "Connect timeout");
+        var remoteEndPoint = new IPEndPoint(remoteAddress, Port);
+        var socket = Transport == ToyopucTransportMode.Tcp
+            ? new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+            : new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        try
+        {
+            ConfigureSocket(socket);
+            if (Transport == ToyopucTransportMode.Udp)
+                socket.Bind(new IPEndPoint(IPAddress.Any, LocalPort));
+            SocketConnectStartedHook?.Invoke(socket);
+            await socket.ConnectAsync(remoteEndPoint, cancellationToken).ConfigureAwait(false);
+            ThrowIfOpenGenerationInvalid(generation);
+            ThrowIfDeadlineExpired(deadline, "Connect timeout");
+            ConnectedSocketHook?.Invoke(socket);
+            PublishConnectedSocket(socket, remoteEndPoint, generation);
+        }
+        catch (Exception exception)
+        {
+            if (ReferenceEquals(_socket, socket))
+                _socket = null;
+            socket.Dispose();
+            if (exception is SocketException or ObjectDisposedException)
+                throw new ToyopucTransportError("Socket error", exception);
+            throw;
+        }
+    }
+
+    private async Task<IPAddress> ResolveRemoteAddressAsync(
+        string host,
+        CancellationToken cancellationToken)
+    {
+        if (IPAddress.TryParse(host, out var address))
+        {
+            return address.AddressFamily == AddressFamily.InterNetwork
+                ? address
+                : throw new ToyopucError($"Host is not an IPv4 address: {host}");
+        }
+        try
+        {
+            return SelectResolvedIPv4(
+                host,
+                await HostAddressResolver(host, cancellationToken).ConfigureAwait(false));
+        }
+        catch (Exception exception) when (exception is SocketException or ArgumentException)
+        {
+            throw new ToyopucTransportError($"Host resolution failed: {host}", exception);
+        }
+    }
+
+    private async Task<byte[]> ExchangeAsync(
+        byte[] payload,
+        bool outcomeUnknownAfterSend,
+        long deadline,
+        CancellationToken cancellationToken,
+        OperationGeneration generation)
+    {
+        var attempt = 0;
+        while (_socket is null)
+        {
+            try
+            {
+                await OpenCoreAsync(explicitRequest: false, deadline, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (
+                exception is (SocketException or ToyopucTransportError) && attempt < Retries)
+            {
+                attempt++;
+                if (RetryDelay > TimeSpan.Zero)
+                {
+                    var remaining = GetRemainingTime(deadline, "Transaction timeout during retry delay");
+                    await Task.Delay(RetryDelay < remaining ? RetryDelay : remaining, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+        }
+
+        var socket = _socket ?? throw new ToyopucNotConnectedException("Socket was not opened.");
+        _lastTx = payload;
+        _lastRx = null;
+        FireTrace(ToyopucTraceDirection.Send, payload);
+        _requestMayHaveBeenSent = true;
+        try
+        {
+            var sent = 0;
+            SocketDeadlineAppliedHook?.Invoke(
+                ToyopucSocketDeadlineDirection.Send,
+                GetSocketDeadlineMilliseconds(deadline, "Send timeout"));
+            while (sent < payload.Length)
+            {
+                sent += await socket.SendAsync(
+                    payload.AsMemory(sent),
+                    SocketFlags.None,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            RecordSend(payload.Length);
+
+            byte[] frame;
+            if (Transport == ToyopucTransportMode.Tcp)
+            {
+                var header = new byte[4];
+                await ReceiveExactAsync(socket, header, deadline, cancellationToken).ConfigureAwait(false);
+                var length = header[2] | (header[3] << 8);
+                frame = GC.AllocateUninitializedArray<byte>(header.Length + length);
+                header.CopyTo(frame, 0);
+                await ReceiveExactAsync(
+                    socket,
+                    frame.AsMemory(header.Length, length),
+                    deadline,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var buffer = GC.AllocateUninitializedArray<byte>(UdpReceiveBufferSize);
+                SocketDeadlineAppliedHook?.Invoke(
+                    ToyopucSocketDeadlineDirection.Receive,
+                    GetSocketDeadlineMilliseconds(deadline, "UDP receive timeout"));
+                var received = await socket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken)
+                    .ConfigureAwait(false);
+                frame = buffer.AsSpan(0, received).ToArray();
+            }
+
+            if (generation.IsRetired)
+                throw generation.CreateFailure(this);
+            ThrowIfDeadlineExpired(deadline, "Send/receive timeout");
+            _lastRx = frame;
+            Interlocked.Add(ref _rxBytes, frame.Length);
+            FireTrace(ToyopucTraceDirection.Receive, frame);
+            if (_traceFrameCapacity > 0)
+            {
+                while (_traceFrames.Count >= _traceFrameCapacity)
+                    _traceFrames.Dequeue();
+                _traceFrames.Enqueue(new TransportTraceFrame(payload.ToArray(), frame.ToArray()));
+            }
+            return frame;
+        }
+        catch (OperationCanceledException)
+        {
+            MarkFixedUdpSessionTaintedIfNeeded();
+            CloseTransport();
+            throw;
+        }
+        catch (Exception exception) when (
+            exception is SocketException or ObjectDisposedException or InvalidOperationException)
+        {
+            MarkFixedUdpSessionTaintedIfNeeded();
+            CloseTransport();
+            var error = new ToyopucTransportError("Socket error", exception);
+            if (outcomeUnknownAfterSend)
+                throw CreateOutcomeUnknownException(error);
+            throw error;
+        }
+    }
+
+    private async Task ReceiveExactAsync(
+        Socket socket,
+        Memory<byte> destination,
+        long deadline,
+        CancellationToken cancellationToken)
+    {
+        var received = 0;
+        while (received < destination.Length)
+        {
+            SocketDeadlineAppliedHook?.Invoke(
+                ToyopucSocketDeadlineDirection.Receive,
+                GetSocketDeadlineMilliseconds(deadline, "Receive timeout"));
+            var count = await socket.ReceiveAsync(
+                destination[received..],
+                SocketFlags.None,
+                cancellationToken).ConfigureAwait(false);
+            if (count == 0)
+                throw new SocketException((int)SocketError.ConnectionReset);
+            received += count;
         }
     }
 

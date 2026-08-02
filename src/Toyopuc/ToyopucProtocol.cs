@@ -143,7 +143,11 @@ public static class ToyopucProtocol
     }
 
     public static ResponseFrame ParseResponse(byte[] frame)
+        => ParseResponseView(frame).ToOwned();
+
+    internal static ResponseFrameView ParseResponseView(byte[] frame)
     {
+        ArgumentNullException.ThrowIfNull(frame);
         if (frame.Length < 5)
         {
             throw new ToyopucProtocolError("Response too short");
@@ -158,13 +162,7 @@ public static class ToyopucProtocol
             throw new ToyopucProtocolError($"Invalid length: expected {expected} bytes, got {frame.Length} bytes");
         }
 
-        var data = new byte[Math.Max(0, frame.Length - 5)];
-        if (data.Length > 0)
-        {
-            Buffer.BlockCopy(frame, 5, data, 0, data.Length);
-        }
-
-        return new ResponseFrame(ft, rc, frame[4], data);
+        return new ResponseFrameView(ft, rc, frame[4], frame.AsMemory(5));
     }
 
     public static byte[] PackU16LittleEndian(int value)
@@ -175,6 +173,9 @@ public static class ToyopucProtocol
     }
 
     public static int[] UnpackU16LittleEndian(byte[] data)
+        => UnpackU16LittleEndian(data.AsSpan());
+
+    internal static int[] UnpackU16LittleEndian(ReadOnlySpan<byte> data)
     {
         if (data.Length % 2 != 0)
         {
@@ -184,7 +185,7 @@ public static class ToyopucProtocol
         var values = new int[data.Length / 2];
         for (var i = 0; i < values.Length; i++)
         {
-            values[i] = BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(i * 2, 2));
+            values[i] = BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(i * 2, 2));
         }
 
         return values;
@@ -306,6 +307,9 @@ public static class ToyopucProtocol
     }
 
     public static ClockData ParseClockData(byte[] data)
+        => ParseClockData(data.AsSpan());
+
+    internal static ClockData ParseClockData(ReadOnlySpan<byte> data)
     {
         if (data.Length != 9 || data[0] != 0x70 || data[1] != 0x00)
         {
@@ -323,6 +327,9 @@ public static class ToyopucProtocol
     }
 
     public static CpuStatusData ParseCpuStatusData(byte[] data)
+        => ParseCpuStatusData(data.AsSpan());
+
+    internal static CpuStatusData ParseCpuStatusData(ReadOnlySpan<byte> data)
     {
         if (data.Length != 10 || data[0] != 0x11 || data[1] != 0x00)
         {
@@ -333,6 +340,9 @@ public static class ToyopucProtocol
     }
 
     public static CpuStatusData ParseCpuStatusDataA0(byte[] data)
+        => ParseCpuStatusDataA0(data.AsSpan());
+
+    internal static CpuStatusData ParseCpuStatusDataA0(ReadOnlySpan<byte> data)
     {
         if (data.Length != 11 || data[0] != 0x00 || data[1] != 0x11 || data[2] != 0x00)
         {
@@ -343,9 +353,10 @@ public static class ToyopucProtocol
     }
 
     public static byte[] ParseCpuStatusDataA0Raw(byte[] data)
-    {
-        return ParseCpuStatusDataA0(data).RawBytes;
-    }
+        => ParseCpuStatusDataA0Raw(data.AsSpan());
+
+    internal static byte[] ParseCpuStatusDataA0Raw(ReadOnlySpan<byte> data)
+        => ParseCpuStatusDataA0(data).RawBytes;
 
     public static byte[] BuildWordRead(int address, int count)
     {
@@ -358,7 +369,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildWordWrite(int address, IEnumerable<int> values)
     {
-        var words = values.ToArray();
+        var words = values as int[] ?? values.ToArray();
         RequireCount("CMD=1D word-write", words.Length, ContinuousWordMax);
         var frame = CreateCommandFrame(0x1D, 2 + (words.Length * 2));
         WriteU16(frame, 5, address);
@@ -412,7 +423,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildMultiWordRead(IEnumerable<int> addresses)
     {
-        var items = addresses.ToArray();
+        var items = addresses as int[] ?? addresses.ToArray();
         RequireCount("CMD=22 multi-word-read", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x22, items.Length * 2);
         for (var i = 0; i < items.Length; i++)
@@ -425,7 +436,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildMultiWordWrite(IEnumerable<(int Address, int Value)> pairs)
     {
-        var items = pairs.ToArray();
+        var items = pairs as (int Address, int Value)[] ?? pairs.ToArray();
         RequireCount("CMD=23 multi-word-write", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x23, items.Length * 4);
         for (var i = 0; i < items.Length; i++)
@@ -439,7 +450,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildMultiByteRead(IEnumerable<int> addresses)
     {
-        var items = addresses.ToArray();
+        var items = addresses as int[] ?? addresses.ToArray();
         RequireCount("CMD=24 multi-byte-read", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x24, items.Length * 2);
         for (var i = 0; i < items.Length; i++)
@@ -452,7 +463,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildMultiByteWrite(IEnumerable<(int Address, int Value)> pairs)
     {
-        var items = pairs.ToArray();
+        var items = pairs as (int Address, int Value)[] ?? pairs.ToArray();
         RequireCount("CMD=25 multi-byte-write", items.Length, BasicMultiMaxPoints);
         var frame = CreateCommandFrame(0x25, items.Length * 3);
         for (var i = 0; i < items.Length; i++)
@@ -478,7 +489,7 @@ public static class ToyopucProtocol
 
     public static byte[] BuildExtWordWrite(int number, int address, IEnumerable<int> values)
     {
-        var words = values.ToArray();
+        var words = values as int[] ?? values.ToArray();
         RequireCount("CMD=95 ext-word-write", words.Length, ContinuousWordMax);
         var frame = CreateCommandFrame(0x95, 3 + (words.Length * 2));
         frame[5] = RequireWireByte(nameof(number), number);
@@ -521,9 +532,9 @@ public static class ToyopucProtocol
         IEnumerable<(int No, int Address)> bytePoints,
         IEnumerable<(int No, int Address)> wordPoints)
     {
-        var bits = bitPoints.ToArray();
-        var bytes = bytePoints.ToArray();
-        var words = wordPoints.ToArray();
+        var bits = bitPoints as (int No, int Bit, int Address)[] ?? bitPoints.ToArray();
+        var bytes = bytePoints as (int No, int Address)[] ?? bytePoints.ToArray();
+        var words = wordPoints as (int No, int Address)[] ?? wordPoints.ToArray();
         RequireExtMultiReadLimits(bits.Length, bytes.Length, words.Length);
         var frame = CreateCommandFrame(0x98, 3 + (bits.Length * 3) + (bytes.Length * 3) + (words.Length * 3));
         frame[5] = (byte)(bits.Length & 0xFF);
@@ -560,9 +571,9 @@ public static class ToyopucProtocol
         IEnumerable<(int No, int Address, int Value)> bytePoints,
         IEnumerable<(int No, int Address, int Value)> wordPoints)
     {
-        var bits = bitPoints.ToArray();
-        var bytes = bytePoints.ToArray();
-        var words = wordPoints.ToArray();
+        var bits = bitPoints as (int No, int Bit, int Address, int Value)[] ?? bitPoints.ToArray();
+        var bytes = bytePoints as (int No, int Address, int Value)[] ?? bytePoints.ToArray();
+        var words = wordPoints as (int No, int Address, int Value)[] ?? wordPoints.ToArray();
         RequireExtMultiWriteLimits(bits.Length, bytes.Length, words.Length);
         var frame = CreateCommandFrame(0x99, 3 + (bits.Length * 4) + (bytes.Length * 4) + (words.Length * 5));
         frame[5] = (byte)(bits.Length & 0xFF);

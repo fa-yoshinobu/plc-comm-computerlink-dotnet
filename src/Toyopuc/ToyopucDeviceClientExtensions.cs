@@ -325,27 +325,45 @@ public static class ToyopucDeviceClientExtensions
             case "basic-word":
                 if (TryGetConsecutiveStart(devices, static device => device.BasicAddress, 1, out var basicStart))
                 {
-                    var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildWordRead(basicStart, devices.Count), ct).ConfigureAwait(false);
-                    return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
+                    return await client.SendViaRelayReadDecodedAsync(
+                        relayHops,
+                        ToyopucProtocol.BuildWordRead(basicStart, devices.Count),
+                        static response => ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data.Span)),
+                        ct).ConfigureAwait(false);
                 }
-                var multiBasic = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildMultiWordRead(CollectBasicAddresses(devices)), ct).ConfigureAwait(false);
-                return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(multiBasic.Data));
+                return await client.SendViaRelayReadDecodedAsync(
+                    relayHops,
+                    ToyopucProtocol.BuildMultiWordRead(CollectBasicAddresses(devices)),
+                    static response => ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data.Span)),
+                    ct).ConfigureAwait(false);
             case "ext-word":
                 if (TryGetUniformNumber(devices, out var number) && TryGetConsecutiveStart(devices, static device => device.Address, 1, out var extStart))
                 {
-                    var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildExtWordRead(number, extStart, devices.Count), ct).ConfigureAwait(false);
-                    return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
+                    return await client.SendViaRelayReadDecodedAsync(
+                        relayHops,
+                        ToyopucProtocol.BuildExtWordRead(number, extStart, devices.Count),
+                        static response => ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data.Span)),
+                        ct).ConfigureAwait(false);
                 }
-                var multiExt = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildExtMultiRead(Array.Empty<(int No, int Bit, int Address)>(), Array.Empty<(int No, int Address)>(), CollectNoAddresses(devices)), ct).ConfigureAwait(false);
-                return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(multiExt.Data));
+                return await client.SendViaRelayReadDecodedAsync(
+                    relayHops,
+                    ToyopucProtocol.BuildExtMultiRead(Array.Empty<(int No, int Bit, int Address)>(), Array.Empty<(int No, int Address)>(), CollectNoAddresses(devices)),
+                    static response => ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data.Span)),
+                    ct).ConfigureAwait(false);
             case "pc10-word":
                 if (TryGetConsecutivePc10BlockStart(devices, 2, out var pc10Start))
                 {
-                    var response = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildPc10BlockRead(pc10Start, devices.Count * 2), ct).ConfigureAwait(false);
-                    return ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data));
+                    return await client.SendViaRelayReadDecodedAsync(
+                        relayHops,
+                        ToyopucProtocol.BuildPc10BlockRead(pc10Start, devices.Count * 2),
+                        static response => ToUShortArray(ToyopucProtocol.UnpackU16LittleEndian(response.Data.Span)),
+                        ct).ConfigureAwait(false);
                 }
-                var multiPc10 = await client.SendViaRelayReadAsync(relayHops, ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiWordReadPayload(CollectAddress32Values(devices))), ct).ConfigureAwait(false);
-                return ToUShortArray(ParsePc10MultiWordData(multiPc10.Data, devices.Count));
+                return await client.SendViaRelayReadDecodedAsync(
+                    relayHops,
+                    ToyopucProtocol.BuildPc10MultiRead(BuildPc10MultiWordReadPayload(CollectAddress32Values(devices))),
+                    response => ToUShortArray(ParsePc10MultiWordData(response.Data.Span, devices.Count)),
+                    ct).ConfigureAwait(false);
             default:
                 throw new ToyopucProtocolError($"Single-request word access does not support group '{group}'.");
         }
@@ -628,7 +646,7 @@ public static class ToyopucDeviceClientExtensions
         return payload;
     }
 
-    private static int[] ParsePc10MultiWordData(byte[] data, int count)
+    private static int[] ParsePc10MultiWordData(ReadOnlySpan<byte> data, int count)
     {
         if (data.Length < 4 + (count * 2))
             throw new ToyopucProtocolError("PC10 multi-word response too short");

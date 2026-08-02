@@ -128,11 +128,11 @@ public sealed class OverhaulContractTests
         using var releaseResolver = new ManualResetEventSlim();
         using var client = new ToyopucClient(
             "localhost", 8501, ToyopucTransportMode.Udp, timeout: TimeSpan.FromSeconds(2));
-        client.HostResolver = (_, _) =>
+        client.HostAddressResolver = (_, _) =>
         {
             resolverEntered.Set();
             releaseResolver.Wait();
-            return IPAddress.Loopback;
+            return Task.FromResult(new[] { IPAddress.Loopback });
         };
 
         Exception? openError = null;
@@ -2686,6 +2686,72 @@ public sealed class OverhaulContractTests
         Assert.False(client.IsOpen);
     }
 
+    [Fact]
+    public void TypedResponseViewBorrowsFrameWhilePublicResponseOwnsPayload()
+    {
+        var raw = BuildResponse(0x1C, [0x34, 0x12]);
+        var view = ToyopucProtocol.ParseResponseView(raw);
+        var ownedFromView = view.ToOwned();
+        var publicResponse = ToyopucProtocol.ParseResponse(raw);
+
+        raw[5] = 0x78;
+
+        Assert.Equal(0x78, view.Data.Span[0]);
+        Assert.Equal(0x34, ownedFromView.Data[0]);
+        Assert.Equal(0x34, publicResponse.Data[0]);
+        publicResponse.Data[0] = 0x9A;
+        Assert.Equal(0x78, raw[5]);
+    }
+
+    [Fact]
+    public void RelayViewUnwrapsMultipleLayersWithoutCopyingInnerFrames()
+    {
+        var final = BuildResponse(0x1C, [0x34, 0x12]);
+        var inner = BuildResponse(
+            0x60,
+            [0x34, 0x03, 0x00, 0x06, .. final.AsSpan(2)]);
+        var raw = BuildResponse(
+            0x60,
+            [0x12, 0x02, 0x00, 0x06, .. inner.AsSpan(2)]);
+
+        var (layers, response) = ToyopucRelay.UnwrapRelayResponseChainView(
+            ToyopucProtocol.ParseResponseView(raw));
+
+        Assert.Equal(2, layers.Count);
+        Assert.Equal((0x12, 0x02), (layers[0].LinkNo, layers[0].StationNo));
+        Assert.Equal((0x34, 0x03), (layers[1].LinkNo, layers[1].StationNo));
+        Assert.True(response.HasValue);
+        raw[^1] = 0x56;
+        Assert.Equal(0x56, response.Value.Data.Span[1]);
+    }
+
+    [Fact]
+    public async Task NativePreparedSequenceBuildsEachPayloadOnceAndDoesNotReplayItsDelegate()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = Task.Run(
+            async () =>
+            {
+                using var server = await listener.AcceptTcpClientAsync();
+                var stream = server.GetStream();
+                for (var index = 0; index < 2; index++)
+                {
+                    var request = await ReadFrameAsync(stream);
+                    await stream.WriteAsync(BuildResponse(request[4], [(byte)(index + 1), 0x00]));
+                }
+            });
+
+        await using var client = new NativeSequenceProbeClient(port);
+        var values = await client.ReadPreparedPairAsync();
+        await serverTask;
+
+        Assert.Equal([1, 2], values);
+        Assert.Equal(2, client.PayloadBuildCount);
+        Assert.Equal(1, client.SequenceInvocationCount);
+    }
+
     private static void AssertDeadlineValuesDoNotIncrease(
         IReadOnlyList<(ToyopucSocketDeadlineDirection Direction, int Milliseconds)> events)
     {
@@ -2720,6 +2786,41 @@ public sealed class OverhaulContractTests
         {
             CloseCalls++;
             base.Close();
+        }
+    }
+
+    private sealed class NativeSequenceProbeClient(int port)
+        : ToyopucClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(2))
+    {
+        public int PayloadBuildCount { get; private set; }
+        public int SequenceInvocationCount { get; private set; }
+
+        public Task<int[]> ReadPreparedPairAsync()
+        {
+            var payloads = new[] { PreparePayload(0), PreparePayload(1) };
+            return RunNativeSequenceAsync(
+                async exchange =>
+                {
+                    SequenceInvocationCount++;
+                    var results = new int[payloads.Length];
+                    for (var index = 0; index < payloads.Length; index++)
+                    {
+                        var response = await exchange(payloads[index], false);
+                        results[index] = response.Data.Span[0] | (response.Data.Span[1] << 8);
+                    }
+                    return results;
+                },
+                outcomeUnknownAfterSend: false);
+        }
+
+        private byte[] PreparePayload(int address)
+        {
+            PayloadBuildCount++;
+            return ToyopucProtocol.BuildWordRead(address, 1);
         }
     }
 

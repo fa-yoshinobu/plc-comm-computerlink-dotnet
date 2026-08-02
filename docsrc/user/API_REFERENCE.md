@@ -1076,6 +1076,10 @@ public void WriteFloat32s(int address, IEnumerable<float> values)
 public virtual Task OpenAsync(CancellationToken cancellationToken = default)
 ```
 
+Opens the configured TCP or UDP transport asynchronously.
+
+Remarks: This native asynchronous contract does not invoke a synchronous `Open` override. Derived clients that customize connection establishment must override this method explicitly.
+
 ##### CloseAsync
 
 ```csharp

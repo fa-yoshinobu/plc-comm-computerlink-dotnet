@@ -195,9 +195,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var resolved = ResolveSequentialDevices(ResolveDeviceObject(device), count);
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
         var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: true);
-        PreflightReadPlan(hopsSnapshot, resolved, plan);
+        var prepared = PrepareReadPlan(hopsSnapshot, resolved, plan);
         return ExecuteSynchronousExclusive(
-            () => RelayReadRuns(hopsSnapshot, resolved, plan));
+            () => ExecutePreparedRead(prepared, resolved.Count));
     }
 
     public object[] RelayReadDevices(object hops, IEnumerable<object> devices)
@@ -206,9 +206,9 @@ public partial class ToyopucDeviceClient : ToyopucClient
         RequireReadItems(resolved, nameof(RelayReadDevices));
         var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
         var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: false);
-        PreflightReadPlan(hopsSnapshot, resolved, plan);
+        var prepared = PrepareReadPlan(hopsSnapshot, resolved, plan);
         return ExecuteSynchronousExclusive(
-            () => RelayReadRuns(hopsSnapshot, resolved, plan));
+            () => ExecutePreparedRead(prepared, resolved.Length));
     }
 
     internal object[] RelayReadMany(object hops, IEnumerable<object> devices) => RelayReadDevices(hops, devices);
@@ -367,8 +367,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
             throw new ArgumentOutOfRangeException(nameof(count), "count must be 1 or greater.");
         var resolved = ResolveSequentialDevices(ResolveDeviceObject(device), count);
         var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: true);
-        PreflightReadPlan(resolved, plan);
-        return ExecuteSynchronousExclusive(() => ReadRuns(resolved, plan));
+        var prepared = PrepareReadPlan(resolved, plan);
+        return ExecuteSynchronousExclusive(() => ExecutePreparedRead(prepared, resolved.Count));
     }
 
     public object[] ReadDevices(IEnumerable<object> devices)
@@ -376,8 +376,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var resolved = ResolveDevices(devices);
         RequireReadItems(resolved, nameof(ReadDevices));
         var plan = GetReadRunPlan(resolved, splitPc10BlockBoundaries: false);
-        PreflightReadPlan(resolved, plan);
-        return ExecuteSynchronousExclusive(() => ReadRuns(resolved, plan));
+        var prepared = PrepareReadPlan(resolved, plan);
+        return ExecuteSynchronousExclusive(() => ExecutePreparedRead(prepared, resolved.Length));
     }
 
     internal object[] ReadMany(IEnumerable<object> devices) => ReadDevices(devices);
@@ -606,32 +606,137 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return ParsePc10MultiBitData(client.Pc10MultiRead(Pc10Payloads.BuildMultiBitReadPayload(items)), items.Length);
     }
 
-    private object[] ReadRuns(IReadOnlyList<ResolvedDevice> devices, IReadOnlyList<int> plan)
-    {
-        var results = new object[devices.Count];
-        var index = 0;
-        foreach (var runLength in plan)
-        {
-            var batchResults = ReadBatch(new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
-            Array.Copy(batchResults, 0, results, index, runLength);
-            index += runLength;
-        }
+    private sealed record PreparedReadSegment(
+        byte[] Payload,
+        PreparedRelayRead? Relay,
+        string DecodeKind,
+        int ResultOffset,
+        int Count);
 
+    private static PreparedReadSegment[] PrepareReadPlan(
+        IReadOnlyList<ResolvedDevice> devices,
+        IReadOnlyList<int> plan)
+        => PrepareReadPlanCore(null, devices, plan);
+
+    private static PreparedReadSegment[] PrepareReadPlan(
+        IReadOnlyList<(int LinkNo, int StationNo)> hops,
+        IReadOnlyList<ResolvedDevice> devices,
+        IReadOnlyList<int> plan)
+        => PrepareReadPlanCore(hops, devices, plan);
+
+    private static PreparedReadSegment[] PrepareReadPlanCore(
+        IReadOnlyList<(int LinkNo, int StationNo)>? hops,
+        IReadOnlyList<ResolvedDevice> devices,
+        IReadOnlyList<int> plan)
+    {
+        var prepared = new PreparedReadSegment[plan.Count];
+        var index = 0;
+        for (var segmentIndex = 0; segmentIndex < plan.Count; segmentIndex++)
+        {
+            var count = plan[segmentIndex];
+            var slice = new ReadOnlyListSlice<ResolvedDevice>(devices, index, count);
+            var payload = BuildReadBatchPayload(slice);
+            var kind = DeviceRunPlanner.GetBatchGroupKey(slice[0]) ?? slice[0].Scheme;
+            prepared[segmentIndex] = new PreparedReadSegment(
+                payload,
+                hops is null ? null : PrepareRelayRead(hops, payload),
+                kind,
+                index,
+                count);
+            index += count;
+        }
+        return prepared;
+    }
+
+    private object[] ExecutePreparedRead(
+        IReadOnlyList<PreparedReadSegment> prepared,
+        int resultCount)
+    {
+        var results = new object[resultCount];
+        foreach (var segment in prepared)
+        {
+            if (segment.Relay is null)
+            {
+                SendPreparedReadDecoded(
+                    segment.Payload,
+                    response =>
+                    {
+                        DecodePreparedReadSegment(response, segment, results);
+                        return true;
+                    });
+            }
+            else
+            {
+                SendPreparedRelayReadDecoded(
+                    segment.Relay,
+                    response =>
+                    {
+                        DecodePreparedReadSegment(response, segment, results);
+                        return true;
+                    });
+            }
+        }
         return results;
     }
 
-    private object[] RelayReadRuns(object hops, IReadOnlyList<ResolvedDevice> devices, IReadOnlyList<int> plan)
+    private static void DecodePreparedReadSegment(
+        ResponseFrameView response,
+        PreparedReadSegment segment,
+        object[] results)
     {
-        var results = new object[devices.Count];
-        var index = 0;
-        foreach (var runLength in plan)
+        var data = response.Data.Span;
+        var count = segment.Count;
+        var expectedLength = segment.DecodeKind switch
         {
-            var batchResults = RelayReadBatch(hops, new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
-            Array.Copy(batchResults, 0, results, index, runLength);
-            index += runLength;
+            "basic-word" or "ext-word" => checked(count * 2),
+            "basic-byte" or "ext-byte" or "pc10-byte" or "basic-bit" => count,
+            "ext-bit" => checked((count + 7) / 8),
+            "pc10-bit" => checked(4 + ((count + 7) / 8)),
+            "pc10-word" when response.Cmd == 0xC4 => checked(4 + (count * 2)),
+            "pc10-word" => checked(count * 2),
+            _ => throw new ToyopucProtocolError(
+                $"Prepared read has unsupported decode layout '{segment.DecodeKind}'."),
+        };
+        if (data.Length != expectedLength)
+        {
+            throw new ToyopucProtocolError(
+                $"Prepared read response data size mismatch: expected={expectedLength}, actual={data.Length}");
         }
 
-        return results;
+        var resultOffset = segment.ResultOffset;
+        switch (segment.DecodeKind)
+        {
+            case "basic-word":
+            case "ext-word":
+                for (var index = 0; index < count; index++)
+                    results[resultOffset + index] = data[index * 2] | (data[(index * 2) + 1] << 8);
+                break;
+            case "basic-byte":
+            case "ext-byte":
+            case "pc10-byte":
+                for (var index = 0; index < count; index++)
+                    results[resultOffset + index] = data[index];
+                break;
+            case "basic-bit":
+                results[resultOffset] = data[0] != 0;
+                break;
+            case "ext-bit":
+                for (var index = 0; index < count; index++)
+                    results[resultOffset + index] = (data[index / 8] & (1 << (index % 8))) != 0;
+                break;
+            case "pc10-bit":
+                for (var index = 0; index < count; index++)
+                    results[resultOffset + index] = (data[4 + (index / 8)] & (1 << (index % 8))) != 0;
+                break;
+            case "pc10-word":
+                var valueOffset = response.Cmd == 0xC4 ? 4 : 0;
+                for (var index = 0; index < count; index++)
+                {
+                    var byteOffset = valueOffset + (index * 2);
+                    results[resultOffset + index] = data[byteOffset] | (data[byteOffset + 1] << 8);
+                }
+                break;
+        }
     }
 
     private void WriteRuns(IReadOnlyList<(ResolvedDevice Device, object Value)> items, bool splitPc10BlockBoundaries)
@@ -850,31 +955,6 @@ public partial class ToyopucDeviceClient : ToyopucClient
         }
 
         return length;
-    }
-
-    private static void PreflightReadPlan(IReadOnlyList<ResolvedDevice> devices, IReadOnlyList<int> plan)
-    {
-        var index = 0;
-        foreach (var runLength in plan)
-        {
-            _ = BuildReadBatchPayload(new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
-            index += runLength;
-        }
-    }
-
-    private static void PreflightReadPlan(
-        IReadOnlyList<(int LinkNo, int StationNo)> hops,
-        IReadOnlyList<ResolvedDevice> devices,
-        IReadOnlyList<int> plan)
-    {
-        var index = 0;
-        foreach (var runLength in plan)
-        {
-            var innerPayload = BuildReadBatchPayload(
-                new ReadOnlyListSlice<ResolvedDevice>(devices, index, runLength));
-            _ = ToyopucProtocol.BuildRelayNested(hops, innerPayload);
-            index += runLength;
-        }
     }
 
     private static byte[] BuildReadBatchPayload(IReadOnlyList<ResolvedDevice> devices)

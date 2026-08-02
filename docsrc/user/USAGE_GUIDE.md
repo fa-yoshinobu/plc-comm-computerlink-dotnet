@@ -12,6 +12,8 @@ Each ordinary client admits public asynchronous live operations to one arrival-o
 
 Canceling a call that is still waiting removes only that call and sends nothing. Queue waiting does not consume the transaction timeout; the timeout starts when the call owns the transport. Compound helpers reserve the client without deadlocking their nested protocol calls, while separate client instances progress independently.
 
+Async DNS, connect, TCP/UDP send, and receive use native asynchronous APIs; the library does not reserve one worker thread per client while a socket is waiting. `OpenAsync()` is an independent virtual async contract and does not call a synchronous `Open()` override. A derived client that customizes connection establishment must override `OpenAsync()` as well as any synchronous behavior it needs.
+
 `QueuedToyopucDeviceClient` was removed. Replace its type with `ToyopucDeviceClient`, remove the wrapper constructor, and keep using the same ordinary high-level methods. The factory now returns the ordinary client directly.
 
 ## Read shapes

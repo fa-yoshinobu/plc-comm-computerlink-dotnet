@@ -145,6 +145,60 @@ public static class ToyopucRelay
         return (ToyopucProtocol.ParseResponse(innerFrame), padding);
     }
 
+    internal readonly record struct RelayLayerView(
+        int LinkNo,
+        int StationNo,
+        int Ack,
+        ReadOnlyMemory<byte> InnerRaw,
+        ReadOnlyMemory<byte> Padding);
+
+    internal static (IReadOnlyList<RelayLayerView> Layers, ResponseFrameView? FinalResponse)
+        UnwrapRelayResponseChainView(ResponseFrameView response)
+    {
+        var layers = new List<RelayLayerView>();
+        var current = response;
+
+        while (current.Cmd == 0x60)
+        {
+            if (current.Data.Length < 4)
+                throw new ToyopucProtocolError("Relay response data too short");
+
+            var data = current.Data.Span;
+            var linkNo = data[0];
+            var stationNo = data[1] | (data[2] << 8);
+            var ack = data[3];
+            var innerRaw = current.Data[4..];
+            if (ack != 0x06)
+            {
+                layers.Add(new RelayLayerView(linkNo, stationNo, ack, innerRaw, ReadOnlyMemory<byte>.Empty));
+                return (layers, null);
+            }
+
+            if (innerRaw.Length < 3)
+                throw new ToyopucProtocolError("Inner relay response too short");
+            var innerSpan = innerRaw.Span;
+            var innerLength = innerSpan[0] | (innerSpan[1] << 8);
+            var expected = checked(2 + innerLength);
+            if (innerRaw.Length < expected)
+            {
+                throw new ToyopucProtocolError(
+                    $"Inner relay response truncated: expected {expected} bytes, got {innerRaw.Length} bytes");
+            }
+            if (innerLength < 1)
+                throw new ToyopucProtocolError("Inner relay response length must include a command byte");
+
+            var padding = innerRaw[expected..];
+            layers.Add(new RelayLayerView(linkNo, stationNo, ack, innerRaw, padding));
+            current = new ResponseFrameView(
+                ToyopucProtocol.FtResponse,
+                0x00,
+                innerSpan[2],
+                innerRaw.Slice(3, innerLength - 1));
+        }
+
+        return (layers, current);
+    }
+
     public static (IReadOnlyList<RelayLayer> Layers, ResponseFrame? FinalResponse) UnwrapRelayResponseChain(ResponseFrame response)
     {
         var layers = new List<RelayLayer>();

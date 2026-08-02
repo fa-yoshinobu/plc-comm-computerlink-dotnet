@@ -7,6 +7,16 @@ public readonly record struct ToyopucTrafficStats(ulong RequestCount, ulong TxBy
 
 public sealed record ResponseFrame(byte Ft, byte Rc, byte Cmd, byte[] Data);
 
+internal readonly record struct ResponseFrameView(
+    byte Ft,
+    byte Rc,
+    byte Cmd,
+    ReadOnlyMemory<byte> Data)
+{
+    internal ResponseFrame ToOwned()
+        => new(Ft, Rc, Cmd, Data.ToArray());
+}
+
 internal sealed record TransportTraceFrame(byte[] Tx, byte[]? Rx);
 
 public enum ToyopucTransportMode { Unspecified, Tcp, Udp }
