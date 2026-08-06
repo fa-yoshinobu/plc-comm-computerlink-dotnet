@@ -12,6 +12,102 @@ public sealed class ToyopucClientExtensionsTests
     private const string Pc3JgSeparateProfile = "toyopuc:pc3jg:pc3-separate";
 
     [Fact]
+    public async Task WriteBitInWordAsync_AlwaysReadsThenWritesOneWord()
+    {
+        var read = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 1);
+        var write = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, [8]);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildResponse(0x94, [0x08, 0x00])
+                : frame.SequenceEqual(write)
+                    ? BuildResponse(0x95, [])
+                    : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            transport: ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
+
+        await client.WriteBitInWordAsync("P1-D0000", 3, true);
+
+        Assert.Equal(
+            [Convert.ToHexString(read), Convert.ToHexString(write)],
+            server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task WriteBitInWord_SynchronousSurfaceUsesTheSameTwoRequestContract()
+    {
+        var read = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 1);
+        var write = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, [0]);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildResponse(0x94, [0x08, 0x00])
+                : frame.SequenceEqual(write)
+                    ? BuildResponse(0x95, [])
+                    : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            transport: ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
+
+        client.WriteBitInWord("P1-D0000", 3, false);
+
+        Assert.Equal(
+            [Convert.ToHexString(read), Convert.ToHexString(write)],
+            server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task WriteBitInWord_RejectsInvalidTargetBeforeTransport()
+    {
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            transport: ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => client.WriteBitInWordAsync("P1-M0000", 0, true));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => client.WriteBitInWordAsync("P1-D0000", 16, true));
+        Assert.Equal(0UL, client.TrafficStats.RequestCount);
+    }
+
+    [Fact]
+    public async Task WriteBitInWordAsync_PreservesTheConfiguredRelayRouteForBothRequests()
+    {
+        var innerRead = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 1);
+        var innerWrite = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, [8]);
+        var read = ToyopucProtocol.BuildRelayCommand(0x12, 2, innerRead);
+        var write = ToyopucProtocol.BuildRelayCommand(0x12, 2, innerWrite);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildRelayResponse(0x12, 2, 0x94, [0x00, 0x00])
+                : frame.SequenceEqual(write)
+                    ? BuildRelayResponse(0x12, 2, 0x95, [])
+                    : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            route: ToyopucRoute.Relay("P1-L2:N2"));
+
+        await client.WriteBitInWordAsync("P1-D0000", 3, true);
+
+        Assert.Equal(
+            [Convert.ToHexString(read), Convert.ToHexString(write)],
+            server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
     public void ToyopucAddress_Normalize_PreservesPrefixAndSuffix()
     {
         var normalized = ToyopucAddress.Normalize(
@@ -280,6 +376,23 @@ public sealed class ToyopucClientExtensionsTests
         return new[] { (byte)0x80, (byte)0x00, (byte)(length & 0xFF), (byte)((length >> 8) & 0xFF), (byte)(cmd & 0xFF) }
             .Concat(data)
             .ToArray();
+    }
+
+    private static byte[] BuildRelayResponse(int linkNo, int stationNo, int command, byte[] data)
+    {
+        var innerLength = checked(1 + data.Length);
+        return BuildResponse(
+            0x60,
+            [
+                (byte)linkNo,
+                (byte)(stationNo & 0xFF),
+                (byte)(stationNo >> 8),
+                0x06,
+                (byte)(innerLength & 0xFF),
+                (byte)(innerLength >> 8),
+                (byte)command,
+                .. data,
+            ]);
     }
 
     private sealed class ScriptedToyopucServer : IAsyncDisposable

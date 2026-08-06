@@ -2568,7 +2568,7 @@ public static class ToyopucDeviceClientExtensions
 
 High-level typed, named, polling, and contiguous-range operations for `ToyopucDeviceClient`.
 
-Remarks: Typed and contiguous-range methods issue exactly one protocol request. `ReadNamedAsync` and each `PollAsync` cycle accept exactly one named address and therefore issue one request. Only `WriteBitInWordAsync` is a multi-request helper: it performs an explicit read followed by a write while holding one local client FIFO turn.
+Remarks: Typed and contiguous-range methods issue exactly one protocol request. `ReadNamedAsync` and each `PollAsync` cycle accept exactly one named address and therefore issue one request. Only `WriteBitInWord` and `WriteBitInWordAsync` are multi-request helpers: they perform an explicit read followed by a write while holding one local client FIFO turn and one absolute deadline.
 
 #### Members
 
@@ -2596,7 +2596,17 @@ public static Task WriteBitInWordAsync(ToyopucDeviceClient client, string device
 
 Sets or clears one bit in a word by an explicit read-modify-write sequence.
 
-Remarks: The read and write occupy one FIFO turn on this client, so its other operations cannot interleave. They remain two PLC requests and are not PLC-atomic: another client, PLC logic, or external writer can change the word between them. Applications that require atomic coordination must implement it in the PLC contract.
+Remarks: The read and write occupy one FIFO turn and share one absolute deadline, so this client's other operations cannot interleave. The helper always sends both requests, even when the bit is unchanged. It is not PLC-atomic: another client, PLC logic, or an external writer can change the word between them. Cancellation or failure after the write may have started is outcome-unknown and requires reconnect plus PLC-state reconciliation.
+
+##### WriteBitInWord
+
+```csharp
+public static void WriteBitInWord(ToyopucDeviceClient client, string device, int bitIndex, bool value)
+```
+
+Synchronously sets or clears one bit in a word by an explicit read-modify-write sequence.
+
+Remarks: The helper always performs one read followed by one write under one local FIFO turn and one deadline. It is not PLC-atomic and can overwrite a concurrent update to another bit in the same word. A failure after the write may have started is outcome-unknown and requires reconnect plus PLC-state reconciliation.
 
 ##### ReadNamedAsync
 

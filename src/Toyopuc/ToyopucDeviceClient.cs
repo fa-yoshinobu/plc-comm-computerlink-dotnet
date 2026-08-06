@@ -541,7 +541,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         return Convert.ToInt32(value, CultureInfo.InvariantCulture);
     }
 
-    private static int NormalizeDeviceValue(ResolvedDevice device, object value)
+    private static object NormalizeDeviceValue(ResolvedDevice device, object value)
     {
         return device.Unit switch
         {
@@ -552,10 +552,10 @@ public partial class ToyopucDeviceClient : ToyopucClient
         };
     }
 
-    private static int RequireBitValue(object value)
+    private static bool RequireBitValue(object value)
     {
         if (value is bool flag)
-            return flag ? 1 : 0;
+            return flag;
         throw new ArgumentException("Bit value must be Boolean; integer 0 or 1 is not accepted.", nameof(value));
     }
 
@@ -2132,7 +2132,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private static int ToBitInt(object value)
     {
-        return RequireBitValue(value);
+        return RequireBitValue(value) ? 1 : 0;
     }
 
     internal static void RequireGenericWriteDevice(ResolvedDevice resolved)

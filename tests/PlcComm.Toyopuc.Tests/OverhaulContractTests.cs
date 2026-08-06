@@ -1421,6 +1421,34 @@ public sealed class OverhaulContractTests
     }
 
     [Fact]
+    public async Task GenericWriteManyAsync_PreservesBooleanUntilWireEncoding()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = Task.Run(async () =>
+        {
+            using var server = await listener.AcceptTcpClientAsync();
+            var request = await ReadFrameAsync(server.GetStream());
+            Assert.Equal(0x99, request[4]);
+            Assert.Equal(1, request[^1]);
+            await server.GetStream().WriteAsync(BuildResponse(0x99, []));
+        });
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            port,
+            ToyopucTransportMode.Tcp,
+            ToyopucPlcProfiles.Nano10GxCompatible.Name,
+            timeout: TimeSpan.FromSeconds(2));
+
+        await client.WriteManyAsync(
+            new Dictionary<object, object> { ["P1-M0000"] = true });
+
+        await serverTask;
+        Assert.Equal(1UL, client.TrafficStats.RequestCount);
+    }
+
+    [Fact]
     public void FixedExtendedSegments_RejectAddressesThatWouldAliasAnotherDevice()
     {
         foreach (var device in new[] { "EX0800", "EX080W", "EX080L" })
@@ -1936,6 +1964,45 @@ public sealed class OverhaulContractTests
         Assert.True(secondEntered.Wait(TimeSpan.FromSeconds(2)));
         release.Set();
         await Task.WhenAll(first, second);
+    }
+
+    [Fact]
+    public async Task ExecuteExclusiveAsync_DeadlineInitializationFailureReleasesLease()
+    {
+        await using var client = new TrackingClient();
+        ForceTimeoutForDeadlineInitializationTest(client);
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            await Assert.ThrowsAsync<OverflowException>(
+                () => client.QueueExclusiveNoopAsync().WaitAsync(TimeSpan.FromSeconds(1)));
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteSynchronousExclusive_DeadlineInitializationFailureReleasesLease()
+    {
+        await using var client = new TrackingClient();
+        ForceTimeoutForDeadlineInitializationTest(client);
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            await Assert.ThrowsAsync<OverflowException>(
+                () => Task.Run(client.QueueSynchronousNoop).WaitAsync(TimeSpan.FromSeconds(1)));
+        }
+    }
+
+    [Fact]
+    public async Task RunAsyncLifecycleCore_DeadlineInitializationFailureReleasesLease()
+    {
+        await using var client = new TrackingClient();
+        ForceTimeoutForDeadlineInitializationTest(client);
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            await Assert.ThrowsAsync<OverflowException>(
+                () => client.ReadWordsAsync(0, 1).WaitAsync(TimeSpan.FromSeconds(1)));
+        }
     }
 
     [Fact]
@@ -2765,6 +2832,16 @@ public sealed class OverhaulContractTests
         }
     }
 
+    private static void ForceTimeoutForDeadlineInitializationTest(ToyopucClient client)
+    {
+        var timeoutField = typeof(ToyopucClient).GetField(
+            "<Timeout>k__BackingField",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(timeoutField);
+        timeoutField.SetValue(client, TimeSpan.MaxValue);
+        Assert.Equal(TimeSpan.MaxValue, client.Timeout);
+    }
+
     private sealed class TrackingClient()
         : ToyopucClient("127.0.0.1", 1025, ToyopucTransportMode.Tcp)
     {
@@ -2772,6 +2849,12 @@ public sealed class OverhaulContractTests
 
         public Task QueueAction(Action action, CancellationToken cancellationToken = default) =>
             RunAsync(action, cancellationToken);
+
+        public Task QueueExclusiveNoopAsync() =>
+            ExecuteExclusiveAsync(static _ => Task.CompletedTask);
+
+        public void QueueSynchronousNoop() =>
+            ExecuteSynchronousExclusive(static () => { });
 
         public Task QueueNestedAsync(List<int> order) =>
             ExecuteExclusiveAsync(

@@ -59,12 +59,15 @@ var bit13 = await client.ReadNamedAsync(["P1-D0000.D"]);
 
 `:D` is an unsigned dword; `.D` is bit 13.
 
-Use `WriteBitInWordAsync` only when an explicit read-modify-write is intended.
-It holds one FIFO turn on this client across the read and write, but the PLC
-still receives two requests. The operation is not PLC-atomic: PLC logic,
-another connection, or another controller can change the word between those
-requests. A post-send write failure can be outcome-unknown, so reconcile the
-PLC state before deciding whether another write is safe.
+Use `WriteBitInWord` or `WriteBitInWordAsync` only when an explicit
+read-modify-write is intended. Both forms validate the complete operation
+before communication, hold one FIFO turn, share one absolute deadline, and
+always issue one word read followed by one word write even when the selected
+bit already has the requested state. The PLC therefore receives two requests.
+The operation is not PLC-atomic: PLC logic, another connection, or another
+controller can change the word between them. Cancellation or failure after the
+write may have started is outcome-unknown; reconnect and reconcile the PLC
+state before deciding whether another write is safe.
 
 ## FR work area and commit
 

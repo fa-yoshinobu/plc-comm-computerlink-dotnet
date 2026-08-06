@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-08-07
+
+- Release: Bumped .NET package metadata to `4.0.0` for the approved breaking contract release.
+- Library: Fixed aggregate and generic semantic bit writes to preserve native `bool` values through planning and validation, converting to integer `0`/`1` only at final wire encoding. Valid Boolean writes no longer fail after an internal integer conversion; integer, string, and truthy substitutes remain rejected before transport.
+- Library: Added synchronous `WriteBitInWord` alongside `WriteBitInWordAsync`. Both validate the complete ordinary 16-bit word route before communication, hold one local FIFO turn, use one absolute post-admission deadline, and always issue one read followed by one write. The sequence is not PLC-atomic; cancellation or failure after the write may have started is outcome-unknown and requires transport retirement, reconnect, and PLC-state reconciliation.
+- Library: FIFO admission now releases its lease and restores operation context even when deadline or cancellation-source initialization itself throws, preventing a failed initializer from permanently blocking later work.
+- Tests: Added strict native-Boolean preservation, direct/relay bit-in-word read-modify-write, and repeated deadline-initialization failure recovery coverage.
+
 - BREAKING: `OpenAsync()` now owns native asynchronous DNS/connect work and no longer invokes a synchronous `Open()` override. Derived clients that customize connection establishment must override `OpenAsync()` explicitly.
 - Library: Async TCP/UDP operations now use native `Socket` async APIs under the existing FIFO, with one absolute post-admission deadline across DNS, connect, send, receive, response validation, and decode; cancellation and close retire the active transport without occupying a worker thread for socket waits.
 - Library: Synchronous and asynchronous hostname opens share the cancellation-aware IPv4 resolver core without library-owned `Task.Run`, timeout `Task.Delay`, resolver cache, or stale-address fallback.

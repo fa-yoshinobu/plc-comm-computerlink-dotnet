@@ -69,7 +69,10 @@ public partial class ToyopucClient
     }
 
     private readonly record struct OperationLease(OperationGeneration Generation, bool OwnsTurn);
-    private sealed record OperationContext(ToyopucClient Client, OperationGeneration Generation);
+    private sealed record OperationContext(
+        ToyopucClient Client,
+        OperationGeneration Generation,
+        long Deadline);
 
     public uint ReadDWord(int address)
     {
@@ -673,35 +676,42 @@ public partial class ToyopucClient
         ArgumentNullException.ThrowIfNull(operation);
         var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
         var priorContext = _operationContext.Value;
-        if (lease.OwnsTurn)
-        {
-            _operationContext.Value = new OperationContext(this, lease.Generation);
-            _requestMayHaveBeenSent = false;
-        }
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            lease.Generation.Cancellation.Token);
         try
         {
-            var result = await operation(linked.Token).ConfigureAwait(false);
-            if (lease.Generation.IsRetired)
+            var deadline = lease.OwnsTurn
+                ? CreateDeadline(Timeout)
+                : priorContext?.Deadline
+                    ?? throw new InvalidOperationException("Nested operation is missing its operation context.");
+            if (lease.OwnsTurn)
+            {
+                _operationContext.Value = new OperationContext(this, lease.Generation, deadline);
+                _requestMayHaveBeenSent = false;
+            }
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken,
+                lease.Generation.Cancellation.Token);
+            try
+            {
+                var result = await operation(linked.Token).ConfigureAwait(false);
+                if (lease.Generation.IsRetired)
+                    throw lease.Generation.CreateFailure(this);
+                return result;
+            }
+            catch (ToyopucOperationOutcomeUnknownException)
+            {
+                throw;
+            }
+            catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+            {
+                var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
+                if (unknown is not null)
+                    throw unknown;
+                throw;
+            }
+            catch when (lease.Generation.IsRetired)
+            {
                 throw lease.Generation.CreateFailure(this);
-            return result;
-        }
-        catch (ToyopucOperationOutcomeUnknownException)
-        {
-            throw;
-        }
-        catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
-        {
-            var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
-            if (unknown is not null)
-                throw unknown;
-            throw;
-        }
-        catch when (lease.Generation.IsRetired)
-        {
-            throw lease.Generation.CreateFailure(this);
+            }
         }
         finally
         {
@@ -732,35 +742,42 @@ public partial class ToyopucClient
         var lease = EnterOperationAsync(CancellationToken.None).GetAwaiter().GetResult();
         var priorContext = _operationContext.Value;
         var priorCancellation = _operationCancellation.Value;
-        if (lease.OwnsTurn)
-        {
-            _operationContext.Value = new OperationContext(this, lease.Generation);
-            _requestMayHaveBeenSent = false;
-        }
-        _operationCancellation.Value = priorCancellation.CanBeCanceled
-            ? priorCancellation
-            : lease.Generation.Cancellation.Token;
         try
         {
-            var result = operation();
-            if (lease.Generation.IsRetired)
+            var deadline = lease.OwnsTurn
+                ? CreateDeadline(Timeout)
+                : priorContext?.Deadline
+                    ?? throw new InvalidOperationException("Nested operation is missing its operation context.");
+            if (lease.OwnsTurn)
+            {
+                _operationContext.Value = new OperationContext(this, lease.Generation, deadline);
+                _requestMayHaveBeenSent = false;
+            }
+            _operationCancellation.Value = priorCancellation.CanBeCanceled
+                ? priorCancellation
+                : lease.Generation.Cancellation.Token;
+            try
+            {
+                var result = operation();
+                if (lease.Generation.IsRetired)
+                    throw lease.Generation.CreateFailure(this);
+                return result;
+            }
+            catch (ToyopucOperationOutcomeUnknownException)
+            {
+                throw;
+            }
+            catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+            {
+                var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend: false);
+                if (unknown is not null)
+                    throw unknown;
+                throw;
+            }
+            catch when (lease.Generation.IsRetired)
+            {
                 throw lease.Generation.CreateFailure(this);
-            return result;
-        }
-        catch (ToyopucOperationOutcomeUnknownException)
-        {
-            throw;
-        }
-        catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
-        {
-            var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend: false);
-            if (unknown is not null)
-                throw unknown;
-            throw;
-        }
-        catch when (lease.Generation.IsRetired)
-        {
-            throw lease.Generation.CreateFailure(this);
+            }
         }
         finally
         {
@@ -780,6 +797,9 @@ public partial class ToyopucClient
                 return true;
             });
     }
+
+    internal void ExecuteSynchronousExclusiveInternal(Action operation)
+        => ExecuteSynchronousExclusive(operation);
 
     private async Task RunAsyncCore(
         Action action,
@@ -882,74 +902,80 @@ public partial class ToyopucClient
         ArgumentNullException.ThrowIfNull(operation);
         var lease = await EnterOperationAsync(cancellationToken).ConfigureAwait(false);
         var priorContext = _operationContext.Value;
-        if (lease.OwnsTurn)
-            _operationContext.Value = new OperationContext(this, lease.Generation);
-        var deadline = CreateDeadline(Timeout);
-        using var deadlineCancellation = new CancellationTokenSource(
-            GetRemainingTime(deadline, "Send/receive timeout"));
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            lease.Generation.Cancellation.Token,
-            deadlineCancellation.Token);
         var priorCancellation = _operationCancellation.Value;
         try
         {
-            _requestMayHaveBeenSent = false;
-            _operationCancellation.Value = linked.Token;
-            var result = await operation(deadline, linked.Token, lease.Generation).ConfigureAwait(false);
-            linked.Token.ThrowIfCancellationRequested();
-            if (lease.Generation.IsRetired)
-                throw lease.Generation.CreateFailure(this);
-            return result;
-        }
-        catch (ToyopucOperationOutcomeUnknownException)
-        {
-            throw;
-        }
-        catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
-        {
-            var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
-            if (unknown is not null)
-                throw unknown;
-            throw;
-        }
-        catch (OperationCanceledException exception) when (linked.IsCancellationRequested)
-        {
-            if (lease.Generation.IsRetired)
+            var deadline = lease.OwnsTurn
+                ? CreateDeadline(Timeout)
+                : priorContext?.Deadline
+                    ?? throw new InvalidOperationException("Nested operation is missing its operation context.");
+            if (lease.OwnsTurn)
+                _operationContext.Value = new OperationContext(this, lease.Generation, deadline);
+            using var deadlineCancellation = new CancellationTokenSource(
+                GetRemainingTime(deadline, "Send/receive timeout"));
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken,
+                lease.Generation.Cancellation.Token,
+                deadlineCancellation.Token);
+            try
             {
+                _requestMayHaveBeenSent = false;
+                _operationCancellation.Value = linked.Token;
+                var result = await operation(deadline, linked.Token, lease.Generation).ConfigureAwait(false);
+                linked.Token.ThrowIfCancellationRequested();
+                if (lease.Generation.IsRetired)
+                    throw lease.Generation.CreateFailure(this);
+                return result;
+            }
+            catch (ToyopucOperationOutcomeUnknownException)
+            {
+                throw;
+            }
+            catch (ToyopucProtocolError exception) when (_requestMayHaveBeenSent)
+            {
+                var unknown = RetireMalformedPostSendResponse(exception, outcomeUnknownAfterSend);
+                if (unknown is not null)
+                    throw unknown;
+                throw;
+            }
+            catch (OperationCanceledException exception) when (linked.IsCancellationRequested)
+            {
+                if (lease.Generation.IsRetired)
+                {
+                    if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
+                    {
+                        throw new ToyopucOperationOutcomeUnknownException(
+                            ToyopucOutcomeUnknownReason.Closed,
+                            "The operation ended after its request may have been sent; the PLC state is unknown.",
+                            exception);
+                    }
+                    throw lease.Generation.CreateFailure(this);
+                }
+                var deadlineExpired = deadlineCancellation.IsCancellationRequested
+                    && !cancellationToken.IsCancellationRequested
+                    && !lease.Generation.IsRetired;
+                if (!deadlineExpired)
+                    _explicitReconnectRequired = true;
+                CloseTransport();
                 if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
                 {
                     throw new ToyopucOperationOutcomeUnknownException(
-                        ToyopucOutcomeUnknownReason.Closed,
+                        lease.Generation.IsRetired
+                            ? ToyopucOutcomeUnknownReason.Closed
+                            : deadlineExpired
+                                ? ToyopucOutcomeUnknownReason.Timeout
+                                : ToyopucOutcomeUnknownReason.Cancellation,
                         "The operation ended after its request may have been sent; the PLC state is unknown.",
                         exception);
                 }
+                if (deadlineExpired)
+                    throw new ToyopucTimeoutError("Send/receive timeout", exception);
+                throw;
+            }
+            catch when (lease.Generation.IsRetired)
+            {
                 throw lease.Generation.CreateFailure(this);
             }
-            var deadlineExpired = deadlineCancellation.IsCancellationRequested
-                && !cancellationToken.IsCancellationRequested
-                && !lease.Generation.IsRetired;
-            if (!deadlineExpired)
-                _explicitReconnectRequired = true;
-            CloseTransport();
-            if (outcomeUnknownAfterSend && _requestMayHaveBeenSent)
-            {
-                throw new ToyopucOperationOutcomeUnknownException(
-                    lease.Generation.IsRetired
-                        ? ToyopucOutcomeUnknownReason.Closed
-                        : deadlineExpired
-                            ? ToyopucOutcomeUnknownReason.Timeout
-                            : ToyopucOutcomeUnknownReason.Cancellation,
-                    "The operation ended after its request may have been sent; the PLC state is unknown.",
-                    exception);
-            }
-            if (deadlineExpired)
-                throw new ToyopucTimeoutError("Send/receive timeout", exception);
-            throw;
-        }
-        catch when (lease.Generation.IsRetired)
-        {
-            throw lease.Generation.CreateFailure(this);
         }
         finally
         {

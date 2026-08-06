@@ -11,8 +11,9 @@ namespace PlcComm.Toyopuc;
 /// Typed and contiguous-range methods issue exactly one protocol request.
 /// <see cref="ReadNamedAsync"/> and each <see cref="PollAsync"/> cycle accept
 /// exactly one named address and therefore issue one request. Only
-/// <see cref="WriteBitInWordAsync"/> is a multi-request helper: it performs an
-/// explicit read followed by a write while holding one local client FIFO turn.
+/// <see cref="WriteBitInWord"/> and <see cref="WriteBitInWordAsync"/> are
+/// multi-request helpers: they perform an explicit read followed by a write
+/// while holding one local client FIFO turn and one absolute deadline.
 /// </remarks>
 public static class ToyopucDeviceClientExtensions
 {
@@ -29,14 +30,43 @@ public static class ToyopucDeviceClientExtensions
 
     /// <summary>Sets or clears one bit in a word by an explicit read-modify-write sequence.</summary>
     /// <remarks>
-    /// The read and write occupy one FIFO turn on this client, so its other
-    /// operations cannot interleave. They remain two PLC requests and are not
-    /// PLC-atomic: another client, PLC logic, or external writer can change the
-    /// word between them. Applications that require atomic coordination must
-    /// implement it in the PLC contract.
+    /// The read and write occupy one FIFO turn and share one absolute deadline,
+    /// so this client's other operations cannot interleave. The helper always
+    /// sends both requests, even when the bit is unchanged. It is not PLC-atomic:
+    /// another client, PLC logic, or an external writer can change the word
+    /// between them. Cancellation or failure after the write may have started
+    /// is outcome-unknown and requires reconnect plus PLC-state reconciliation.
     /// </remarks>
     public static Task WriteBitInWordAsync(this ToyopucDeviceClient client, string device, int bitIndex, bool value, CancellationToken ct = default)
-        => client.ExecuteExclusiveAsync(token => WriteBitInWordCoreAsync(client, client.RelayHops, device, bitIndex, value, token), ct);
+    {
+        ValidateBitInWordTarget(client, device, bitIndex);
+        return client.ExecuteExclusiveAsync(
+            token => WriteBitInWordCoreAsync(client, client.RelayHops, device, bitIndex, value, token),
+            ct);
+    }
+
+    /// <summary>Synchronously sets or clears one bit in a word by an explicit read-modify-write sequence.</summary>
+    /// <remarks>
+    /// The helper always performs one read followed by one write under one
+    /// local FIFO turn and one deadline. It is not PLC-atomic and can overwrite
+    /// a concurrent update to another bit in the same word. A failure after the
+    /// write may have started is outcome-unknown and requires reconnect plus
+    /// PLC-state reconciliation.
+    /// </remarks>
+    public static void WriteBitInWord(this ToyopucDeviceClient client, string device, int bitIndex, bool value)
+    {
+        ValidateBitInWordTarget(client, device, bitIndex);
+        client.ExecuteSynchronousExclusiveInternal(
+            () => WriteBitInWordCoreAsync(
+                    client,
+                    client.RelayHops,
+                    device,
+                    bitIndex,
+                    value,
+                    CancellationToken.None)
+                .GetAwaiter()
+                .GetResult());
+    }
 
     /// <summary>Reads exactly one named address using one protocol request.</summary>
     /// <remarks>Multiple named addresses are rejected before transport; split reads must be explicit.</remarks>
@@ -215,12 +245,20 @@ public static class ToyopucDeviceClientExtensions
 
     private static async Task WriteBitInWordCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, int bitIndex, bool value, CancellationToken ct)
     {
-        if (bitIndex is < 0 or > 15)
-            throw new ArgumentOutOfRangeException(nameof(bitIndex), "bitIndex must be 0-15.");
-        ToyopucDeviceClient.RequireGenericWriteDevice(client.ResolveDevice(device));
         ushort current = (await ReadWordsSingleRequestCoreAsync(client, relayHops, device, 1, ct).ConfigureAwait(false))[0];
         int raw = value ? current | (1 << bitIndex) : current & ~(1 << bitIndex);
         await WriteWordsSingleRequestCoreAsync(client, relayHops, device, [(ushort)(raw & 0xFFFF)], ct).ConfigureAwait(false);
+    }
+
+    private static void ValidateBitInWordTarget(ToyopucDeviceClient client, string device, int bitIndex)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        if (bitIndex is < 0 or > 15)
+            throw new ArgumentOutOfRangeException(nameof(bitIndex), "bitIndex must be 0-15.");
+        var devices = BuildSequentialWordDevices(client, device, 1);
+        ToyopucDeviceClient.RequireGenericWriteDevice(devices[0]);
+        if (GetBatchGroupKey(devices[0]) is null)
+            throw new ToyopucProtocolError("Bit-in-word access requires an ordinary 16-bit word route.");
     }
 
     private static async Task<IReadOnlyDictionary<string, object>> ReadNamedCoreAsync(ToyopucDeviceClient client, object? relayHops, IEnumerable<string> addresses, CancellationToken ct)

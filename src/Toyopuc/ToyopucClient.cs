@@ -1306,7 +1306,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             throw new ToyopucNotConnectedException(
                 "The canceled session requires an explicit Open/OpenAsync before another command.");
 
-        var deadline = CreateDeadline(Timeout);
+        var deadline = _operationContext.Value?.Deadline ?? CreateDeadline(Timeout);
         var attempt = 0;
         Exception? lastError = null;
 
