@@ -636,8 +636,8 @@ Implementation scope: maintainer metadata under `internal_docs/maintainer/api-di
 cross-platform PowerShell gate, its policy fixtures, Windows CI, and release gates.
 
 Current state: **classification complete**. The three candidate assemblies were compared with the
-verified stable package and produced 216 exact per-TFM records: 120 removals of prior documented
-contract and 96 approved additions. These are 72 distinct changes with identical signatures on all
+verified stable package and produced 219 exact per-TFM records: 120 removals of prior documented
+contract and 99 approved additions. These are 73 distinct changes with identical signatures on all
 three TFMs. `classifications.json` contains every exact record and no prefix or guessed rule.
 
 Target contract: CI downloads the immutable `PlcComm.Toyopuc` prior stable package identified in
@@ -670,7 +670,7 @@ Acceptance criteria:
 7. Policy fixtures cover all four categories, all three TFMs, incomplete state, prefix rejection, candidate-signature drift, unclassified failure, and next-major enforcement.
 8. Every breaking classification records `next-major` with minimum release major `4`; release workflow and local release check reject an earlier major.
 
-- [x] Implementation and all 216 exact per-TFM classifications completed.
+- [x] Implementation and all 219 exact per-TFM classifications completed.
 - [x] Policy fixture code added for every classification category, all three TFMs, exact-signature drift, prefix rejection, incomplete state, and release-major enforcement.
 - [x] API export, fixture execution, immutable package/digest verification, source-tag verification, documentation evidence generation, and candidate comparison passed.
 - [x] Three-TFM build/tests, generated API freshness, all five sample builds, package consumer, format, and extracted worktree source-archive validation passed.
@@ -678,14 +678,16 @@ Acceptance criteria:
 - [x] Live PLC checks are not required because assembly metadata comparison has no PLC or transport behavior.
 - [x] Maintainer documentation and changelog agree with the implementation; user pages do not display the baseline as a current package version.
 - [x] The release-major gate correctly rejected current version `3.2.1` and accepted the required major target `4.0.0`.
-- [ ] Update the actual release version to major `4` or later and record final release acceptance.
+- [x] The actual release version is `4.0.0`; final release acceptance was recorded after the 2026-08-07 full release gate passed.
 
-Verification evidence (2026-08-01): the stable package downloaded independently through NuGet v3
+Verification evidence (2026-08-07): the stable package downloaded independently through NuGet v3
 and v2 had identical SHA-256
 `34AB3ACFB7942F69BAC65D46DA559DCD37CEB66551FC104D583B63D130A98622`.
-The exact API gate passed all 216 records with no unclassified or stale entry. Release policy
-rejected `3.2.1` because the documented breaks require major `4`, while its deterministic `4.0.0`
-check passed. No version was changed and no package was published.
+The exact API gate passed all 219 records with no unclassified or stale entry. Release policy
+rejected `3.2.1` because the documented breaks require major `4`, then accepted the actual `4.0.0`
+release version. The full release gate passed the extracted source-archive build/tests, three-TFM
+CI and API classification, release-major policy, documentation checks, and NuGet package build.
+No tag, GitHub release, or package-registry publication was performed.
 
 Self-review disposition:
 
@@ -694,7 +696,7 @@ Self-review disposition:
 - Accepted and corrected: `Expand-Archive` is extension-sensitive and may reject a NuGet `.nupkg` path. The gate uses `System.IO.Compression.ZipFile` so the immutable package is extracted by archive format rather than filename extension.
 - Accepted and corrected: type/member prefix rules could silently approve a later overload or signature. Prefix and prefix-list properties are now forbidden, and both unclassified actual records and stale classification records fail.
 - Accepted and corrected: candidate documentation paths cannot prove whether the prior stable API was documented. Evidence now comes only from the package-corresponding immutable source commit's README, standard/generated pages, and examples.
-- Accepted and corrected: the original hand-written rules guessed the candidate surface without generating it. Those rules were removed; the executed comparison now pins all 216 exact per-TFM records.
+- Accepted and corrected: the original hand-written rules guessed the candidate surface without generating it. Those rules were removed; the executed comparison now pins all 219 exact per-TFM records.
 - Accepted and corrected: a prose-only breaking-version note was insufficient. Classification fields, baseline/minimum majors, release workflow input, and local release check are machine validated.
 
 ## GOAL-DOTNET-SAMPLE-TFM-001 — repository user examples target .NET 10
