@@ -862,3 +862,45 @@ is required because DNS/connect scheduling and socket identity are controlled
 local lifecycle facts.
 
 - [x] `CL-DOTNET-001` deterministic non-live disposition reverified on the final source state.
+
+## RELEASE-COMPUTERLINK-4.1.0-20260827 — Canonical Word single-request APIs
+
+Stable identifier: `RELEASE-COMPUTERLINK-4.1.0-20260827`.
+
+Implementation scope: public high-level contiguous Word helpers, compatibility aliases, examples,
+user and generated API documentation, package metadata, changelog, tests, and the final release
+gate in this repository.
+
+Target contract: release `ReadWordsSingleRequestAsync` and `WriteWordsSingleRequestAsync` as the
+canonical one-command high-level Word APIs in `PlcComm.Toyopuc` `4.1.0`. Complete capacity, relay,
+route, and value admission occurs before transport. No Bit-block helper is added because this
+protocol API does not provide a supported Bit-block operation.
+
+Compatibility impact: `ReadWordsAsync` and `WriteWordsAsync` remain deprecated delegates for this
+release. Existing callers continue to compile, while new code uses the canonical names.
+
+Machine-verifiable acceptance criteria:
+
+1. MSBuild reports package version `4.1.0`, and the changelog has a dated `4.1.0` section.
+2. The exact repository `release_check.bat` passes on the final source state.
+3. The NuGet package exposes the canonical Word helpers on every supported target framework.
+4. PLC Scope compiles and passes its non-live tests using the candidate package API.
+5. No public registry publication is performed by the agent.
+
+Live disposition: command count, preflight, relay planning, delegation, and response decoding are
+fully covered by deterministic tests. No supported-PLC or physical-compatibility claim changes, so
+a live PLC check is not required for this release item.
+
+Final self-review inspected the direct and relay preflight payloads, capacity rejection, deprecated
+delegation, public surface, examples, and package use. The only accepted finding was stale sample
+help text naming `ReadWordsAsync`; it now names `ReadWordsSingleRequestAsync` and the sample rebuilds.
+The working-tree release gate passed, but the gate and final-acceptance boxes stay open until the
+same command is rerun against the eventual release commit before tagging.
+
+- [x] Implementation and package metadata completed in this repository.
+- [x] Tests cover every acceptance criterion.
+- [ ] Relevant static, unit, integration, sample, source-archive, API, and package gates passed.
+- [x] Codex final self-review completed against the approved contract and actual diff.
+- [x] Live verification is not required under the disposition above.
+- [x] Documentation, migration notes, changelog, and generated API reference agree.
+- [ ] Final acceptance criteria verified and this item marked complete.

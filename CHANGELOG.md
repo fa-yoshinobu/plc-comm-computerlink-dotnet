@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-08-27
+
+- Release: Bumped .NET package metadata to `4.1.0` for the additive canonical single-request word APIs.
 - Library: Added `ReadWordsSingleRequestAsync` and `WriteWordsSingleRequestAsync` as the canonical one-request high-level word APIs, with protocol-capacity and relay preflight before transport; the former short names remain obsolete compatibility delegates.
 
 ## [4.0.0] - 2026-08-07

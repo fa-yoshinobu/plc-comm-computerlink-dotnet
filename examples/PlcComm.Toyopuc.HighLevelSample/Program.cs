@@ -232,6 +232,6 @@ static void PrintUsage()
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp \"toyopuc:pc10g:pc10\"");
     Console.WriteLine();
     Console.WriteLine("This sample demonstrates ReadOneAsync, WriteAsync, ReadDevicesAsync, WriteManyAsync,");
-    Console.WriteLine("ReadTypedAsync, WriteTypedAsync, ReadWordsAsync, ReadDWordsAsync, WriteBitInWordAsync,");
+    Console.WriteLine("ReadTypedAsync, WriteTypedAsync, ReadWordsSingleRequestAsync, ReadDWordsAsync, WriteBitInWordAsync,");
     Console.WriteLine("ReadNamedAsync, PollAsync, and FR helpers.");
 }
