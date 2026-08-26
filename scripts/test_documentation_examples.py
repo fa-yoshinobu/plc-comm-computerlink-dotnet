@@ -46,7 +46,7 @@ class DocumentationExamplesTests(unittest.TestCase):
             if not line.lstrip().startswith("//")
         }
         forbidden_prefixes = (
-            "await client.WriteWordsAsync(",
+            "await client.WriteWordsSingleRequestAsync(",
             "await client.WriteDWordsAsync(",
             "await client.WriteFrWorkAreaAsync(",
             "await client.CommitFrBlockAsync(",

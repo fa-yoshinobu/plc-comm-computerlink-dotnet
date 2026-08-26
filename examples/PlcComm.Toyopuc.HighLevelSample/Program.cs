@@ -115,9 +115,9 @@ finally
 }
 
 Console.WriteLine();
-Console.WriteLine("4. ReadWordsAsync / ReadDWordsAsync");
+Console.WriteLine("4. ReadWordsSingleRequestAsync / ReadDWordsAsync");
 // These APIs issue one request or reject the range before transport.
-ushort[] words = await client.ReadWordsAsync("P1-D0000", 4);
+ushort[] words = await client.ReadWordsSingleRequestAsync("P1-D0000", 4);
 uint[] dwords = await client.ReadDWordsAsync("P1-D0200", 2);
 Console.WriteLine($"words        = [{string.Join(", ", words)}]");
 Console.WriteLine($"dwords       = [{string.Join(", ", dwords)}]");

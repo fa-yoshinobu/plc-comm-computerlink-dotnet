@@ -291,6 +291,75 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
+    public async Task WordSingleRequestHelpers_RejectASecondSegmentBeforeTransport()
+    {
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            transport: ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromMilliseconds(1),
+            plcProfile: Pc10Profile);
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(
+            () => client.ReadWordsSingleRequestAsync("B0000", 513));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => client.WriteWordsSingleRequestAsync("B0000", new ushort[513]));
+
+        Assert.Equal(0UL, client.TrafficStats.RequestCount);
+    }
+
+    [Fact]
+    public async Task DeprecatedWordAliases_DelegateToTheCanonicalWireContract()
+    {
+        var read = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 2);
+        var write = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, [0x1234, 0x5678]);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildResponse(0x94, [0x34, 0x12, 0x78, 0x56])
+                : frame.SequenceEqual(write)
+                    ? BuildResponse(0x95, [])
+                    : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            transport: ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
+
+        var canonical = await client.ReadWordsSingleRequestAsync("P1-D0000", 2);
+#pragma warning disable CS0618
+        var compatibility = await client.ReadWordsAsync("P1-D0000", 2);
+#pragma warning restore CS0618
+        await client.WriteWordsSingleRequestAsync("P1-D0000", [0x1234, 0x5678]);
+#pragma warning disable CS0618
+        await client.WriteWordsAsync("P1-D0000", [0x1234, 0x5678]);
+#pragma warning restore CS0618
+
+        Assert.Equal(canonical, compatibility);
+        Assert.Equal(
+            [
+                Convert.ToHexString(read),
+                Convert.ToHexString(read),
+                Convert.ToHexString(write),
+                Convert.ToHexString(write),
+            ],
+            server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public void ComputerLinkHighLevelSurface_DoesNotExposeBitSingleRequestHelpers()
+    {
+        var names = typeof(ToyopucDeviceClientExtensions)
+            .GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Select(static method => method.Name)
+            .ToArray();
+
+        Assert.DoesNotContain("ReadBitsSingleRequestAsync", names);
+        Assert.DoesNotContain("WriteBitsSingleRequestAsync", names);
+    }
+
+    [Fact]
     public async Task ReadWordsSingleRequestAsync_ExtMultiFallbackUsesByteAddresses()
     {
         var expected = ToyopucProtocol.BuildExtMultiRead(

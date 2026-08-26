@@ -33,11 +33,11 @@ Methods explicitly documented as single-request reads must fit one Computerlink 
 Typed contiguous helpers follow the same rule:
 
 ```csharp
-ushort[] words = await client.ReadWordsAsync("P1-D0000", 8);
+ushort[] words = await client.ReadWordsSingleRequestAsync("P1-D0000", 8);
 uint[] dwords = await client.ReadDWordsAsync("P1-D0100", 4);
 ```
 
-The general example is intentionally read-only. Use `WriteWordsAsync` and
+The general example is intentionally read-only. Use `WriteWordsSingleRequestAsync` and
 `WriteDWordsAsync` only with addresses prepared for controlled testing. Save
 the original values first and restore them afterward. If a write has an
 outcome-unknown failure, reopen the client and reconcile the actual PLC state

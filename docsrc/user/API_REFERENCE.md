@@ -2616,6 +2616,16 @@ public static Task<ushort[]> ReadWordsAsync(ToyopucDeviceClient client, string d
 
 Reads a contiguous word range using exactly one protocol request.
 
+Remarks: This compatibility alias delegates to `ReadWordsSingleRequestAsync` and will be removed in the next breaking release.
+
+##### ReadWordsSingleRequestAsync
+
+```csharp
+public static Task<ushort[]> ReadWordsSingleRequestAsync(ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+```
+
+Reads a contiguous word range using exactly one protocol request.
+
 ##### WriteBitInWord
 
 ```csharp
@@ -2656,6 +2666,16 @@ Writes one typed value using exactly one protocol request.
 
 ```csharp
 public static Task WriteWordsAsync(ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
+```
+
+Writes a contiguous word range using exactly one protocol request.
+
+Remarks: This compatibility alias delegates to `WriteWordsSingleRequestAsync` and will be removed in the next breaking release.
+
+##### WriteWordsSingleRequestAsync
+
+```csharp
+public static Task WriteWordsSingleRequestAsync(ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
 ```
 
 Writes a contiguous word range using exactly one protocol request.

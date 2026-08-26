@@ -270,7 +270,7 @@ public sealed class OverhaulContractTests
         var extensionWrites = new (string Name, Func<Task> Write)[]
         {
             ("WriteTypedAsync", () => ToyopucDeviceClientExtensions.WriteTypedAsync(client, "FR000000", "U", 1)),
-            ("WriteWordsAsync extension", () => ToyopucDeviceClientExtensions.WriteWordsAsync(client, "FR000000", new ushort[] { 1 })),
+            ("WriteWordsSingleRequestAsync extension", () => ToyopucDeviceClientExtensions.WriteWordsSingleRequestAsync(client, "FR000000", new ushort[] { 1 })),
             ("WriteDWordsAsync extension", () => ToyopucDeviceClientExtensions.WriteDWordsAsync(client, "FR000000", new uint[] { 1 })),
             ("WriteBitInWordAsync", () => ToyopucDeviceClientExtensions.WriteBitInWordAsync(client, "FR000000", 0, true)),
         };

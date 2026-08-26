@@ -97,12 +97,19 @@ public static class ToyopucDeviceClientExtensions
     }
 
     /// <summary>Reads a contiguous word range using exactly one protocol request.</summary>
-    public static async Task<ushort[]> ReadWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-    {
-        return await client.ExecuteExclusiveAsync(
+    public static Task<ushort[]> ReadWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+        => client.ExecuteExclusiveAsync(
             token => ReadWordsSingleRequestCoreAsync(client, client.RelayHops, device, count, token),
-            ct).ConfigureAwait(false);
-    }
+            ct);
+
+    /// <summary>Reads a contiguous word range using exactly one protocol request.</summary>
+    /// <remarks>
+    /// This compatibility alias delegates to <see cref="ReadWordsSingleRequestAsync"/> and will be
+    /// removed in the next breaking release.
+    /// </remarks>
+    [Obsolete("Use ReadWordsSingleRequestAsync. This compatibility alias will be removed in the next breaking release.")]
+    public static Task<ushort[]> ReadWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+        => client.ReadWordsSingleRequestAsync(device, count, ct);
 
     /// <summary>Reads a contiguous double-word range using exactly one protocol request.</summary>
     public static Task<uint[]> ReadDWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
@@ -111,7 +118,7 @@ public static class ToyopucDeviceClientExtensions
             ct);
 
     /// <summary>Writes a contiguous word range using exactly one protocol request.</summary>
-    public static Task WriteWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
+    public static Task WriteWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
     {
         var snapshot = values.ToArray();
         return client.ExecuteExclusiveAsync(
@@ -119,25 +126,20 @@ public static class ToyopucDeviceClientExtensions
             ct,
             outcomeUnknownAfterSend: true);
     }
+
+    /// <summary>Writes a contiguous word range using exactly one protocol request.</summary>
+    /// <remarks>
+    /// This compatibility alias delegates to <see cref="WriteWordsSingleRequestAsync"/> and will be
+    /// removed in the next breaking release.
+    /// </remarks>
+    [Obsolete("Use WriteWordsSingleRequestAsync. This compatibility alias will be removed in the next breaking release.")]
+    public static Task WriteWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
+        => client.WriteWordsSingleRequestAsync(device, values, ct);
 
     /// <summary>Writes a contiguous double-word range using exactly one protocol request.</summary>
     public static Task WriteDWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
     {
         var snapshot = ExpandDWords(values.ToArray());
-        return client.ExecuteExclusiveAsync(
-            token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
-            ct,
-            outcomeUnknownAfterSend: true);
-    }
-
-    internal static Task<ushort[]> ReadWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
-        => client.ExecuteExclusiveAsync(
-            token => ReadWordsSingleRequestCoreAsync(client, client.RelayHops, device, count, token),
-            ct);
-
-    internal static Task WriteWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
-    {
-        var snapshot = values.ToArray();
         return client.ExecuteExclusiveAsync(
             token => WriteWordsSingleRequestCoreAsync(client, client.RelayHops, device, snapshot, token),
             ct,
@@ -299,6 +301,8 @@ public static class ToyopucDeviceClientExtensions
         if (group is null || !AllDevicesInGroup(devices, group))
             throw new ToyopucProtocolError("Single-request word access cannot cross incompatible protocol groups.");
 
+        client.RequireSingleWordReadRequest(devices, relayHops, nameof(ReadWordsSingleRequestAsync));
+
         return relayHops is null
             ? await ReadWordsSingleRequestDirectAsync(client, devices, group, ct).ConfigureAwait(false)
             : await ReadWordsSingleRequestViaRelayAsync(client, relayHops, devices, group, ct).ConfigureAwait(false);
@@ -323,6 +327,8 @@ public static class ToyopucDeviceClientExtensions
         var group = GetBatchGroupKey(devices[0]);
         if (group is null || !AllDevicesInGroup(devices, group))
             throw new ToyopucProtocolError("Single-request word write cannot cross incompatible protocol groups.");
+
+        client.RequireSingleWordWriteRequest(devices, values, relayHops, nameof(WriteWordsSingleRequestAsync));
 
         if (relayHops is null)
         {

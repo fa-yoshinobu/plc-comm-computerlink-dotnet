@@ -1074,6 +1074,48 @@ public partial class ToyopucDeviceClient : ToyopucClient
         }
     }
 
+    internal void RequireSingleWordReadRequest(
+        IReadOnlyList<ResolvedDevice> devices,
+        object? relayHops,
+        string operation)
+    {
+        RequireReadItems(devices, operation);
+        var plan = GetReadRunPlan(devices, splitPc10BlockBoundaries: true);
+        if (plan.Length != 1 || plan[0] != devices.Count || !CanReadAsSingleRequest(devices))
+        {
+            RaiseImplicitSplitError(operation);
+        }
+
+        if (relayHops is null)
+        {
+            _ = PrepareReadPlan(devices, plan);
+            return;
+        }
+
+        var normalizedHops = ToyopucRelay.NormalizeRelayHops(relayHops).ToArray();
+        _ = PrepareReadPlan(normalizedHops, devices, plan);
+    }
+
+    internal void RequireSingleWordWriteRequest(
+        IReadOnlyList<ResolvedDevice> devices,
+        IReadOnlyList<ushort> values,
+        object? relayHops,
+        string operation)
+    {
+        var items = new (ResolvedDevice Device, object Value)[devices.Count];
+        for (var i = 0; i < devices.Count; i++)
+        {
+            items[i] = (devices[i], values[i]);
+        }
+
+        RequireSingleWriteRequest(items, splitPc10BlockBoundaries: true, operation);
+        var payload = BuildWordWriteBatchPayload(items);
+        if (relayHops is not null)
+        {
+            _ = ToyopucProtocol.BuildRelayNested(ToyopucRelay.NormalizeRelayHops(relayHops), payload);
+        }
+    }
+
     private void RequireSingleWriteRequest(
         IReadOnlyList<(ResolvedDevice Device, object Value)> items,
         bool splitPc10BlockBoundaries,
@@ -1504,14 +1546,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void RelayWriteBasicWordBatch(object hops, IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
-        var values = CollectIntValues(items);
-        if (TryGetConsecutiveStart(items, static item => item.Device.BasicAddress, 1, out var startAddress))
-        {
-            _ = SendViaRelay(hops, ToyopucProtocol.BuildWordWrite(startAddress, values));
-            return;
-        }
-
-        _ = SendViaRelay(hops, ToyopucProtocol.BuildMultiWordWrite(CollectBasicAddressValues(items)));
+        _ = SendViaRelay(hops, BuildWordWriteBatchPayload(items));
     }
 
     private void WriteExtWordBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1532,20 +1567,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void RelayWriteExtWordBatch(object hops, IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
-        var values = CollectIntValues(items);
-        if (TryGetUniformNumber(items, out var number)
-            && TryGetConsecutiveStart(items, static item => item.Device.Address, 1, out var startAddress))
-        {
-            _ = SendViaRelay(hops, ToyopucProtocol.BuildExtWordWrite(number, startAddress, values));
-            return;
-        }
-
-        _ = SendViaRelay(
-            hops,
-            ToyopucProtocol.BuildExtMultiWrite(
-                Array.Empty<(int No, int Bit, int Address, int Value)>(),
-                Array.Empty<(int No, int Address, int Value)>(),
-                CollectNoWordMonitorAddressValues(items)));
+        _ = SendViaRelay(hops, BuildWordWriteBatchPayload(items));
     }
 
     private void WriteExtByteBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
@@ -1614,16 +1636,31 @@ public partial class ToyopucDeviceClient : ToyopucClient
 
     private void RelayWritePc10WordBatch(object hops, IReadOnlyList<(ResolvedDevice Device, object Value)> items)
     {
-        var values = CollectIntValues(items);
-        if (DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 2, out var startAddress))
-        {
-            _ = SendViaRelay(hops, ToyopucProtocol.BuildPc10BlockWrite(startAddress, Pc10Payloads.PackWordValues(values)));
-            return;
-        }
+        _ = SendViaRelay(hops, BuildWordWriteBatchPayload(items));
+    }
 
-        _ = SendViaRelay(
-            hops,
-            ToyopucProtocol.BuildPc10MultiWrite(Pc10Payloads.PackMultiWordPayload(CollectAddress32WordValues(items))));
+    private static byte[] BuildWordWriteBatchPayload(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
+    {
+        var group = DeviceRunPlanner.GetBatchGroupKey(items[0].Device);
+        var values = CollectIntValues(items);
+        return group switch
+        {
+            "basic-word" when TryGetConsecutiveStart(items, static item => item.Device.BasicAddress, 1, out var start)
+                => ToyopucProtocol.BuildWordWrite(start, values),
+            "basic-word" => ToyopucProtocol.BuildMultiWordWrite(CollectBasicAddressValues(items)),
+            "ext-word" when TryGetUniformNumber(items, out var number)
+                && TryGetConsecutiveStart(items, static item => item.Device.Address, 1, out var start)
+                => ToyopucProtocol.BuildExtWordWrite(number, start, values),
+            "ext-word" => ToyopucProtocol.BuildExtMultiWrite(
+                Array.Empty<(int No, int Bit, int Address, int Value)>(),
+                Array.Empty<(int No, int Address, int Value)>(),
+                CollectNoWordMonitorAddressValues(items)),
+            "pc10-word" when DeviceRunPlanner.TryGetConsecutivePc10BlockStart(items, 2, out var start)
+                => ToyopucProtocol.BuildPc10BlockWrite(start, Pc10Payloads.PackWordValues(values)),
+            "pc10-word" => ToyopucProtocol.BuildPc10MultiWrite(
+                Pc10Payloads.PackMultiWordPayload(CollectAddress32WordValues(items))),
+            _ => throw new ToyopucProtocolError($"Single-request word write does not support group '{group}'."),
+        };
     }
 
     private void WritePc10ByteBatch(IReadOnlyList<(ResolvedDevice Device, object Value)> items)
