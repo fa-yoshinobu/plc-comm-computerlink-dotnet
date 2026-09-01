@@ -713,7 +713,7 @@ public class ProtocolAndClientTests
             using var serverClient = await listener.AcceptTcpClientAsync();
             await using var stream = serverClient.GetStream();
             requestFrame = await ReadFrameAsync(stream);
-            await stream.WriteAsync(BuildResponse(0xC4, new byte[] { 0x00, 0x00, 0x00, 0x00, 0x34, 0x12, 0x78, 0x56 }));
+            await stream.WriteAsync(BuildResponse(0xC4, new byte[] { 0x00, 0x00, 0x02, 0x00, 0x34, 0x12, 0x78, 0x56 }));
         });
 
         using var client = new ToyopucDeviceClient(

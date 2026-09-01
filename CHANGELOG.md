@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Library: Added `ReadDWordsSingleRequestAsync` and `WriteDWordsSingleRequestAsync` as the canonical one-request DWord extension names. The former extension identities remain obsolete forwarding aliases for this next release only and are scheduled for removal in the next breaking release; arguments, results, exceptions, and wire behavior are unchanged.
+- Library: Corrected PC10 C4 response correlation and long-value length calculation for direct, relay, synchronous, asynchronous, and aggregate reads; malformed count echoes are now rejected instead of decoded.
+- Library: Corrected PC10 C5 sparse word and bit writes to encode each address immediately followed by its value/data byte, and corrected FR block-commit validation messages to name the public operations.
+- Tests: Added exact C4/C5 regression vectors, direct/relay count-mismatch coverage, long-response coverage, unchanged single-point vectors, and zero-traffic FR validation coverage.
+
 ## [4.1.0] - 2026-08-27
 
 - Release: Bumped .NET package metadata to `4.1.0` for the additive canonical single-request word APIs.

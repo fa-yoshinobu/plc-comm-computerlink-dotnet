@@ -179,7 +179,7 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
-    public async Task ReadDWordsAsync_UsesExactlyOneRequest()
+    public async Task ReadDWordsSingleRequestAsync_UsesExactlyOneRequest()
     {
         await using var server = new ScriptedToyopucServer(frame =>
         {
@@ -195,7 +195,7 @@ public sealed class ToyopucClientExtensionsTests
             timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
             plcProfile: Pc10Profile);
 
-        var values = await client.ReadDWordsAsync("B0100", 3);
+        var values = await client.ReadDWordsSingleRequestAsync("B0100", 3);
 
         Assert.Equal(new uint[] { 0x00010001, 0x00020002, 0x00030003 }, values);
         Assert.Equal(
@@ -291,7 +291,7 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
-    public async Task WordSingleRequestHelpers_RejectASecondSegmentBeforeTransport()
+    public async Task SingleRequestHelpers_RejectASecondSegmentBeforeTransport()
     {
         await using var client = new ToyopucDeviceClient(
             "127.0.0.1",
@@ -304,6 +304,10 @@ public sealed class ToyopucClientExtensionsTests
             () => client.ReadWordsSingleRequestAsync("B0000", 513));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => client.WriteWordsSingleRequestAsync("B0000", new ushort[513]));
+        await Assert.ThrowsAsync<ToyopucProtocolError>(
+            () => client.ReadDWordsSingleRequestAsync("B0000", 257));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => client.WriteDWordsSingleRequestAsync("B0000", new uint[257]));
 
         Assert.Equal(0UL, client.TrafficStats.RequestCount);
     }
@@ -345,6 +349,82 @@ public sealed class ToyopucClientExtensionsTests
                 Convert.ToHexString(write),
             ],
             server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task DeprecatedDWordAliases_DelegateToTheCanonicalWireContract()
+    {
+        var read = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 4);
+        var write = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, [0x3344, 0x1122, 0x7788, 0x5566]);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildResponse(0x94, [0x44, 0x33, 0x22, 0x11, 0x88, 0x77, 0x66, 0x55])
+                : frame.SequenceEqual(write)
+                    ? BuildResponse(0x95, [])
+                    : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            transport: ToyopucTransportMode.Tcp,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds),
+            addressingOptions: ToyopucAddressingOptions.Pc10GMode,
+            plcProfile: Pc10Profile);
+
+        var canonical = await client.ReadDWordsSingleRequestAsync("P1-D0000", 2);
+#pragma warning disable CS0618
+        var compatibility = await ToyopucDeviceClientExtensions.ReadDWordsAsync(client, "P1-D0000", 2);
+#pragma warning restore CS0618
+        await client.WriteDWordsSingleRequestAsync("P1-D0000", [0x11223344, 0x55667788]);
+#pragma warning disable CS0618
+        await ToyopucDeviceClientExtensions.WriteDWordsAsync(client, "P1-D0000", [0x11223344, 0x55667788]);
+#pragma warning restore CS0618
+
+        Assert.Equal(new uint[] { 0x11223344, 0x55667788 }, canonical);
+        Assert.Equal(canonical, compatibility);
+        Assert.Equal(
+            [
+                Convert.ToHexString(read),
+                Convert.ToHexString(read),
+                Convert.ToHexString(write),
+                Convert.ToHexString(write),
+            ],
+            server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public void DWordSingleRequestExtensions_HaveDistinctCanonicalIdentityAndObsoleteAliases()
+    {
+        var instanceRead = typeof(ToyopucDeviceClient).GetMethod(
+            nameof(ToyopucDeviceClient.ReadDWordsAsync),
+            [typeof(object), typeof(int), typeof(CancellationToken)]);
+        var instanceWrite = typeof(ToyopucDeviceClient).GetMethod(
+            nameof(ToyopucDeviceClient.WriteDWordsAsync),
+            [typeof(object), typeof(IEnumerable<uint>), typeof(CancellationToken)]);
+        var canonicalRead = typeof(ToyopucDeviceClientExtensions).GetMethod(
+            nameof(ToyopucDeviceClientExtensions.ReadDWordsSingleRequestAsync),
+            [typeof(ToyopucDeviceClient), typeof(string), typeof(int), typeof(CancellationToken)]);
+        var canonicalWrite = typeof(ToyopucDeviceClientExtensions).GetMethod(
+            nameof(ToyopucDeviceClientExtensions.WriteDWordsSingleRequestAsync),
+            [typeof(ToyopucDeviceClient), typeof(string), typeof(IReadOnlyList<uint>), typeof(CancellationToken)]);
+        var compatibilityRead = typeof(ToyopucDeviceClientExtensions).GetMethod(
+            "ReadDWordsAsync",
+            [typeof(ToyopucDeviceClient), typeof(string), typeof(int), typeof(CancellationToken)]);
+        var compatibilityWrite = typeof(ToyopucDeviceClientExtensions).GetMethod(
+            "WriteDWordsAsync",
+            [typeof(ToyopucDeviceClient), typeof(string), typeof(IReadOnlyList<uint>), typeof(CancellationToken)]);
+
+        Assert.NotNull(instanceRead);
+        Assert.NotNull(instanceWrite);
+        Assert.NotNull(canonicalRead);
+        Assert.NotNull(canonicalWrite);
+        Assert.NotNull(compatibilityRead);
+        Assert.NotNull(compatibilityWrite);
+        Assert.Equal(typeof(ToyopucDeviceClient), instanceRead.DeclaringType);
+        Assert.Equal(typeof(ToyopucDeviceClient), instanceWrite.DeclaringType);
+        Assert.Equal(typeof(ToyopucDeviceClientExtensions), canonicalRead.DeclaringType);
+        Assert.Equal(typeof(ToyopucDeviceClientExtensions), canonicalWrite.DeclaringType);
+        Assert.NotNull(compatibilityRead.GetCustomAttributes(typeof(ObsoleteAttribute), false).SingleOrDefault());
+        Assert.NotNull(compatibilityWrite.GetCustomAttributes(typeof(ObsoleteAttribute), false).SingleOrDefault());
     }
 
     [Fact]

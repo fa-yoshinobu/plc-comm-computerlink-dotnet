@@ -4,33 +4,7 @@ Current active TODOs only.
 
 ## Current Status
 
-Three high-level API consistency candidates are currently tracked. Library implementation has not started.
-
-## CL-NAME-001: DWord single-request API names
-
-### Target State
-
-The one-request DWord extension methods use names that identify their one-request contract and do not collide with the broader instance methods:
-
-- `ReadDWordsSingleRequestAsync`
-- `WriteDWordsSingleRequestAsync`
-
-The existing `ReadDWordsAsync` and `WriteDWordsAsync` extension names remain available only for an agreed transition period. Wire behavior does not change.
-
-### Acceptance Criteria
-
-1. The two canonical names above are public and execute exactly one protocol request.
-2. Ordinary extension-method syntax resolves to the intended methods without a static-call workaround.
-3. The previous extension names follow the separately approved transition and removal policy.
-4. Tests distinguish the single-request extensions from the broader instance APIs.
-5. User documentation and examples use only the canonical names.
-
-- [ ] Implementation completed.
-- [ ] Tests added or updated for every acceptance criterion.
-- [ ] Relevant static, unit, package, and documentation checks passed.
-- [ ] Codex self-review completed.
-- [ ] Documentation, migration notes, changelog, and API reference agree.
-- [ ] Final acceptance criteria verified.
+Two high-level API consistency candidates are currently tracked. Completed decisions are recorded in the maintainer overhaul record and changelog rather than retained here.
 
 ## CL-API-002: Named read and polling cardinality
 

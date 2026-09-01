@@ -558,16 +558,18 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
     public byte[] Pc10MultiRead(byte[] payload)
     {
         ArgumentNullException.ThrowIfNull(payload);
-        if (payload.Length < 4)
+        var snapshot = payload.ToArray();
+        if (snapshot.Length < 4)
             throw new ArgumentException("PC10 multi-read payload must contain the four count header bytes", nameof(payload));
-        var expectedLength = checked(4 + ((payload[0] + 7) / 8) + payload[1] + (payload[2] * 2));
+        var expectedLength = checked(4 + ((snapshot[0] + 7) / 8) + snapshot[1] + (snapshot[2] * 2) + (snapshot[3] * 4));
         return SendAndReceiveDecoded(
-            ToyopucProtocol.BuildPc10MultiRead(payload),
+            ToyopucProtocol.BuildPc10MultiRead(snapshot),
             allowRetry: true,
             response =>
             {
                 EnsureCommand(response, 0xC4);
                 EnsureResponseDataLength(response, expectedLength, "PC10 multi-read");
+                EnsurePc10MultiReadResponseCounts(response, snapshot, "PC10 multi-read");
                 return response.Data.ToArray();
             });
     }
@@ -710,6 +712,10 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             throw new ToyopucProtocolError(
                 $"relay read response data size mismatch: expected={expected}, actual={final.Data.Length}");
         }
+        if (prepared.Request.Command == 0xC4)
+        {
+            EnsurePc10MultiReadResponseCounts(final, prepared.Request.Body, "relay PC10 multi-read");
+        }
         return decode(final);
     }
 
@@ -782,6 +788,11 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             {
                 throw new ToyopucProtocolError(
                     $"Unexpected relay state-changing response body for CMD={request.Command:X2}");
+            }
+
+            if (request.Command == 0xC4)
+            {
+                EnsurePc10MultiReadResponseCounts(final, request.Body, "relay PC10 multi-read");
             }
 
             return decode(final);
@@ -1188,6 +1199,26 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         {
             throw new ToyopucProtocolError(
                 $"Unexpected {operation} response data length: expected {expectedLength}, got {response.Data.Length}");
+        }
+    }
+
+    private protected static void EnsurePc10MultiReadResponseCounts(
+        ResponseFrameView response,
+        ReadOnlySpan<byte> expectedCounts,
+        string operation)
+    {
+        if (expectedCounts.Length < 4 || response.Data.Length < 4)
+        {
+            throw new ToyopucProtocolError($"Unexpected {operation} count header length.");
+        }
+
+        var actualCounts = response.Data.Span[..4];
+        if (!actualCounts.SequenceEqual(expectedCounts[..4]))
+        {
+            throw new ToyopucProtocolError(
+                $"Unexpected {operation} point counts: " +
+                $"expected={expectedCounts[0]},{expectedCounts[1]},{expectedCounts[2]},{expectedCounts[3]}, " +
+                $"actual={actualCounts[0]},{actualCounts[1]},{actualCounts[2]},{actualCounts[3]}");
         }
     }
 

@@ -297,7 +297,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var resolved = ResolveDeviceObject(device);
         if (resolved.Area != "FR" || resolved.Unit != "word")
         {
-            throw new ArgumentException("CommitFr() requires an FR word device such as FR000000", nameof(device));
+            throw new ArgumentException("CommitFrBlock() requires an FR word device such as FR000000", nameof(device));
         }
 
         base.CommitFrBlock(resolved.Index);
@@ -308,7 +308,7 @@ public partial class ToyopucDeviceClient : ToyopucClient
         var resolved = ResolveDeviceObject(device);
         if (resolved.Area != "FR" || resolved.Unit != "word")
         {
-            throw new ArgumentException("RelayCommitFr() requires an FR word device such as FR000000", nameof(device));
+            throw new ArgumentException("RelayCommitFrBlock() requires an FR word device such as FR000000", nameof(device));
         }
 
         base.RelayCommitFrBlock(hops, resolved.Index);
@@ -611,7 +611,8 @@ public partial class ToyopucDeviceClient : ToyopucClient
         PreparedRelayRead? Relay,
         string DecodeKind,
         int ResultOffset,
-        int Count);
+        int Count,
+        byte[]? Pc10MultiReadCounts);
 
     private static PreparedReadSegment[] PrepareReadPlan(
         IReadOnlyList<ResolvedDevice> devices,
@@ -637,12 +638,14 @@ public partial class ToyopucDeviceClient : ToyopucClient
             var slice = new ReadOnlyListSlice<ResolvedDevice>(devices, index, count);
             var payload = BuildReadBatchPayload(slice);
             var kind = DeviceRunPlanner.GetBatchGroupKey(slice[0]) ?? slice[0].Scheme;
+            var innerRequest = ToyopucProtocol.ParseRelayInnerRequest(payload);
             prepared[segmentIndex] = new PreparedReadSegment(
                 payload,
                 hops is null ? null : PrepareRelayRead(hops, payload),
                 kind,
                 index,
-                count);
+                count,
+                innerRequest.Command == 0xC4 ? innerRequest.Body[..4] : null);
             index += count;
         }
         return prepared;
@@ -701,6 +704,10 @@ public partial class ToyopucDeviceClient : ToyopucClient
         {
             throw new ToyopucProtocolError(
                 $"Prepared read response data size mismatch: expected={expectedLength}, actual={data.Length}");
+        }
+        if (segment.Relay is null && segment.Pc10MultiReadCounts is byte[] expectedCounts)
+        {
+            EnsurePc10MultiReadResponseCounts(response, expectedCounts, "prepared PC10 multi-read");
         }
 
         var resultOffset = segment.ResultOffset;

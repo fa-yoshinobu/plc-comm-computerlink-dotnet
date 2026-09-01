@@ -904,3 +904,46 @@ same command is rerun against the eventual release commit before tagging.
 - [x] Live verification is not required under the disposition above.
 - [x] Documentation, migration notes, changelog, and generated API reference agree.
 - [x] Final acceptance criteria verified and this item marked complete.
+
+## CL-REQ-003 — Canonical DWord single-request extension identities
+
+Stable identifier: `CL-REQ-003`.
+
+Implementation scope: the public DWord single-request extensions, their compatibility aliases,
+compile-time and runtime identity tests, user examples, migration guidance, generated API
+reference, changelog, and exact public API classifications in this repository.
+
+Target contract: `ReadDWordsSingleRequestAsync` and `WriteDWordsSingleRequestAsync` are the
+canonical public extension names. Ordinary extension syntax resolves these names directly to the
+one-request implementation. Their arguments, results, validation, error behavior, request limit,
+FIFO ownership, and wire traffic remain those of the former single-request extensions.
+
+Compatibility impact: the former static extension identities `ReadDWordsAsync` and
+`WriteDWordsAsync` remain callable as `[Obsolete]` forwarding aliases for the next release only.
+They delegate to the canonical names and are scheduled for removal in the next breaking release.
+The broader instance methods with those former names are unchanged. New documentation and examples
+use only the canonical `SingleRequest` names.
+
+Machine-verifiable acceptance criteria:
+
+1. Both canonical identities are public on every supported target framework and ordinary extension
+   syntax compiles.
+2. Read and write each issue exactly one request for a valid range and preserve the existing
+   pre-transport single-request boundary.
+3. The retained static aliases carry `ObsoleteAttribute` and produce the same request and result as
+   their canonical counterpart.
+4. Tests distinguish the canonical extension identities from the broader instance methods.
+5. User examples use the canonical names; migration guidance, changelog, generated reference, and
+   exact API classifications all state the approved transition.
+
+Live disposition: no live PLC check is required. This item changes source-level method identity
+only; deterministic tests compare canonical and compatibility requests byte-for-byte while both
+paths use the unchanged single-request core.
+
+- [x] Implementation completed in this repository.
+- [x] Focused tests cover canonical resolution, one-request behavior, instance/extension identity, and compatibility delegation.
+- [x] Relevant full static, unit, package, sample, API-diff, and documentation checks passed.
+- [x] Codex self-review completed against the approved contract and actual diff.
+- [x] Live verification is not required under the disposition above.
+- [x] Migration guidance, changelog, generated API reference, and exact API classifications agree.
+- [x] Final acceptance criteria verified and this item marked complete.

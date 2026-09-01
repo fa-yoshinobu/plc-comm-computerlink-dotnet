@@ -115,10 +115,10 @@ finally
 }
 
 Console.WriteLine();
-Console.WriteLine("4. ReadWordsSingleRequestAsync / ReadDWordsAsync");
+Console.WriteLine("4. ReadWordsSingleRequestAsync / ReadDWordsSingleRequestAsync");
 // These APIs issue one request or reject the range before transport.
 ushort[] words = await client.ReadWordsSingleRequestAsync("P1-D0000", 4);
-uint[] dwords = await client.ReadDWordsAsync("P1-D0200", 2);
+uint[] dwords = await client.ReadDWordsSingleRequestAsync("P1-D0200", 2);
 Console.WriteLine($"words        = [{string.Join(", ", words)}]");
 Console.WriteLine($"dwords       = [{string.Join(", ", dwords)}]");
 
@@ -232,6 +232,6 @@ static void PrintUsage()
     Console.WriteLine("  dotnet run --project examples\\PlcComm.Toyopuc.HighLevelSample -- 192.168.250.100 1025 tcp \"toyopuc:pc10g:pc10\"");
     Console.WriteLine();
     Console.WriteLine("This sample demonstrates ReadOneAsync, WriteAsync, ReadDevicesAsync, WriteManyAsync,");
-    Console.WriteLine("ReadTypedAsync, WriteTypedAsync, ReadWordsSingleRequestAsync, ReadDWordsAsync, WriteBitInWordAsync,");
+    Console.WriteLine("ReadTypedAsync, WriteTypedAsync, ReadWordsSingleRequestAsync, ReadDWordsSingleRequestAsync, WriteBitInWordAsync,");
     Console.WriteLine("ReadNamedAsync, PollAsync, and FR helpers.");
 }

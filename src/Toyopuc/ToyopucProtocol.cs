@@ -778,7 +778,7 @@ public static class ToyopucProtocol
                 "CMD=98 relay request body is too short to derive its response length",
                 nameof(body)),
             0xC2 => ReadBodyU16(4),
-            0xC4 when body.Length >= 4 => checked(4 + ((body[0] + 7) / 8) + body[1] + (body[2] * 2)),
+            0xC4 when body.Length >= 4 => checked(4 + ((body[0] + 7) / 8) + body[1] + (body[2] * 2) + (body[3] * 4)),
             0xC4 => throw new ArgumentException(
                 "CMD=C4 relay request body is too short to derive its response length",
                 nameof(body)),

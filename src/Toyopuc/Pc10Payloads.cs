@@ -55,18 +55,14 @@ internal static class Pc10Payloads
     public static byte[] PackMultiWordPayload(IEnumerable<(int Address32, int Value)> addressValues)
     {
         var items = addressValues.ToArray();
-        var payload = new byte[4 + (items.Length * 4) + (items.Length * 2)];
+        var payload = new byte[4 + (items.Length * 6)];
         payload[2] = (byte)(items.Length & 0xFF);
         for (var i = 0; i < items.Length; i++)
         {
-            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
-        }
-
-        var valuesOffset = 4 + (items.Length * 4);
-        for (var i = 0; i < items.Length; i++)
-        {
+            var itemOffset = 4 + (i * 6);
+            WriteAddress32LittleEndian(payload, itemOffset, items[i].Address32);
             RequireWordValue(items[i].Value);
-            WriteU16LittleEndian(payload, valuesOffset + (i * 2), items[i].Value);
+            WriteU16LittleEndian(payload, itemOffset + 4, items[i].Value);
         }
 
         RequireMultiWritePayload(payload);
@@ -76,18 +72,15 @@ internal static class Pc10Payloads
     public static byte[] PackMultiBitPayload(IEnumerable<(int Address32, int Value)> addressValues)
     {
         var items = addressValues.ToArray();
-        var bitBytesOffset = 4 + (items.Length * 4);
-        var payload = new byte[bitBytesOffset + ((items.Length + 7) / 8)];
+        var payload = new byte[4 + (items.Length * 5)];
         payload[0] = (byte)(items.Length & 0xFF);
         for (var i = 0; i < items.Length; i++)
         {
             if (items[i].Value is < 0 or > 1)
                 throw new ArgumentOutOfRangeException(nameof(addressValues), "Bit values must be 0 or 1.");
-            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
-            if (items[i].Value == 1)
-            {
-                payload[bitBytesOffset + (i / 8)] |= (byte)(1 << (i % 8));
-            }
+            var itemOffset = 4 + (i * 5);
+            WriteAddress32LittleEndian(payload, itemOffset, items[i].Address32);
+            payload[itemOffset + 4] = (byte)items[i].Value;
         }
 
         RequireMultiWritePayload(payload);

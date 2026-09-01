@@ -34,14 +34,18 @@ Typed contiguous helpers follow the same rule:
 
 ```csharp
 ushort[] words = await client.ReadWordsSingleRequestAsync("P1-D0000", 8);
-uint[] dwords = await client.ReadDWordsAsync("P1-D0100", 4);
+uint[] dwords = await client.ReadDWordsSingleRequestAsync("P1-D0100", 4);
 ```
 
 The general example is intentionally read-only. Use `WriteWordsSingleRequestAsync` and
-`WriteDWordsAsync` only with addresses prepared for controlled testing. Save
+`WriteDWordsSingleRequestAsync` only with addresses prepared for controlled testing. Save
 the original values first and restore them afterward. If a write has an
 outcome-unknown failure, reopen the client and reconcile the actual PLC state
 before deciding whether restoration or any retry is safe.
+
+The former DWord extension names `ReadDWordsAsync` and `WriteDWordsAsync` remain
+obsolete forwarding aliases for the next release only and will be removed in the
+next breaking release. Migrate extension calls to the `SingleRequest` names above.
 
 Explicit read aggregates (`ReadMany`, `ReadDevices`, their relay forms, and async equivalents) compile and validate the complete request plan before communication. They use one client FIFO turn, preserve caller-declared entry order, and split only when one protocol request cannot represent the aggregate. The calls are not PLC-atomic: different split requests can observe different PLC scan instants. If a later split request fails, the aggregate raises an error and does not return partial results.
 

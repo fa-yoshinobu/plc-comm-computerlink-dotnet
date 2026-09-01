@@ -271,7 +271,7 @@ public sealed class OverhaulContractTests
         {
             ("WriteTypedAsync", () => ToyopucDeviceClientExtensions.WriteTypedAsync(client, "FR000000", "U", 1)),
             ("WriteWordsSingleRequestAsync extension", () => ToyopucDeviceClientExtensions.WriteWordsSingleRequestAsync(client, "FR000000", new ushort[] { 1 })),
-            ("WriteDWordsAsync extension", () => ToyopucDeviceClientExtensions.WriteDWordsAsync(client, "FR000000", new uint[] { 1 })),
+            ("WriteDWordsSingleRequestAsync extension", () => ToyopucDeviceClientExtensions.WriteDWordsSingleRequestAsync(client, "FR000000", new uint[] { 1 })),
             ("WriteBitInWordAsync", () => ToyopucDeviceClientExtensions.WriteBitInWordAsync(client, "FR000000", 0, true)),
         };
 

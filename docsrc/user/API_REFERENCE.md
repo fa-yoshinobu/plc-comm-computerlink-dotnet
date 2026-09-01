@@ -2590,6 +2590,16 @@ public static Task<uint[]> ReadDWordsAsync(ToyopucDeviceClient client, string de
 
 Reads a contiguous double-word range using exactly one protocol request.
 
+Remarks: This compatibility alias delegates to `ReadDWordsSingleRequestAsync` and will be removed in the next breaking release.
+
+##### ReadDWordsSingleRequestAsync
+
+```csharp
+public static Task<uint[]> ReadDWordsSingleRequestAsync(ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+```
+
+Reads a contiguous double-word range using exactly one protocol request.
+
 ##### ReadNamedAsync
 
 ```csharp
@@ -2650,6 +2660,16 @@ Remarks: The read and write occupy one FIFO turn and share one absolute deadline
 
 ```csharp
 public static Task WriteDWordsAsync(ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
+```
+
+Writes a contiguous double-word range using exactly one protocol request.
+
+Remarks: This compatibility alias delegates to `WriteDWordsSingleRequestAsync` and will be removed in the next breaking release.
+
+##### WriteDWordsSingleRequestAsync
+
+```csharp
+public static Task WriteDWordsSingleRequestAsync(ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
 ```
 
 Writes a contiguous double-word range using exactly one protocol request.

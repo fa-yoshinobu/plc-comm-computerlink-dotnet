@@ -112,10 +112,19 @@ public static class ToyopucDeviceClientExtensions
         => client.ReadWordsSingleRequestAsync(device, count, ct);
 
     /// <summary>Reads a contiguous double-word range using exactly one protocol request.</summary>
-    public static Task<uint[]> ReadDWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+    public static Task<uint[]> ReadDWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
         => client.ExecuteExclusiveAsync(
             token => ReadDWordsSingleRequestCoreAsync(client, client.RelayHops, device, count, token),
             ct);
+
+    /// <summary>Reads a contiguous double-word range using exactly one protocol request.</summary>
+    /// <remarks>
+    /// This compatibility alias delegates to <see cref="ReadDWordsSingleRequestAsync"/> and will be
+    /// removed in the next breaking release.
+    /// </remarks>
+    [Obsolete("Use ReadDWordsSingleRequestAsync. This compatibility alias will be removed in the next breaking release.")]
+    public static Task<uint[]> ReadDWordsAsync(this ToyopucDeviceClient client, string device, int count, CancellationToken ct = default)
+        => client.ReadDWordsSingleRequestAsync(device, count, ct);
 
     /// <summary>Writes a contiguous word range using exactly one protocol request.</summary>
     public static Task WriteWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<ushort> values, CancellationToken ct = default)
@@ -137,7 +146,7 @@ public static class ToyopucDeviceClientExtensions
         => client.WriteWordsSingleRequestAsync(device, values, ct);
 
     /// <summary>Writes a contiguous double-word range using exactly one protocol request.</summary>
-    public static Task WriteDWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
+    public static Task WriteDWordsSingleRequestAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
     {
         var snapshot = ExpandDWords(values.ToArray());
         return client.ExecuteExclusiveAsync(
@@ -145,6 +154,15 @@ public static class ToyopucDeviceClientExtensions
             ct,
             outcomeUnknownAfterSend: true);
     }
+
+    /// <summary>Writes a contiguous double-word range using exactly one protocol request.</summary>
+    /// <remarks>
+    /// This compatibility alias delegates to <see cref="WriteDWordsSingleRequestAsync"/> and will be
+    /// removed in the next breaking release.
+    /// </remarks>
+    [Obsolete("Use WriteDWordsSingleRequestAsync. This compatibility alias will be removed in the next breaking release.")]
+    public static Task WriteDWordsAsync(this ToyopucDeviceClient client, string device, IReadOnlyList<uint> values, CancellationToken ct = default)
+        => client.WriteDWordsSingleRequestAsync(device, values, ct);
 
     private static async Task<object> ReadTypedCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, string dtype, CancellationToken ct)
     {
@@ -678,17 +696,7 @@ public static class ToyopucDeviceClientExtensions
     }
 
     private static byte[] PackPc10MultiWordPayload(IEnumerable<(int Address32, int Value)> addressValues)
-    {
-        var items = addressValues.ToArray();
-        var payload = new byte[4 + (items.Length * 4) + (items.Length * 2)];
-        payload[2] = (byte)(items.Length & 0xFF);
-        for (var i = 0; i < items.Length; i++)
-            WriteAddress32LittleEndian(payload, 4 + (i * 4), items[i].Address32);
-        var valuesOffset = 4 + (items.Length * 4);
-        for (var i = 0; i < items.Length; i++)
-            WriteU16LittleEndian(payload, valuesOffset + (i * 2), items[i].Value);
-        return payload;
-    }
+        => Pc10Payloads.PackMultiWordPayload(addressValues);
 
     private static int[] ParsePc10MultiWordData(ReadOnlySpan<byte> data, int count)
     {

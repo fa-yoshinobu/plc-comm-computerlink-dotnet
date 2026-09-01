@@ -37,31 +37,45 @@ public class Pc10PayloadTests
             Pc10Payloads.PackMultiWordPayload(Enumerable.Repeat((Address32: 0x00100000, Value: 0), 85)));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             Pc10Payloads.PackMultiBitPayload(Enumerable.Range(0, 124).Select(i => (Address32: 0x00100000 + i, Value: 1))));
+        _ = Pc10Payloads.PackMultiBitPayload(
+            Enumerable.Range(0, 101).Select(i => (Address32: 0x00100000 + i, Value: 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Pc10Payloads.PackMultiBitPayload(
+                Enumerable.Range(0, 102).Select(i => (Address32: 0x00100000 + i, Value: 1))));
     }
 
     [Fact]
-    public void PackMultiWordPayload_PreservesCurrentAddressThenValueLayout()
+    public void PackMultiWordPayload_InterleavesEachAddressAndValue()
     {
         var payload = Pc10Payloads.PackMultiWordPayload(new[]
         {
-            (Address32: 0x04000000, Value: 0x1234),
-            (Address32: 0x10000000, Value: 0x5678),
+            (Address32: 0x00040000, Value: 0x1234),
+            (Address32: 0x00040200, Value: 0x5678),
         });
 
         Assert.Equal(
             new byte[]
             {
                 0x00, 0x00, 0x02, 0x00,
-                0x00, 0x00, 0x00, 0x04,
-                0x00, 0x00, 0x00, 0x10,
+                0x00, 0x00, 0x04, 0x00,
                 0x34, 0x12,
+                0x00, 0x02, 0x04, 0x00,
                 0x78, 0x56,
+            },
+            payload);
+        Assert.NotEqual(
+            new byte[]
+            {
+                0x00, 0x00, 0x02, 0x00,
+                0x00, 0x00, 0x04, 0x00,
+                0x00, 0x02, 0x04, 0x00,
+                0x34, 0x12, 0x78, 0x56,
             },
             payload);
     }
 
     [Fact]
-    public void PackMultiBitPayload_PreservesCurrentBitPackingAcrossByteBoundary()
+    public void PackMultiBitPayload_InterleavesEachAddressAndDataByte()
     {
         var payload = Pc10Payloads.PackMultiBitPayload(new[]
         {
@@ -81,6 +95,30 @@ public class Pc10PayloadTests
             {
                 0x09, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x04,
+                0x01,
+                0x01, 0x00, 0x00, 0x04,
+                0x00,
+                0x02, 0x00, 0x00, 0x04,
+                0x01,
+                0x03, 0x00, 0x00, 0x04,
+                0x01,
+                0x04, 0x00, 0x00, 0x04,
+                0x00,
+                0x05, 0x00, 0x00, 0x04,
+                0x01,
+                0x06, 0x00, 0x00, 0x04,
+                0x00,
+                0x07, 0x00, 0x00, 0x04,
+                0x01,
+                0x08, 0x00, 0x00, 0x04,
+                0x01,
+            },
+            payload);
+        Assert.NotEqual(
+            new byte[]
+            {
+                0x09, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x04,
                 0x01, 0x00, 0x00, 0x04,
                 0x02, 0x00, 0x00, 0x04,
                 0x03, 0x00, 0x00, 0x04,
@@ -92,6 +130,17 @@ public class Pc10PayloadTests
                 0xAD, 0x01,
             },
             payload);
+    }
+
+    [Fact]
+    public void SinglePointMultiWritePayloads_RemainByteIdentical()
+    {
+        Assert.Equal(
+            new byte[] { 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x04, 0x34, 0x12 },
+            Pc10Payloads.PackMultiWordPayload([(0x04000000, 0x1234)]));
+        Assert.Equal(
+            new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01 },
+            Pc10Payloads.PackMultiBitPayload([(0x04000000, 1)]));
     }
 
     [Fact]

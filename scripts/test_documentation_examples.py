@@ -13,6 +13,9 @@ OPTIONS_SOURCE = (ROOT / "src/Toyopuc/ToyopucConnectionOptions.cs").read_text(
     encoding="utf-8"
 )
 API_REFERENCE = (ROOT / "docsrc/user/API_REFERENCE.md").read_text(encoding="utf-8")
+HIGH_LEVEL_SAMPLE = (
+    ROOT / "examples/PlcComm.Toyopuc.HighLevelSample/Program.cs"
+).read_text(encoding="utf-8")
 
 
 class DocumentationExamplesTests(unittest.TestCase):
@@ -47,7 +50,7 @@ class DocumentationExamplesTests(unittest.TestCase):
         }
         forbidden_prefixes = (
             "await client.WriteWordsSingleRequestAsync(",
-            "await client.WriteDWordsAsync(",
+            "await client.WriteDWordsSingleRequestAsync(",
             "await client.WriteFrWorkAreaAsync(",
             "await client.CommitFrBlockAsync(",
             "await client.WriteClockAsync(",
@@ -57,6 +60,12 @@ class DocumentationExamplesTests(unittest.TestCase):
         )
         self.assertIn("outcome-unknown failure", USAGE)
         self.assertIn("changing a PLC clock", USAGE)
+
+    def test_dword_single_request_examples_use_canonical_names(self) -> None:
+        for source in (USAGE, HIGH_LEVEL_SAMPLE):
+            self.assertNotIn("client.ReadDWordsAsync(", source)
+            self.assertNotIn("client.WriteDWordsAsync(", source)
+            self.assertIn("ReadDWordsSingleRequestAsync", source)
 
 
 if __name__ == "__main__":
