@@ -138,10 +138,9 @@ try
         "P1-D0300:F",
         "P1-D0100.3",
     };
-    foreach (var address in namedAddresses)
+    var named = await client.ReadNamedAsync(namedAddresses);
+    foreach (var pair in named)
     {
-        var named = await client.ReadNamedAsync([address]);
-        var pair = named.Single();
         Console.WriteLine($"{pair.Key,-12} = {FormatValue(pair.Value)}");
     }
 }

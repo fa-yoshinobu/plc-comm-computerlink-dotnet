@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-09-02
+
+- Release: Bumped .NET package metadata to `4.2.0` for the approved high-level API consistency additions and protocol corrections.
+- Library: `ReadNamedAsync` and each `PollAsync` cycle now accept one or more unique compatible named addresses only when the complete set fits one protocol request; automatic splitting and partial results are rejected before transport.
+- Library: Added explicit `RelayWriteBitInWord` and `RelayWriteBitInWordAsync` entry points that reuse the existing sequential read-modify-write contract on caller-supplied relay hops.
+- Library: Added direct/relay and sync/async program-explicit timer/counter preset/current operations using native A0 selectors `40` through `43` and mandatory `P1`/`P2`/`P3` device prefixes.
+- Tests: Added one-request named/polling, relay bit-in-word, exact A0 selector, response-shape, relay, and pre-transport validation coverage.
 - Library: Added `ReadDWordsSingleRequestAsync` and `WriteDWordsSingleRequestAsync` as the canonical one-request DWord extension names. The former extension identities remain obsolete forwarding aliases for this next release only and are scheduled for removal in the next breaking release; arguments, results, exceptions, and wire behavior are unchanged.
 - Library: Corrected PC10 C4 response correlation and long-value length calculation for direct, relay, synchronous, asynchronous, and aggregate reads; malformed count echoes are now rejected instead of decoded.
 - Library: Corrected PC10 C5 sparse word and bit writes to encode each address immediately followed by its value/data byte, and corrected FR block-commit validation messages to name the public operations.

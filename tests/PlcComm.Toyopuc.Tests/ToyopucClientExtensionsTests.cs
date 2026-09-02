@@ -272,6 +272,202 @@ public sealed class ToyopucClientExtensionsTests
     }
 
     [Fact]
+    public async Task ReadNamedAsync_ReadsCompatibleMultipleAddressesInOneRequest()
+    {
+        var expected = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 2);
+        await using var server = new ScriptedToyopucServer(_ =>
+            BuildResponse(0x94, [0x34, 0x12, 0xFF, 0xFF]));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+
+        var values = await client.ReadNamedAsync(["P1-D0000:U", "P1-D0001:S"]);
+
+        Assert.Equal(["P1-D0000:U", "P1-D0001:S"], values.Keys);
+        Assert.Equal((ushort)0x1234, values["P1-D0000:U"]);
+        Assert.Equal((short)-1, values["P1-D0001:S"]);
+        Assert.Equal([Convert.ToHexString(expected)], server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task PollAsync_ReadsTheCompatibleAddressSetInOneRequestPerCycle()
+    {
+        var expected = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 2);
+        await using var server = new ScriptedToyopucServer(_ =>
+            BuildResponse(0x94, [0x34, 0x12, 0xFF, 0xFF]));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+
+        await using var enumerator = client
+            .PollAsync(["P1-D0000:U", "P1-D0001:S"], TimeSpan.FromSeconds(1))
+            .GetAsyncEnumerator();
+
+        Assert.True(await enumerator.MoveNextAsync());
+        Assert.Equal(["P1-D0000:U", "P1-D0001:S"], enumerator.Current.Keys);
+        Assert.Equal([Convert.ToHexString(expected)], server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task ReadNamedAsync_RejectsDuplicatesIncompatibleFamiliesAndCapacityBeforeTransport()
+    {
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromMilliseconds(1));
+
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() =>
+            client.ReadNamedAsync(["P1-D0000:U", "P1-D0000:U"]));
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() =>
+            client.ReadNamedAsync(["P1-D0000:U", "B0000:U"]));
+        var overCapacity = Enumerable.Range(0, 129)
+            .Select(static index => $"B{index * 2:X4}:U")
+            .ToArray();
+        await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(overCapacity));
+
+        Assert.Equal(0UL, client.TrafficStats.RequestCount);
+    }
+
+    [Fact]
+    public async Task ExplicitRelayWriteBitInWord_UsesTheFixedRouteForReadAndWrite()
+    {
+        var innerRead = ToyopucProtocol.BuildExtWordRead(0x01, 0x1000, 1);
+        var innerWrite = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, [8]);
+        var read = ToyopucProtocol.BuildRelayCommand(0x12, 2, innerRead);
+        var write = ToyopucProtocol.BuildRelayCommand(0x12, 2, innerWrite);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildRelayResponse(0x12, 2, 0x94, [0x00, 0x00])
+                : frame.SequenceEqual(write)
+                    ? BuildRelayResponse(0x12, 2, 0x95, [])
+                    : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+
+        await client.RelayWriteBitInWordAsync("P1-L2:N2", "P1-D0000", 3, true);
+        client.RelayWriteBitInWord("P1-L2:N2", "P1-D0000", 3, true);
+
+        Assert.Equal(
+            [Convert.ToHexString(read), Convert.ToHexString(write), Convert.ToHexString(read), Convert.ToHexString(write)],
+            server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task ProgramTimerCounterOperations_UseA0ProgramAndNativeSelectors()
+    {
+        var read = ToyopucProtocol.BuildProgramTimerCounterRead(0x01, 0x0600);
+        var writeBoth = ToyopucProtocol.BuildProgramTimerCounterWriteBoth(0x01, 0x0600, 10, 8);
+        var writePreset = ToyopucProtocol.BuildProgramTimerCounterWritePreset(0x01, 0x0600, 11);
+        var writeCurrent = ToyopucProtocol.BuildProgramTimerCounterWriteCurrent(0x01, 0x0600, 9);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildResponse(0xA0, [0x01, 0x40, 0x00, 0x0A, 0x00, 0x08, 0x00])
+                : frame.SequenceEqual(writeBoth)
+                    ? BuildResponse(0xA0, [0x01, 0x41, 0x00])
+                    : frame.SequenceEqual(writePreset)
+                        ? BuildResponse(0xA0, [0x01, 0x42, 0x00])
+                        : frame.SequenceEqual(writeCurrent)
+                            ? BuildResponse(0xA0, [0x01, 0x43, 0x00])
+                            : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+
+        var values = await client.ReadProgramTimerCounterValuesAsync("P1-T000");
+        await client.WriteProgramTimerCounterValuesAsync("P1-T000", 10, 8);
+        await client.WriteProgramTimerCounterPresetAsync("P1-C000", 11);
+        await client.WriteProgramTimerCounterCurrentAsync("P1-C000", 9);
+        var syncValues = client.ReadProgramTimerCounterValues("P1-T000");
+        client.WriteProgramTimerCounterValues("P1-T000", 10, 8);
+        client.WriteProgramTimerCounterPreset("P1-C000", 11);
+        client.WriteProgramTimerCounterCurrent("P1-C000", 9);
+
+        Assert.Equal(new TimerCounterValues(10, 8), values);
+        Assert.Equal(new TimerCounterValues(10, 8), syncValues);
+        Assert.Equal(
+            new[] { read, writeBoth, writePreset, writeCurrent, read, writeBoth, writePreset, writeCurrent }
+                .Select(Convert.ToHexString),
+            server.ReceivedFrames.ToArray());
+        Assert.Throws<ToyopucProtocolError>(() =>
+            ToyopucProtocol.ParseProgramTimerCounterValues(
+                [0x01, 0x40, 0x00, 0x0A, 0x00, 0x08, 0x00, 0x00],
+                0x01));
+        Assert.Throws<ToyopucProtocolError>(() =>
+            ToyopucProtocol.ValidateProgramTimerCounterWriteResponse([0x01, 0x42, 0x00, 0x00], 0x01, 0x42));
+    }
+
+    [Fact]
+    public async Task ProgramTimerCounterOperations_UseExplicitRelayForReadAndWrite()
+    {
+        var innerRead = ToyopucProtocol.BuildProgramTimerCounterRead(0x02, 0x0600);
+        var innerWrite = ToyopucProtocol.BuildProgramTimerCounterWriteCurrent(0x02, 0x0600, 9);
+        var read = ToyopucProtocol.BuildRelayCommand(0x12, 2, innerRead);
+        var write = ToyopucProtocol.BuildRelayCommand(0x12, 2, innerWrite);
+        await using var server = new ScriptedToyopucServer(frame =>
+            frame.SequenceEqual(read)
+                ? BuildRelayResponse(0x12, 2, 0xA0, [0x02, 0x40, 0x00, 0x0B, 0x00, 0x09, 0x00])
+                : frame.SequenceEqual(write)
+                    ? BuildRelayResponse(0x12, 2, 0xA0, [0x02, 0x43, 0x00])
+                    : throw new InvalidOperationException($"Unexpected frame: {Convert.ToHexString(frame)}"));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+
+        var values = await client.RelayReadProgramTimerCounterValuesAsync("P1-L2:N2", "P2-C000");
+        await client.RelayWriteProgramTimerCounterCurrentAsync("P1-L2:N2", "P2-C000", 9);
+        var syncValues = client.RelayReadProgramTimerCounterValues("P1-L2:N2", "P2-C000");
+        client.RelayWriteProgramTimerCounterCurrent("P1-L2:N2", "P2-C000", 9);
+
+        Assert.Equal(new TimerCounterValues(11, 9), values);
+        Assert.Equal(new TimerCounterValues(11, 9), syncValues);
+        Assert.Equal(
+            [Convert.ToHexString(read), Convert.ToHexString(write), Convert.ToHexString(read), Convert.ToHexString(write)],
+            server.ReceivedFrames.ToArray());
+    }
+
+    [Fact]
+    public async Task ProgramTimerCounterOperations_RejectInvalidTargetsAndValuesBeforeTransport()
+    {
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            1,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromMilliseconds(1));
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            client.ReadProgramTimerCounterValuesAsync("T000"));
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            client.ReadProgramTimerCounterValuesAsync("P1-D0000"));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            client.ReadProgramTimerCounterValuesAsync("P1-T1000"));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            client.WriteProgramTimerCounterPresetAsync("P1-T000", -1));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            client.WriteProgramTimerCounterCurrentAsync("P1-C000", 0x10000));
+
+        Assert.Equal(0UL, client.TrafficStats.RequestCount);
+    }
+
+    [Fact]
     public async Task WriteWordsSingleRequestAsync_UsesOneExtWordWriteForProgramDevices()
     {
         var expected = ToyopucProtocol.BuildExtWordWrite(0x01, 0x1000, new[] { 0x1234, 0x5678 });

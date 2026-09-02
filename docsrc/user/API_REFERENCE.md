@@ -684,6 +684,36 @@ public byte Ft { get; init; }
 public byte Rc { get; init; }
 ```
 
+### TimerCounterValues
+
+```csharp
+public sealed class TimerCounterValues
+```
+
+Program timer/counter preset and current values returned by CMD=A0.
+
+#### Members
+
+##### TimerCounterValues
+
+```csharp
+public TimerCounterValues(int Preset, int Current)
+```
+
+Program timer/counter preset and current values returned by CMD=A0.
+
+##### Current
+
+```csharp
+public int Current { get; init; }
+```
+
+##### Preset
+
+```csharp
+public int Preset { get; init; }
+```
+
 ### ToyopucAddress
 
 ```csharp
@@ -2174,6 +2204,22 @@ public object ReadOne(object device)
 public Task<object> ReadOneAsync(object device, CancellationToken cancellationToken = default)
 ```
 
+##### ReadProgramTimerCounterValues
+
+```csharp
+public TimerCounterValues ReadProgramTimerCounterValues(object device)
+```
+
+Reads the preset and current values of one program timer/counter.
+
+##### ReadProgramTimerCounterValuesAsync
+
+```csharp
+public Task<TimerCounterValues> ReadProgramTimerCounterValuesAsync(object device, CancellationToken cancellationToken = default)
+```
+
+Asynchronously reads the preset and current values of one program timer/counter.
+
 ##### RelayCommitFrBlock
 
 ```csharp
@@ -2294,6 +2340,22 @@ public object RelayReadOne(object hops, object device)
 public Task<object> RelayReadOneAsync(object hops, object device, CancellationToken cancellationToken = default)
 ```
 
+##### RelayReadProgramTimerCounterValues
+
+```csharp
+public TimerCounterValues RelayReadProgramTimerCounterValues(object hops, object device)
+```
+
+Reads the preset and current values through explicit relay hops.
+
+##### RelayReadProgramTimerCounterValuesAsync
+
+```csharp
+public Task<TimerCounterValues> RelayReadProgramTimerCounterValuesAsync(object hops, object device, CancellationToken cancellationToken = default)
+```
+
+Asynchronously reads both values through explicit relay hops.
+
 ##### RelayReadWords
 
 ```csharp
@@ -2389,6 +2451,54 @@ public void RelayWriteMany(object hops, IEnumerable<KeyValuePair<object, object>
 ```csharp
 public Task RelayWriteManyAsync(object hops, IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
 ```
+
+##### RelayWriteProgramTimerCounterCurrent
+
+```csharp
+public void RelayWriteProgramTimerCounterCurrent(object hops, object device, int current)
+```
+
+Writes only the current value through explicit relay hops.
+
+##### RelayWriteProgramTimerCounterCurrentAsync
+
+```csharp
+public Task RelayWriteProgramTimerCounterCurrentAsync(object hops, object device, int current, CancellationToken cancellationToken = default)
+```
+
+Asynchronously writes only the current value through explicit relay hops.
+
+##### RelayWriteProgramTimerCounterPreset
+
+```csharp
+public void RelayWriteProgramTimerCounterPreset(object hops, object device, int preset)
+```
+
+Writes only the preset value through explicit relay hops.
+
+##### RelayWriteProgramTimerCounterPresetAsync
+
+```csharp
+public Task RelayWriteProgramTimerCounterPresetAsync(object hops, object device, int preset, CancellationToken cancellationToken = default)
+```
+
+Asynchronously writes only the preset value through explicit relay hops.
+
+##### RelayWriteProgramTimerCounterValues
+
+```csharp
+public void RelayWriteProgramTimerCounterValues(object hops, object device, int preset, int current)
+```
+
+Writes both values through explicit relay hops.
+
+##### RelayWriteProgramTimerCounterValuesAsync
+
+```csharp
+public Task RelayWriteProgramTimerCounterValuesAsync(object hops, object device, int preset, int current, CancellationToken cancellationToken = default)
+```
+
+Asynchronously writes both values through explicit relay hops.
 
 ##### RelayWriteWords
 
@@ -2530,6 +2640,54 @@ public void WriteMany(IEnumerable<KeyValuePair<object, object>> items)
 public Task WriteManyAsync(IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
 ```
 
+##### WriteProgramTimerCounterCurrent
+
+```csharp
+public void WriteProgramTimerCounterCurrent(object device, int current)
+```
+
+Writes only the current value of one program timer/counter.
+
+##### WriteProgramTimerCounterCurrentAsync
+
+```csharp
+public Task WriteProgramTimerCounterCurrentAsync(object device, int current, CancellationToken cancellationToken = default)
+```
+
+Asynchronously writes only the current value of one program timer/counter.
+
+##### WriteProgramTimerCounterPreset
+
+```csharp
+public void WriteProgramTimerCounterPreset(object device, int preset)
+```
+
+Writes only the preset value of one program timer/counter.
+
+##### WriteProgramTimerCounterPresetAsync
+
+```csharp
+public Task WriteProgramTimerCounterPresetAsync(object device, int preset, CancellationToken cancellationToken = default)
+```
+
+Asynchronously writes only the preset value of one program timer/counter.
+
+##### WriteProgramTimerCounterValues
+
+```csharp
+public void WriteProgramTimerCounterValues(object device, int preset, int current)
+```
+
+Writes both preset and current values of one program timer/counter.
+
+##### WriteProgramTimerCounterValuesAsync
+
+```csharp
+public Task WriteProgramTimerCounterValuesAsync(object device, int preset, int current, CancellationToken cancellationToken = default)
+```
+
+Asynchronously writes both preset and current values of one program timer/counter.
+
 ##### PlcProfile
 
 ```csharp
@@ -2568,7 +2726,7 @@ public static class ToyopucDeviceClientExtensions
 
 High-level typed, named, polling, and contiguous-range operations for `ToyopucDeviceClient`.
 
-Remarks: Typed and contiguous-range methods issue exactly one protocol request. `ReadNamedAsync` and each `PollAsync` cycle accept exactly one named address and therefore issue one request. Only `WriteBitInWord` and `WriteBitInWordAsync` are multi-request helpers: they perform an explicit read followed by a write while holding one local client FIFO turn and one absolute deadline.
+Remarks: Typed and contiguous-range methods issue exactly one protocol request. `ReadNamedAsync` and each `PollAsync` cycle accept one or more compatible named addresses in exactly one request. Only `WriteBitInWord` and `WriteBitInWordAsync` are multi-request helpers: they perform an explicit read followed by a write while holding one local client FIFO turn and one absolute deadline.
 
 #### Members
 
@@ -2578,7 +2736,7 @@ Remarks: Typed and contiguous-range methods issue exactly one protocol request. 
 public static IAsyncEnumerable<IReadOnlyDictionary<string, object>> PollAsync(ToyopucDeviceClient client, IEnumerable<string> addresses, TimeSpan interval, CancellationToken ct = default)
 ```
 
-Repeatedly reads exactly one named address, one request per cycle.
+Repeatedly reads one compatible named-address set, one request per cycle.
 
 Remarks: Each cycle is independent; no atomicity is implied across polling cycles.
 
@@ -2606,9 +2764,9 @@ Reads a contiguous double-word range using exactly one protocol request.
 public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(ToyopucDeviceClient client, IEnumerable<string> addresses, CancellationToken ct = default)
 ```
 
-Reads exactly one named address using one protocol request.
+Reads one or more compatible named addresses using exactly one protocol request.
 
-Remarks: Multiple named addresses are rejected before transport; split reads must be explicit.
+Remarks: Automatic request splitting is rejected before transport.
 
 ##### ReadTypedAsync
 
@@ -2635,6 +2793,22 @@ public static Task<ushort[]> ReadWordsSingleRequestAsync(ToyopucDeviceClient cli
 ```
 
 Reads a contiguous word range using exactly one protocol request.
+
+##### RelayWriteBitInWord
+
+```csharp
+public static void RelayWriteBitInWord(ToyopucDeviceClient client, object hops, string device, int bitIndex, bool value)
+```
+
+Synchronously sets or clears one word bit through an explicitly supplied relay route.
+
+##### RelayWriteBitInWordAsync
+
+```csharp
+public static Task RelayWriteBitInWordAsync(ToyopucDeviceClient client, object hops, string device, int bitIndex, bool value, CancellationToken cancellationToken = default)
+```
+
+Sets or clears one word bit through an explicitly supplied relay route.
 
 ##### WriteBitInWord
 

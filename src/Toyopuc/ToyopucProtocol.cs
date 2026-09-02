@@ -253,6 +253,40 @@ public static class ToyopucProtocol
         return frame;
     }
 
+    internal static byte[] BuildProgramTimerCounterRead(int programNumber, int address)
+        => BuildProgramTimerCounterCommand(programNumber, 0x40, address, Array.Empty<int>());
+
+    internal static byte[] BuildProgramTimerCounterWriteBoth(int programNumber, int address, int preset, int current)
+        => BuildProgramTimerCounterCommand(programNumber, 0x41, address, [preset, current]);
+
+    internal static byte[] BuildProgramTimerCounterWritePreset(int programNumber, int address, int preset)
+        => BuildProgramTimerCounterCommand(programNumber, 0x42, address, [preset]);
+
+    internal static byte[] BuildProgramTimerCounterWriteCurrent(int programNumber, int address, int current)
+        => BuildProgramTimerCounterCommand(programNumber, 0x43, address, [current]);
+
+    private static byte[] BuildProgramTimerCounterCommand(
+        int programNumber,
+        int selector,
+        int address,
+        IReadOnlyList<int> values)
+    {
+        if (programNumber is < 1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(programNumber), "programNumber must be 1-3.");
+        if (address is < 0 or > 0xFFFF)
+            throw new ArgumentOutOfRangeException(nameof(address), "address must be 0-65535.");
+        var data = new byte[5 + (values.Count * 2)];
+        data[0] = (byte)programNumber;
+        data[1] = (byte)selector;
+        data[2] = 0x00;
+        WriteU16(data, 3, address);
+        for (var index = 0; index < values.Count; index++)
+        {
+            WriteU16(data, 5 + (index * 2), values[index]);
+        }
+        return BuildCommand(0xA0, data);
+    }
+
     public static byte[] BuildScanResume()
     {
         var frame = CreateCommandFrame(0x32, 2);
@@ -350,6 +384,37 @@ public static class ToyopucProtocol
         }
 
         return new CpuStatusData(data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10]);
+    }
+
+    internal static TimerCounterValues ParseProgramTimerCounterValues(ReadOnlySpan<byte> data, int programNumber)
+    {
+        if (data.Length != 7
+            || data[0] != programNumber
+            || data[1] != 0x40
+            || data[2] != 0x00)
+        {
+            throw new ToyopucProtocolError(
+                $"A0 timer/counter response must be 7 bytes starting with {programNumber:X2} 40 00");
+        }
+
+        return new TimerCounterValues(
+            BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(3, 2)),
+            BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(5, 2)));
+    }
+
+    internal static void ValidateProgramTimerCounterWriteResponse(
+        ReadOnlySpan<byte> data,
+        int programNumber,
+        int selector)
+    {
+        if (data.Length != 3
+            || data[0] != programNumber
+            || data[1] != selector
+            || data[2] != 0x00)
+        {
+            throw new ToyopucProtocolError(
+                $"A0 timer/counter write response must be 3 bytes starting with {programNumber:X2} {selector:X2} 00");
+        }
     }
 
     public static byte[] ParseCpuStatusDataA0Raw(byte[] data)
@@ -739,9 +804,14 @@ public static class ToyopucProtocol
 
     private static bool IsRelayReadOnlyRequest(byte command, byte[] body)
     {
-        if (command is 0x1C or 0x1E or 0x20 or 0x22 or 0x24 or 0x94 or 0x96 or 0x98 or 0xA0 or 0xC2 or 0xC4)
+        if (command is 0x1C or 0x1E or 0x20 or 0x22 or 0x24 or 0x94 or 0x96 or 0x98 or 0xC2 or 0xC4)
         {
             return true;
+        }
+
+        if (command == 0xA0 && body.Length >= 3 && body[2] == 0x00)
+        {
+            return body[1] is 0x11 or 0x40;
         }
 
         return command == 0x32
@@ -777,6 +847,8 @@ public static class ToyopucProtocol
             0x98 => throw new ArgumentException(
                 "CMD=98 relay request body is too short to derive its response length",
                 nameof(body)),
+            0xA0 when body.Length >= 3 && body[1] == 0x11 && body[2] == 0x00 => 11,
+            0xA0 when body.Length >= 3 && body[1] == 0x40 && body[2] == 0x00 => 7,
             0xC2 => ReadBodyU16(4),
             0xC4 when body.Length >= 4 => checked(4 + ((body[0] + 7) / 8) + body[1] + (body[2] * 2) + (body[3] * 4)),
             0xC4 => throw new ArgumentException(
@@ -800,6 +872,13 @@ public static class ToyopucProtocol
                 || (body[0] == 0x02 && body[1] == 0x00)))
         {
             return body[..2];
+        }
+        if (command == 0xA0
+            && body.Length >= 3
+            && body[1] is 0x41 or 0x42 or 0x43
+            && body[2] == 0x00)
+        {
+            return body[..3];
         }
 
         return null;

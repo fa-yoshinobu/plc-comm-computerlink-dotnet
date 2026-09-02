@@ -328,6 +328,26 @@ public partial class ToyopucDeviceClient
         return ExecutePreparedReadAsync(prepared, resolved.Length, cancellationToken);
     }
 
+    internal Task<object[]> ReadResolvedDevicesSingleRequestAsync(
+        IReadOnlyList<ResolvedDevice> devices,
+        object? relayHops,
+        string operation,
+        CancellationToken cancellationToken)
+    {
+        var snapshot = devices.ToArray();
+        RequireReadItems(snapshot, operation);
+        var plan = GetReadRunPlan(snapshot, splitPc10BlockBoundaries: false);
+        if (plan.Length != 1 || plan[0] != snapshot.Length || !CanReadAsSingleRequest(snapshot))
+        {
+            RaiseImplicitSplitError(operation);
+        }
+
+        var prepared = relayHops is null
+            ? PrepareReadPlan(snapshot, plan)
+            : PrepareReadPlan(ToyopucRelay.NormalizeRelayHops(relayHops).ToArray(), snapshot, plan);
+        return ExecutePreparedReadAsync(prepared, snapshot.Length, cancellationToken);
+    }
+
     public Task WriteManyAsync(IEnumerable<KeyValuePair<object, object>> items, CancellationToken cancellationToken = default)
     {
         var resolved = ResolveWriteItems(items);

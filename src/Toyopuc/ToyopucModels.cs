@@ -49,6 +49,9 @@ public sealed record ClockData(
     }
 }
 
+/// <summary>Program timer/counter preset and current values returned by CMD=A0.</summary>
+public sealed record TimerCounterValues(int Preset, int Current);
+
 public sealed class CpuStatusData
 {
     public CpuStatusData(

@@ -56,12 +56,17 @@ Writes are never implicitly divided into multiple protocol requests. When a writ
 Named addresses require a data type. Use `:U` or `:S` for a word, and `:D`, `:L`, or `:F` for a 32-bit value. `.0` through `.F` select a bit inside a word. Bare named addresses are rejected.
 
 ```csharp
-var word = await client.ReadNamedAsync(["P1-D0000:U"]);
-var dword = await client.ReadNamedAsync(["P1-D0100:D"]);
-var bit13 = await client.ReadNamedAsync(["P1-D0000.D"]);
+var snapshot = await client.ReadNamedAsync([
+    "P1-D0000:U",
+    "P1-D0100:D",
+    "P1-D0000.D",
+]);
 ```
 
 `:D` is an unsigned dword; `.D` is bit 13.
+`ReadNamedAsync` and each `PollAsync` cycle accept one or more unique compatible
+addresses only when the complete set fits exactly one protocol request. They
+never split automatically or return a partial result.
 
 Use `WriteBitInWord` or `WriteBitInWordAsync` only when an explicit
 read-modify-write is intended. Both forms validate the complete operation
@@ -71,7 +76,26 @@ bit already has the requested state. The PLC therefore receives two requests.
 The operation is not PLC-atomic: PLC logic, another connection, or another
 controller can change the word between them. Cancellation or failure after the
 write may have started is outcome-unknown; reconnect and reconcile the PLC
-state before deciding whether another write is safe.
+state before deciding whether another write is safe. Use
+`RelayWriteBitInWord` or `RelayWriteBitInWordAsync` when the relay hops must be
+supplied explicitly for that call.
+
+## Program timer/counter values
+
+Program timer/counter preset and current values require an explicit program
+prefix. `P1-T000`, `P2-C010`, and `P3-T100` select program 1, 2, and 3;
+unprefixed `T`/`C` devices are rejected before communication.
+
+```csharp
+TimerCounterValues values = await client.ReadProgramTimerCounterValuesAsync("P1-T000");
+await client.WriteProgramTimerCounterValuesAsync("P1-T000", preset: 100, current: 0);
+await client.WriteProgramTimerCounterPresetAsync("P1-T000", preset: 200);
+await client.WriteProgramTimerCounterCurrentAsync("P1-T000", current: 0);
+```
+
+The four operations use native A0 selectors `40` through `43`; they do not
+fall back to program-implicit CMD `32` operations. Explicit relay counterparts
+use the `Relay` prefix.
 
 ## FR work area and commit
 

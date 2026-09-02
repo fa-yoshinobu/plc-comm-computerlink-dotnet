@@ -27,9 +27,9 @@ Raw frame and payload builders are the wire layer and therefore use validated in
 
 ## Bit-in-word updates are not PLC-atomic
 
-`WriteBitInWord` and `WriteBitInWordAsync` reserve one FIFO turn on their local
-client, share one absolute deadline, and always perform one word read followed
-by one word write. PLC logic and other connections can still modify the word
+`WriteBitInWord`, `WriteBitInWordAsync`, and their explicit-relay counterparts
+reserve one FIFO turn on their local client, share one absolute deadline, and
+always perform one word read followed by one word write. PLC logic and other connections can still modify the word
 between those requests. Use a PLC-side ownership or handshake contract when
 that race is unacceptable. If cancellation or failure occurs after the write
 may have started, retire and reconnect the transport and treat the result as

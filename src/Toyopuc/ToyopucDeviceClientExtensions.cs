@@ -10,13 +10,15 @@ namespace PlcComm.Toyopuc;
 /// <remarks>
 /// Typed and contiguous-range methods issue exactly one protocol request.
 /// <see cref="ReadNamedAsync"/> and each <see cref="PollAsync"/> cycle accept
-/// exactly one named address and therefore issue one request. Only
+/// one or more compatible named addresses in exactly one request. Only
 /// <see cref="WriteBitInWord"/> and <see cref="WriteBitInWordAsync"/> are
 /// multi-request helpers: they perform an explicit read followed by a write
 /// while holding one local client FIFO turn and one absolute deadline.
 /// </remarks>
 public static class ToyopucDeviceClientExtensions
 {
+    private sealed record NamedReadEntry(string Address, string DType, int? BitIndex, int WordOffset);
+
     /// <summary>Reads one typed value using exactly one protocol request.</summary>
     public static Task<object> ReadTypedAsync(this ToyopucDeviceClient client, string device, string dtype, CancellationToken ct = default)
         => client.ExecuteExclusiveAsync(token => ReadTypedCoreAsync(client, client.RelayHops, device, dtype, token), ct);
@@ -68,15 +70,55 @@ public static class ToyopucDeviceClientExtensions
                 .GetResult());
     }
 
-    /// <summary>Reads exactly one named address using one protocol request.</summary>
-    /// <remarks>Multiple named addresses are rejected before transport; split reads must be explicit.</remarks>
-    public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(this ToyopucDeviceClient client, IEnumerable<string> addresses, CancellationToken ct = default)
+    /// <summary>Sets or clears one word bit through an explicitly supplied relay route.</summary>
+    public static Task RelayWriteBitInWordAsync(
+        this ToyopucDeviceClient client,
+        object hops,
+        string device,
+        int bitIndex,
+        bool value,
+        CancellationToken cancellationToken = default)
     {
-        var addrList = addresses.ToArray();
-        return client.ExecuteExclusiveAsync(token => ReadNamedCoreAsync(client, client.RelayHops, addrList, token), ct);
+        ValidateBitInWordTarget(client, device, bitIndex);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        return client.ExecuteExclusiveAsync(
+            token => WriteBitInWordCoreAsync(client, hopsSnapshot, device, bitIndex, value, token),
+            cancellationToken);
     }
 
-    /// <summary>Repeatedly reads exactly one named address, one request per cycle.</summary>
+    /// <summary>Synchronously sets or clears one word bit through an explicitly supplied relay route.</summary>
+    public static void RelayWriteBitInWord(
+        this ToyopucDeviceClient client,
+        object hops,
+        string device,
+        int bitIndex,
+        bool value)
+    {
+        ValidateBitInWordTarget(client, device, bitIndex);
+        var hopsSnapshot = ToyopucRelay.NormalizeRelayHops(hops).ToArray();
+        client.ExecuteSynchronousExclusiveInternal(
+            () => WriteBitInWordCoreAsync(
+                    client,
+                    hopsSnapshot,
+                    device,
+                    bitIndex,
+                    value,
+                    CancellationToken.None)
+                .GetAwaiter()
+                .GetResult());
+    }
+
+    /// <summary>Reads one or more compatible named addresses using exactly one protocol request.</summary>
+    /// <remarks>Automatic request splitting is rejected before transport.</remarks>
+    public static Task<IReadOnlyDictionary<string, object>> ReadNamedAsync(this ToyopucDeviceClient client, IEnumerable<string> addresses, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(addresses);
+        var addrList = addresses.ToArray();
+        return ReadNamedCoreAsync(client, client.RelayHops, addrList, ct);
+    }
+
+    /// <summary>Repeatedly reads one compatible named-address set, one request per cycle.</summary>
     /// <remarks>Each cycle is independent; no atomicity is implied across polling cycles.</remarks>
     public static async IAsyncEnumerable<IReadOnlyDictionary<string, object>> PollAsync(
         this ToyopucDeviceClient client,
@@ -89,9 +131,7 @@ public static class ToyopucDeviceClientExtensions
         ValidateNamedAddresses(addrList);
         while (!ct.IsCancellationRequested)
         {
-            yield return await client.ExecuteExclusiveAsync(
-                token => ReadNamedCoreAsync(client, client.RelayHops, addrList, token),
-                ct).ConfigureAwait(false);
+            yield return await ReadNamedCoreAsync(client, client.RelayHops, addrList, ct).ConfigureAwait(false);
             await Task.Delay(interval, ct).ConfigureAwait(false);
         }
     }
@@ -284,29 +324,75 @@ public static class ToyopucDeviceClientExtensions
     private static async Task<IReadOnlyDictionary<string, object>> ReadNamedCoreAsync(ToyopucDeviceClient client, object? relayHops, IEnumerable<string> addresses, CancellationToken ct)
     {
         var addrList = addresses as IList<string> ?? addresses.ToList();
-        if (addrList.Count != 1)
+        ValidateNamedAddresses(addrList);
+
+        var entries = new NamedReadEntry[addrList.Count];
+        var devices = new List<ResolvedDevice>();
+        for (var index = 0; index < addrList.Count; index++)
         {
-            throw new ToyopucProtocolError(
-                "ReadNamedAsync requires exactly one named address per call. Split the operation into explicit calls when multiple requests are intentional.");
+            var address = addrList[index];
+            var (baseAddr, dtype, bitIdx) = ParseLogicalAddress(address);
+            var wordCount = dtype is "D" or "L" or "F" ? 2 : 1;
+            var entryDevices = BuildSequentialWordDevices(client, baseAddr, wordCount);
+            entries[index] = new NamedReadEntry(address, dtype, bitIdx, devices.Count);
+            devices.AddRange(entryDevices);
         }
 
-        var result = new Dictionary<string, object>();
-        foreach (var address in addrList)
+        var rawValues = await client.ReadResolvedDevicesSingleRequestAsync(
+            devices,
+            relayHops,
+            nameof(ReadNamedAsync),
+            ct).ConfigureAwait(false);
+
+        var result = new Dictionary<string, object>(entries.Length, StringComparer.Ordinal);
+        foreach (var entry in entries)
         {
-            var (baseAddr, dtype, bitIdx) = ParseLogicalAddress(address);
-            if (dtype == "BIT_IN_WORD")
+            var low = RequireNamedWord(rawValues[entry.WordOffset]);
+            if (entry.DType == "BIT_IN_WORD")
             {
-                if (!bitIdx.HasValue)
-                    throw new ToyopucProtocolError($"Bit index is required for bit-in-word address '{address}'.");
-                var raw = (await ReadWordsSingleRequestCoreAsync(client, relayHops, baseAddr, 1, ct).ConfigureAwait(false))[0];
-                result[address] = ((raw >> bitIdx.Value) & 1) != 0;
+                result[entry.Address] = ((low >> entry.BitIndex!.Value) & 1) != 0;
+            }
+            else if (entry.DType == "U")
+            {
+                result[entry.Address] = low;
+            }
+            else if (entry.DType == "S")
+            {
+                result[entry.Address] = unchecked((short)low);
             }
             else
             {
-                result[address] = await ReadTypedCoreAsync(client, relayHops, baseAddr, dtype, ct).ConfigureAwait(false);
+                var high = RequireNamedWord(rawValues[entry.WordOffset + 1]);
+                var unsigned = (uint)(low | (high << 16));
+                result[entry.Address] = entry.DType switch
+                {
+                    "D" => unsigned,
+                    "L" => unchecked((int)unsigned),
+                    "F" when float.IsFinite(BitConverter.Int32BitsToSingle(unchecked((int)unsigned))) =>
+                        BitConverter.Int32BitsToSingle(unchecked((int)unsigned)),
+                    "F" => throw new ToyopucProtocolError("PLC returned a non-finite float32 value."),
+                    _ => throw new ToyopucProtocolError($"Unsupported named data type '{entry.DType}'."),
+                };
             }
         }
         return result;
+    }
+
+    private static ushort RequireNamedWord(object value)
+    {
+        if (value is bool)
+            throw new ToyopucProtocolError("PLC returned a Boolean where a word value was required.");
+        try
+        {
+            var word = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+            if (word is < 0 or > 0xFFFF)
+                throw new ToyopucProtocolError("PLC returned a word value outside 0..65535.");
+            return (ushort)word;
+        }
+        catch (Exception exception) when (exception is FormatException or InvalidCastException or OverflowException)
+        {
+            throw new ToyopucProtocolError("PLC returned a non-integral word value.", exception);
+        }
     }
 
     private static async Task<ushort[]> ReadWordsSingleRequestCoreAsync(ToyopucDeviceClient client, object? relayHops, string device, int count, CancellationToken ct)
@@ -767,9 +853,14 @@ public static class ToyopucDeviceClientExtensions
 
     private static void ValidateNamedAddresses(IList<string> addresses)
     {
-        if (addresses.Count != 1)
-            throw new ToyopucProtocolError(
-                "A named read must contain exactly one address so the operation remains one request.");
-        _ = ParseLogicalAddress(addresses[0]);
+        if (addresses.Count == 0)
+            throw new ToyopucProtocolError("A named read requires at least one address.");
+        var unique = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var address in addresses)
+        {
+            if (!unique.Add(address))
+                throw new ToyopucProtocolError($"Named address '{address}' is duplicated.");
+            _ = ParseLogicalAddress(address);
+        }
     }
 }
