@@ -27,7 +27,9 @@ Console.WriteLine(value);
 
 The factory returns the ordinary `ToyopucDeviceClient`. That client already owns the one required FIFO queue; no queued wrapper is needed. The selected route is retained for the client lifetime, so the same high-level methods work for direct and relay sessions.
 
-TCP and UDP are never inferred. For UDP, `LocalPort = 0` asks the operating system to allocate an ephemeral local port:
+TCP and UDP are never inferred. For UDP, configure the PC IP address and a
+fixed PC port in the PLC's Other Node Table, then set `LocalPort` to that same
+port. This example assumes the PLC peer port is `12000`:
 
 ```csharp
 var options = new ToyopucConnectionOptions(
@@ -37,7 +39,7 @@ var options = new ToyopucConnectionOptions(
     "toyopuc:plus:extended",
     ToyopucRoute.Direct)
 {
-    LocalPort = 0,
+    LocalPort = 12000,
 };
 ```
 

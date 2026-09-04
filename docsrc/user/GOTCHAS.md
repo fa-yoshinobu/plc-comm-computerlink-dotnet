@@ -44,9 +44,13 @@ Text routes are decimal-only. Use `P10-L11:N20` for component notation or
 suffixes, and A-F digits are rejected; `FormatRelayHop` also returns decimal
 text.
 
-## UDP local port zero is not source port zero
+## The UDP local port must match the PLC link parameters
 
-`LocalPort = 0` asks the operating system to bind an available ephemeral port. A new session may receive a different port. Set a fixed UDP local port only when the network configuration requires it.
+The PLC's UDP Other Node Table identifies the peer PC by a fixed IP address and
+port. Set `LocalPort` to the same port configured as the Other Node Port No.;
+for example, use `LocalPort = 12000` when the PLC table contains `12000`.
+`LocalPort = 0` asks the operating system for an arbitrary ephemeral port and
+therefore does not match this PLC configuration.
 
 ## Connections are IPv4-only
 
@@ -60,7 +64,7 @@ Pass an explicit century to `AsDateTime(yearBase)` and clock writes. Use a timez
 
 ## A timeout discards the transport session
 
-This prevents a late response from an expired request from being consumed as the response to a later request. A subsequent ordinary command may reconnect for TCP or ephemeral-port UDP. A fixed-local-port UDP client is terminal after an uncertain post-send failure: Computerlink has no request serial that can distinguish a late response from a later request to the same endpoint. Create a new client only after late responses can no longer be present, and prefer `LocalPort = 0` unless a fixed source port is required.
+This prevents a late response from an expired request from being consumed as the response to a later request. A subsequent ordinary command may reconnect for TCP or ephemeral-port UDP. A fixed-local-port UDP client is terminal after an uncertain post-send failure: Computerlink has no request serial that can distinguish a late response from a later request to the same endpoint. Because the TOYOPUC link parameters require the PC's fixed UDP port to match the Other Node Table, create a new client with that configured port only after late responses can no longer be present.
 
 Connection timeouts, retry delays, and polling intervals have a common inclusive maximum of `2,147,483,647` milliseconds (`2,147,483.647` seconds, about 24.86 days). Timeouts and polling intervals must be greater than zero; retry delay may be zero. Invalid values raise `ArgumentOutOfRangeException` before communication or waiting starts.
 
