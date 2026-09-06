@@ -8,7 +8,7 @@ metadata. Store the canonical profile string, not the display name.
 
 Device-family notation, type suffixes, practical range notes, and model-specific
 writable range summaries are shared across the Computerlink libraries. Use the
-common [Computerlink Device Ranges](https://fa-yoshinobu.github.io/plc-comm-docs-site/plc-setup/computerlink/device-ranges/)
+common [Computerlink Device Ranges](https://plc-comm-docs-site.fa-labo.com/plc-setup/computerlink/device-ranges/)
 page for those details.
 
 Verified hardware available for focused validation is maintained once in the

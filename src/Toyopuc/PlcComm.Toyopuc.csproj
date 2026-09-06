@@ -15,7 +15,7 @@
     <PackageTags>plc-comm toyopuc jtekt plc industrial-automation computer-link tcp udp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://fa-yoshinobu.github.io/plc-comm-docs-site/computerlink/dotnet/GETTING_STARTED/</PackageProjectUrl>
+    <PackageProjectUrl>https://plc-comm-docs-site.fa-labo.com/computerlink/dotnet/GETTING_STARTED/</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
