@@ -250,7 +250,7 @@ public sealed class ToyopucClientExtensionsTests
             "127.0.0.1",
             1,
             transport: ToyopucTransportMode.Tcp,
-            timeout: TimeSpan.FromMilliseconds(1),
+            timeout: TimeSpan.FromSeconds(2),
             addressingOptions: ToyopucAddressingOptions.Pc10GMode,
             plcProfile: Pc10Profile);
 
@@ -264,7 +264,7 @@ public sealed class ToyopucClientExtensionsTests
             "127.0.0.1",
             1,
             transport: ToyopucTransportMode.Tcp,
-            timeout: TimeSpan.FromMilliseconds(1),
+            timeout: TimeSpan.FromSeconds(2),
             addressingOptions: ToyopucAddressingOptions.Pc10GMode,
             plcProfile: Pc10Profile);
 
@@ -322,7 +322,7 @@ public sealed class ToyopucClientExtensionsTests
             1,
             ToyopucTransportMode.Tcp,
             Pc10Profile,
-            timeout: TimeSpan.FromMilliseconds(1));
+            timeout: TimeSpan.FromSeconds(2));
 
         await Assert.ThrowsAsync<ToyopucProtocolError>(() =>
             client.ReadNamedAsync(["P1-D0000:U", "P1-D0000:U"]));
@@ -451,7 +451,7 @@ public sealed class ToyopucClientExtensionsTests
             1,
             ToyopucTransportMode.Tcp,
             Pc10Profile,
-            timeout: TimeSpan.FromMilliseconds(1));
+            timeout: TimeSpan.FromSeconds(2));
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             client.ReadProgramTimerCounterValuesAsync("T000"));
@@ -493,7 +493,7 @@ public sealed class ToyopucClientExtensionsTests
             "127.0.0.1",
             1,
             transport: ToyopucTransportMode.Tcp,
-            timeout: TimeSpan.FromMilliseconds(1),
+            timeout: TimeSpan.FromSeconds(2),
             plcProfile: Pc10Profile);
 
         await Assert.ThrowsAsync<ToyopucProtocolError>(

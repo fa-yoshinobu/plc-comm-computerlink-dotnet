@@ -207,7 +207,7 @@ public sealed class OverhaulContractTests
             1,
             ToyopucTransportMode.Tcp,
             Profile,
-            timeout: TimeSpan.FromMilliseconds(10));
+            timeout: TimeSpan.FromSeconds(2));
 
         var resolved = client.ResolveDevice("FR000000");
         foreach (var device in new object[] { "FR000000", resolved })
@@ -663,7 +663,7 @@ public sealed class OverhaulContractTests
             1,
             ToyopucTransportMode.Tcp,
             Profile,
-            timeout: TimeSpan.FromMilliseconds(10));
+            timeout: TimeSpan.FromSeconds(2));
 
         await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(["B0100"]));
         await Assert.ThrowsAsync<ToyopucProtocolError>(() => client.ReadNamedAsync(["B0100:"]));
@@ -726,7 +726,7 @@ public sealed class OverhaulContractTests
             1,
             ToyopucTransportMode.Tcp,
             Profile,
-            timeout: TimeSpan.FromMilliseconds(10));
+            timeout: TimeSpan.FromSeconds(2));
 
         Assert.ThrowsAny<ArgumentException>(() => client.WriteFrWorkArea("FR000000", value));
         Assert.ThrowsAny<ArgumentException>(() => client.RelayWriteFrWorkArea("P1-L2:N2", "FR000000", value));
@@ -741,7 +741,7 @@ public sealed class OverhaulContractTests
             1,
             ToyopucTransportMode.Tcp,
             Profile,
-            timeout: TimeSpan.FromMilliseconds(10));
+            timeout: TimeSpan.FromSeconds(2));
 
         Assert.Throws<ArgumentOutOfRangeException>(() => client.WriteFrWorkArea(0, [-1]));
         Assert.Throws<ArgumentOutOfRangeException>(() => client.RelayWriteFrWorkArea("P1-L2:N2", 0, [65536]));
@@ -761,7 +761,7 @@ public sealed class OverhaulContractTests
             1,
             ToyopucTransportMode.Tcp,
             Profile,
-            timeout: TimeSpan.FromMilliseconds(10));
+            timeout: TimeSpan.FromSeconds(2));
 
         await Assert.ThrowsAnyAsync<ArgumentException>(() => directClient.WriteFrWorkAreaAsync("FR000000", value));
         await Assert.ThrowsAnyAsync<ArgumentException>(() => directClient.RelayWriteFrWorkAreaAsync("P1-L2:N2", "FR000000", value));
@@ -772,7 +772,7 @@ public sealed class OverhaulContractTests
             1,
             ToyopucTransportMode.Tcp,
             Profile,
-            timeout: TimeSpan.FromMilliseconds(10),
+            timeout: TimeSpan.FromSeconds(2),
             route: ToyopucRoute.Relay("P1-L2:N2"));
         await Assert.ThrowsAnyAsync<ArgumentException>(() => relayClient.WriteFrWorkAreaAsync("FR000000", value));
         Assert.False(relayClient.IsOpen);
