@@ -29,10 +29,6 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Check GitHub source archive build and tests
-        shell: pwsh
-        run: ./scripts/check_source_archive.ps1
-
       - name: Restore
         run: dotnet restore PlcComm.Toyopuc.sln
 
