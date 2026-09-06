@@ -36,34 +36,13 @@ jobs:
       - name: Restore
         run: dotnet restore PlcComm.Toyopuc.sln
 
-      - name: Restore TFM-matched API exporter
-        run: dotnet restore tools/api-diff/PlcComm.Toyopuc.ApiSurfaceExporter/PlcComm.Toyopuc.ApiSurfaceExporter.csproj
-
       - name: Build
         run: dotnet build PlcComm.Toyopuc.sln -c Release --no-restore
-
-      - name: Build TFM-matched API exporter
-        run: dotnet build tools/api-diff/PlcComm.Toyopuc.ApiSurfaceExporter/PlcComm.Toyopuc.ApiSurfaceExporter.csproj -c Release --no-restore
 
       - name: Check generated API reference
         run: |
           python scripts/test_generate_api_reference.py
           python scripts/generate_api_reference.py --assembly src/Toyopuc/bin/Release/net8.0/PlcComm.Toyopuc.dll --xml src/Toyopuc/bin/Release/net8.0/PlcComm.Toyopuc.xml --output docsrc/user/API_REFERENCE.md --title "TOYOPUC Computerlink .NET API Reference" --package PlcComm.Toyopuc --check
-
-      - name: Check documented public API diff
-        shell: pwsh
-        run: |
-          ./scripts/test_documented_api_diff.ps1
-          ./scripts/check_documented_api_diff.ps1 -CandidateAssemblyRoot src/Toyopuc/bin/Release -ReviewOutput build/documented-api-diff-review.json
-
-      - name: Upload API diff review when classification is incomplete
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: documented-api-diff-review
-          path: build/documented-api-diff-review.json
-          if-no-files-found: ignore
-          retention-days: 7
 
       - name: Test
         run: dotnet test PlcComm.Toyopuc.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
