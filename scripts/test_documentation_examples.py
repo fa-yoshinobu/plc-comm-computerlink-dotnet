@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import unittest
+import runpy
 from pathlib import Path
 
 
@@ -19,6 +20,9 @@ HIGH_LEVEL_SAMPLE = (
 
 
 class DocumentationExamplesTests(unittest.TestCase):
+    def test_sample_cleanup_outcomes(self) -> None:
+        runpy.run_path(str(ROOT / "scripts/test_sample_cleanup.py"), run_name="__main__")
+
     def test_tcp_local_port_contract_matches_source_and_generated_reference(
         self,
     ) -> None:

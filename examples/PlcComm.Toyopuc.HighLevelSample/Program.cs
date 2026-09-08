@@ -57,16 +57,35 @@ Console.WriteLine($"P1-D0100 = {FormatValue(d100)}");
 // Write only to test addresses you control.
 var originalD101 = await client.ReadOneAsync("P1-D0101");
 var originalM0000 = await client.ReadOneAsync("P1-M0000");
+bool write1Confirmed = false;
+bool write2Confirmed = false;
+bool outcomeUnknown1 = false;
 try
 {
     await client.WriteAsync("P1-D0101", 1234);
+    write2Confirmed = true;
     await client.WriteAsync("P1-M0000", 1);
+    write1Confirmed = true;
     Console.WriteLine("Wrote 1234 -> P1-D0101 and 1 -> P1-M0000");
+}
+catch (ToyopucOperationOutcomeUnknownException)
+{
+    outcomeUnknown1 = true;
+    throw;
 }
 finally
 {
-    await client.WriteAsync("P1-M0000", originalM0000);
-    await client.WriteAsync("P1-D0101", originalD101);
+    if (!outcomeUnknown1)
+    {
+        if (write1Confirmed)
+        {
+            await client.WriteAsync("P1-M0000", originalM0000);
+        }
+        if (write2Confirmed)
+        {
+            await client.WriteAsync("P1-D0101", originalD101);
+        }
+    }
 }
 
 Console.WriteLine();
@@ -75,6 +94,8 @@ Console.WriteLine("2. ReadManyAsync / WriteManyAsync");
 var readResult = await client.ReadDevicesAsync(["P1-D0100", "P1-D0101"]);
 Console.WriteLine($"read result = [{string.Join(", ", readResult.Select(FormatValue))}]");
 // Write compatible device strings as one protocol request.
+bool write3Confirmed = false;
+bool outcomeUnknown2 = false;
 try
 {
     await client.WriteManyAsync(
@@ -82,15 +103,27 @@ try
         new KeyValuePair<object, object>("P1-D0100", 10),
         new KeyValuePair<object, object>("P1-D0101", 20),
     ]);
+    write3Confirmed = true;
     Console.WriteLine("Wrote {P1-D0100=10, P1-D0101=20}");
+}
+catch (ToyopucOperationOutcomeUnknownException)
+{
+    outcomeUnknown2 = true;
+    throw;
 }
 finally
 {
-    await client.WriteManyAsync(
-    [
-        new KeyValuePair<object, object>("P1-D0100", readResult[0]),
-        new KeyValuePair<object, object>("P1-D0101", readResult[1]),
-    ]);
+    if (!outcomeUnknown2)
+    {
+        if (write3Confirmed)
+        {
+            await client.WriteManyAsync(
+            [
+                new KeyValuePair<object, object>("P1-D0100", readResult[0]),
+                new KeyValuePair<object, object>("P1-D0101", readResult[1]),
+            ]);
+        }
+    }
 }
 
 Console.WriteLine();
@@ -102,16 +135,35 @@ var typedL = await client.ReadTypedAsync("P1-D0200", "L");
 Console.WriteLine($"P1-D0100:U = {typedU}");
 Console.WriteLine($"P1-D0300:F = {typedF}");
 // Write typed values to word registers. DWord, long, and float values occupy two words.
+bool write4Confirmed = false;
+bool write5Confirmed = false;
+bool outcomeUnknown3 = false;
 try
 {
     await client.WriteTypedAsync("P1-D0200", "L", -500);
+    write5Confirmed = true;
     await client.WriteTypedAsync("P1-D0300", "F", 3.14f);
+    write4Confirmed = true;
     Console.WriteLine("Wrote -500 -> P1-D0200:L and 3.14 -> P1-D0300:F");
+}
+catch (ToyopucOperationOutcomeUnknownException)
+{
+    outcomeUnknown3 = true;
+    throw;
 }
 finally
 {
-    await client.WriteTypedAsync("P1-D0300", "F", typedF);
-    await client.WriteTypedAsync("P1-D0200", "L", typedL);
+    if (!outcomeUnknown3)
+    {
+        if (write4Confirmed)
+        {
+            await client.WriteTypedAsync("P1-D0300", "F", typedF);
+        }
+        if (write5Confirmed)
+        {
+            await client.WriteTypedAsync("P1-D0200", "L", typedL);
+        }
+    }
 }
 
 Console.WriteLine();
@@ -127,9 +179,12 @@ Console.WriteLine("5. WriteBitInWordAsync / ReadNamedAsync");
 // See GOTCHAS.md: dot notation means a bit inside a word, not a typed dword suffix.
 var originalBitSnapshot = await client.ReadNamedAsync(["P1-D0100.3"]);
 var originalBit = Convert.ToBoolean(originalBitSnapshot["P1-D0100.3"], System.Globalization.CultureInfo.InvariantCulture);
+bool write6Confirmed = false;
+bool outcomeUnknown4 = false;
 try
 {
     await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: true);
+    write6Confirmed = true;
     // ReadNamedAsync keeps the requested address string as the result key.
     var namedAddresses = new[]
     {
@@ -144,9 +199,20 @@ try
         Console.WriteLine($"{pair.Key,-12} = {FormatValue(pair.Value)}");
     }
 }
+catch (ToyopucOperationOutcomeUnknownException)
+{
+    outcomeUnknown4 = true;
+    throw;
+}
 finally
 {
-    await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: originalBit);
+    if (!outcomeUnknown4)
+    {
+        if (write6Confirmed)
+        {
+            await client.WriteBitInWordAsync("P1-D0100", bitIndex: 3, value: originalBit);
+        }
+    }
 }
 
 Console.WriteLine();
@@ -168,17 +234,34 @@ Console.WriteLine("7. ReadFrOneAsync / WriteFrWorkAreaAsync / CommitFrBlockAsync
 // FR reads use dedicated helpers because FR is a flash-backed word area.
 var frValue = await client.ReadFrOneAsync("FR000000");
 Console.WriteLine($"FR000000 = {FormatValue(frValue)}");
-// See GOTCHAS.md: FR writes are staged until CommitFrAsync flushes them to flash.
+// See GOTCHAS.md: FR writes are staged until CommitFrBlockAsync flushes them to flash.
 // This sample restores the RAM-staged value and intentionally does not commit.
+bool write7Confirmed = false;
+bool outcomeUnknown5 = false;
 try
 {
     await client.WriteFrWorkAreaAsync("FR000000", 0x1234);
+    write7Confirmed = true;
     Console.WriteLine("Wrote 0x1234 -> FR000000 (RAM only, not committed)");
+}
+catch (ToyopucOperationOutcomeUnknownException)
+{
+    outcomeUnknown5 = true;
+    throw;
 }
 finally
 {
-    await client.WriteFrWorkAreaAsync("FR000000", frValue);
-    Console.WriteLine("Restored original FR000000 value (RAM only)");
+    if (!outcomeUnknown5)
+    {
+        if (write7Confirmed)
+        {
+            await client.WriteFrWorkAreaAsync("FR000000", frValue);
+        }
+        if (write7Confirmed)
+        {
+            Console.WriteLine("Restored confirmed test writes.");
+        }
+    }
 }
 // Uncomment only when the staged FR value is intentionally persistent.
 // await client.CommitFrBlockAsync("FR000000");
