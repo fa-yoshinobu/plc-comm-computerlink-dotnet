@@ -10,6 +10,45 @@ public sealed class ToyopucClientExtensionsTests
     private const double LocalTestTimeoutSeconds = 3.0;
     private const string Pc10Profile = "toyopuc:pc10g:pc10";
     private const string Pc3JgSeparateProfile = "toyopuc:pc3jg:pc3-separate";
+    public static TheoryData<string, uint, object> DwordScalarCases
+    {
+        get
+        {
+            var cases = new TheoryData<string, uint, object>();
+            foreach (var value in new[] { 0, -1, 123, 16_777_216, 16_777_217, int.MinValue, int.MinValue + 1, int.MaxValue })
+                cases.Add("L", unchecked((uint)value), value);
+            foreach (var value in new[] { 0u, 123u, 16_777_216u, 16_777_217u, uint.MaxValue })
+                cases.Add("D", value, value);
+            cases.Add("F", unchecked((uint)BitConverter.SingleToInt32Bits(1.5f)), 1.5f);
+            return cases;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(DwordScalarCases))]
+    public async Task ReadNamedAndPollAsync_PreserveDwordScalarTypeAndValue(string dtype, uint raw, object expected)
+    {
+        var payload = new byte[4];
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(payload, raw);
+        await using var server = new ScriptedToyopucServer(_ => BuildResponse(0x94, payload));
+        await using var client = new ToyopucDeviceClient(
+            "127.0.0.1",
+            server.Port,
+            ToyopucTransportMode.Tcp,
+            Pc10Profile,
+            timeout: TimeSpan.FromSeconds(LocalTestTimeoutSeconds));
+        var address = $"P1-D0000:{dtype}";
+
+        var values = await client.ReadNamedAsync([address]);
+        Assert.IsType(expected.GetType(), values[address]);
+        Assert.Equal(expected, values[address]);
+
+        await using var enumerator = client.PollAsync([address], TimeSpan.FromSeconds(1)).GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        Assert.IsType(expected.GetType(), enumerator.Current[address]);
+        Assert.Equal(expected, enumerator.Current[address]);
+    }
+
 
     [Fact]
     public async Task WriteBitInWordAsync_AlwaysReadsThenWritesOneWord()

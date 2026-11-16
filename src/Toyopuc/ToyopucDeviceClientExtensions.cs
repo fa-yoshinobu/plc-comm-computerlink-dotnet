@@ -366,10 +366,10 @@ public static class ToyopucDeviceClientExtensions
                 var unsigned = (uint)(low | (high << 16));
                 result[entry.Address] = entry.DType switch
                 {
-                    "D" => unsigned,
-                    "L" => unchecked((int)unsigned),
+                    "D" => (object)unsigned,
+                    "L" => (object)unchecked((int)unsigned),
                     "F" when float.IsFinite(BitConverter.Int32BitsToSingle(unchecked((int)unsigned))) =>
-                        BitConverter.Int32BitsToSingle(unchecked((int)unsigned)),
+                        (object)BitConverter.Int32BitsToSingle(unchecked((int)unsigned)),
                     "F" => throw new ToyopucProtocolError("PLC returned a non-finite float32 value."),
                     _ => throw new ToyopucProtocolError($"Unsupported named data type '{entry.DType}'."),
                 };
