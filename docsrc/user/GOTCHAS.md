@@ -62,6 +62,12 @@ TCP and UDP accept an IPv4 literal or a hostname that resolves to IPv4. An IPv6 
 
 Pass an explicit century to `AsDateTime(yearBase)` and clock writes. Use a timezone-unspecified `DateTime` representing PLC local time.
 
+## Extra responses require an explicit reconnect
+
+The client checks for unowned TCP bytes or UDP datagrams before each send and for immediately visible extra data after receiving a response. This includes partial TCP frames and empty UDP datagrams. Detected extra data raises `ToyopucProtocolError`, closes the transport, and requires an explicit `Open()` or `OpenAsync()`; the request is not automatically retried or resent. A request rejected before send is not reported as outcome-unknown. After a state-changing send, the existing malformed-response outcome-unknown rules apply, including the fixed-local-port UDP taint restriction below.
+
+These checks do not guarantee complete duplicate-response detection. Computerlink responses have no transaction serial, and a delayed duplicate with the same command and response shape that arrives after the next send cannot always be distinguished from that request's response. Do not treat reconnecting to the same fixed UDP port as proof that late datagrams are gone.
+
 ## A timeout discards the transport session
 
 This prevents a late response from an expired request from being consumed as the response to a later request. A subsequent ordinary command may reconnect for TCP or ephemeral-port UDP. A fixed-local-port UDP client is terminal after an uncertain post-send failure: Computerlink has no request serial that can distinguish a late response from a later request to the same endpoint. Because the TOYOPUC link parameters require the PC's fixed UDP port to match the Other Node Table, create a new client with that configured port only after late responses can no longer be present.

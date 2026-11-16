@@ -197,7 +197,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
             _explicitReconnectRequired = false;
         else if (_explicitReconnectRequired)
             throw new ToyopucNotConnectedException(
-                "The canceled session requires an explicit Open/OpenAsync before another command.");
+                "The session requires an explicit Open/OpenAsync before another command.");
 
         if (_socket is not null)
         {
@@ -1335,7 +1335,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         _ = allowRetry; // Retries are now limited to failures proven to occur before any send attempt.
         if (_explicitReconnectRequired)
             throw new ToyopucNotConnectedException(
-                "The canceled session requires an explicit Open/OpenAsync before another command.");
+                "The session requires an explicit Open/OpenAsync before another command.");
 
         var deadline = _operationContext.Value?.Deadline ?? CreateDeadline(Timeout);
         var attempt = 0;
@@ -1351,6 +1351,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 if (_socket is null)
                     OpenCore(explicitRequest: false, deadline);
 
+                RejectUnownedResponse(_socket!, beforeSend: true);
                 _lastTx = payload;
                 _lastRx = null;
                 FireTrace(ToyopucTraceDirection.Send, payload);
@@ -1382,6 +1383,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                         _traceFrames.Dequeue();
                     _traceFrames.Enqueue(new TransportTraceFrame(payload.ToArray(), frame.ToArray()));
                 }
+                RejectUnownedResponse(_socket!, beforeSend: false);
                 var response = ToyopucProtocol.ParseResponseView(frame);
                 ThrowIfDeadlineExpired(deadline, "Response decode timeout");
                 if (response.Ft != ToyopucProtocol.FtResponse)
@@ -1485,7 +1487,7 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
                 }
 
                 lastError = exception;
-                if (attempt <= Retries && !_requestMayHaveBeenSent && exception is not ToyopucPlcError)
+                if (attempt <= Retries && !_requestMayHaveBeenSent && !_explicitReconnectRequired && exception is not ToyopucPlcError)
                 {
                     CloseTransport();
                     RetryDelaySleep(deadline);
@@ -1530,6 +1532,20 @@ public partial class ToyopucClient : IDisposable, IAsyncDisposable
         }
 
         throw new ToyopucError("Send/receive failed");
+    }
+
+    private void RejectUnownedResponse(Socket socket, bool beforeSend)
+    {
+        // Available is zero for an empty UDP datagram; Poll still reports it.
+        if (socket.Available == 0 &&
+            (Transport != ToyopucTransportMode.Udp || !socket.Poll(0, SelectMode.SelectRead)))
+            return;
+
+        _explicitReconnectRequired = true;
+        CloseTransport();
+        throw new ToyopucProtocolError(beforeSend
+            ? "Received an unowned response before sending the next request; explicitly reopen the connection."
+            : "Received extra response data for one request; explicitly reopen the connection.");
     }
 
     private T DecodePreparedAsyncResponse<T>(

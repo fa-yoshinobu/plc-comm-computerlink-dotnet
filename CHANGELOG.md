@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.2] - 2026-11-17
+
+### Fixed
+
+- Library: Reject queued or immediately visible extra TCP/UDP response data before it can be reused as another request's result. Close the contaminated transport and require explicit reopening, without automatic retry or resend.
+- Tests: Cover sync/async reads and writes with complete, partial, and empty UDP residual responses, pre-send rejection, post-send outcome-unknown classification, and explicit reconnection.
+
+### Compatibility
+
+- Library: A residual response detected before send raises ToyopucProtocolError without sending the next request. Extra responses detected after a state-changing send retain the existing malformed-response outcome-unknown classification. The existing fixed-port UDP taint restriction still applies after a post-send protocol failure.
+- Docs: Residual detection cannot correlate a same-shaped duplicate that arrives after the next request has been sent; the protocol has no transaction serial. No public APIs were added.
+
 ## [4.2.1] - 2026-11-16
 
 ### Compatibility

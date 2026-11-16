@@ -1002,7 +1002,7 @@ public partial class ToyopucClient
             _explicitReconnectRequired = false;
         else if (_explicitReconnectRequired)
             throw new ToyopucNotConnectedException(
-                "The canceled session requires an explicit Open/OpenAsync before another command.");
+                "The session requires an explicit Open/OpenAsync before another command.");
         if (_socket is not null)
             return;
 
@@ -1086,6 +1086,8 @@ public partial class ToyopucClient
         }
 
         var socket = _socket ?? throw new ToyopucNotConnectedException("Socket was not opened.");
+        _requestMayHaveBeenSent = false;
+        RejectUnownedResponse(socket, beforeSend: true);
         _lastTx = payload;
         _lastRx = null;
         FireTrace(ToyopucTraceDirection.Send, payload);
@@ -1142,6 +1144,7 @@ public partial class ToyopucClient
                     _traceFrames.Dequeue();
                 _traceFrames.Enqueue(new TransportTraceFrame(payload.ToArray(), frame.ToArray()));
             }
+            RejectUnownedResponse(socket, beforeSend: false);
             return frame;
         }
         catch (OperationCanceledException)
