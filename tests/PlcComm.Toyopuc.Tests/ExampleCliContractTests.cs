@@ -211,6 +211,7 @@ public sealed class ExampleCliContractTests
 
         var stdout = new StringBuilder();
         var stderr = new StringBuilder();
+        var stopwatch = Stopwatch.StartNew();
 
         process.OutputDataReceived += (_, eventArgs) =>
         {
@@ -240,15 +241,41 @@ public sealed class ExampleCliContractTests
         }
         catch (OperationCanceledException)
         {
+            var killRequested = false;
             try
             {
-                process.Kill(entireProcessTree: true);
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                    killRequested = true;
+                }
             }
-            catch
+            catch (InvalidOperationException)
             {
+                // The child exited between the timeout and the kill request.
             }
 
-            throw new TimeoutException($"Timed out running: dotnet {string.Join(" ", args)}");
+            // Wait for exit and redirected output callbacks, with bounded cleanup.
+            var outputDrained = false;
+            try
+            {
+                using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await process.WaitForExitAsync(cleanup.Token);
+                process.WaitForExit();
+                outputDrained = true;
+            }
+            catch (OperationCanceledException)
+            {
+                // Cleanup timed out; avoid reading buffers while callbacks may still run.
+            }
+
+            throw new TimeoutException(
+                $"Timed out after {stopwatch.Elapsed} running: dotnet {string.Join(" ", args)}" +
+                Environment.NewLine + $"Kill requested: {killRequested}; output drained: {outputDrained}" +
+                Environment.NewLine + "Stdout:" + Environment.NewLine +
+                (outputDrained ? stdout.ToString() : "<unavailable: output not drained>") +
+                Environment.NewLine + "Stderr:" + Environment.NewLine +
+                (outputDrained ? stderr.ToString() : "<unavailable: output not drained>"));
         }
 
         return new CliResult(args.ToArray(), process.ExitCode, stdout.ToString(), stderr.ToString());
